@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def doc_display(funct, folder_path='docs/figs', fig_kwargs={}, df_kwargs={},  **kwargs):
+def doc_display(funct, figure_path='docs/figs', fig_kwargs={}, df_kwargs={},  **kwargs):
     """Format the docstring, as an alternative to matplotlib inline in jupyter notebooks
     
     Parameters
@@ -15,7 +15,7 @@ def doc_display(funct, folder_path='docs/figs', fig_kwargs={}, df_kwargs={},  **
     funct : function object | dict
         if a dict, has keys name, doc, locs
         otherlwise, the calling function, used to obtain is name, the docstring, and locals
-    folder_path : string, optional, default 'figs'
+    figure_path : string, optional, default 'docs/figs'
     fig_kwargs : dict,  optional
         additional kwargs to pass to the savefig call.
     df_kwargs : dict, optional, default {"float_format":lambda x: f'{x:.3f}', "notebook":True, "max_rows":10, "show_dimensions":}
@@ -65,10 +65,7 @@ def doc_display(funct, folder_path='docs/figs', fig_kwargs={}, df_kwargs={},  **
     # add kwargs if any
     locs.update(kwargs)
     
-    # set up path to save figures in folder with function name
-    path = f'{folder_path}/{name}'
-
-    
+   
     # process each Figure or DataFrame found in local for display 
     
     class FigureWrapper(plt.Figure):
@@ -88,8 +85,8 @@ def doc_display(funct, folder_path='docs/figs', fig_kwargs={}, df_kwargs={},  **
                 caption=getattr(fig,'caption', '').format(**locs)
                 # save the figure to a file, then close it
                 fig.tight_layout(pad=1.05)
-                fn = f'{path}/fig_{n}.png'
-                fig.savefig(fn) #, **fig_kwargs)
+                fn = f'{figure_path}/fig_{n}.png'
+                fig.savefig(fn, **fig_kwargs)
                 plt.close(fig) 
 
                 # add the HTML as an attribute, to insert the image, including optional caption
@@ -121,7 +118,7 @@ def doc_display(funct, folder_path='docs/figs', fig_kwargs={}, df_kwargs={},  **
             
     def figure_html(fig):
         if hasattr(fig, 'html'): return
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(figure_path, exist_ok=True)
         
         return FigureWrapper(fig)
         
@@ -329,7 +326,7 @@ class Publisher(object):
         md_data = doc_display( 
                     dict(name=name, doc=doc, locs=locs),  
                     no_display=True,
-                    folder_path=self.fig_path, **kwargs)
+                    figure_path=self.fig_path, **kwargs)
         # prepend formatted header 
         if section_name:
             header = f'\n\n## {self.section_number:d}. {section_name}\n\n'

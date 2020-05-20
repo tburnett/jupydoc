@@ -13078,7 +13078,7 @@ div#notebook {
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p style="text-align:center;"> <H1>Producing documents in Jupyter</H1></p>
-<p style="text-align: right;">2020-05-20 14:20</p><p><p style="text-align: center;" >T. Burnett &lt;tburnett@uw.edu&gt;</p></p>
+<p style="text-align: right;">2020-05-20 14:43</p><p><p style="text-align: center;" >T. Burnett &lt;tburnett@uw.edu&gt;</p></p>
 <h2 id="1.-Introduction">1. Introduction<a class="anchor-link" href="#1.-Introduction">&#182;</a></h2><h3 id="Purpose">Purpose<a class="anchor-link" href="#Purpose">&#182;</a></h3><p>This package addresses a long-term frustration I've had with using Jupyterlab for my
 analysis. That is, how do I combine the output of a notebook, entries in my logbook, and
 the python code to produce a document to present to collaborators, or translate to an actual 
@@ -13123,7 +13123,7 @@ ax.set(xlabel='$x$', ylabel='$x^2$', title=f'figure {fig1.number}')
 fig1.caption='''Caption for Fig. 1, which
         shows $x^2$ vs. $x$.'''</code></pre>
 <p>produces:</p>
-<figure> <img src="docs/figs/Document/formatting_summary/fig_1.png" alt="Figure 1 at docs/figs/Document/formatting_summary/fig_1.png"> <figcaption>Caption for Fig. 1, which
+<figure> <img src="docs/figs/Document/fig_1.png" alt="Figure 1 at docs/figs/Document/fig_1.png"> <figcaption>Caption for Fig. 1, which
                 shows $x^2$ vs. $x$.    
                .</figcaption></figure><p>The display processing replaces the <code>fig1</code> reference in a copy of <code>locals()</code>
 with a object that implements a <code>__str__()</code> function returning an HTML reference 
@@ -13237,6 +13237,8 @@ The page is produced with a call to <code>title_page</code>.</p>
 <h3 id="Sections">Sections<a class="anchor-link" href="#Sections">&#182;</a></h3><p>Each member function, with a docstring and call to <code>self.publishme(</code><em>section_name</em><code>)</code> will 
 generate a numbered section. The numbers are sequential as called by default, but can be specified
 by setting <code>self.section_number</code> in the code.</p>
+<h3 id="Other-text">Other text<a class="anchor-link" href="#Other-text">&#182;</a></h3><p>Text not fitting into the section structure can be added with a call to the member function
+<code>markdown</code>, providing a text string.</p>
 <h2 id="4.-Saving-the-document">4. Saving the document<a class="anchor-link" href="#4.-Saving-the-document">&#182;</a></h2><h3 id="HTML">HTML<a class="anchor-link" href="#HTML">&#182;</a></h3><p>If the parameter <code>html_file</code> is set, the current document, corresponding to a sequence of calls to 
 section-generating functions, will be processed by <code>nbconvert</code>. The resuling HTML file will be in 
 a folder determined by <code>doc_path</code>. In that, figures will be found in <code>figs</code>.</p>
