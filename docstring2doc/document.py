@@ -1,4 +1,5 @@
 """
+Generate illustrative document
 """
 import numpy as np
 import pylab as plt
@@ -9,14 +10,7 @@ from docstring2doc import Publisher
 class Document(Publisher):
     
     def __init__(self,**kwargs):
-        super().__init__(
-                title_info= dict(
-                    title='Producing documents in Jupyter',
-                    author='T. Burnett <tburnett@uw.edu>',
-                    ),
-                html_file='docstring2doc.html',
-                doc_path='.',
-                )
+        super().__init__(**kwargs)
         
     def introduction(self):
         """
@@ -24,7 +18,8 @@ class Document(Publisher):
         This package addresses a long-term frustration I've had with using Jupyterlab for my
         analysis. That is, how do I combine the output of a notebook, entries in my logbook, and
         the python code to produce a document to present to collaborators, or translate to an actual 
-        publishable document? Jupyter notebooks are tempting since they have markdown cells that
+        publishable document? And finally, how to maintain some sort of version control with inputs to such
+        a document from several sources? Jupyter notebooks are tempting since they have markdown cells that
         provide for nice formatting, even including LaTex. And of course the figures are nicely 
         inserted in the output. But I wanted to have the text reflect the calcualations, that is,
         be as dynamic as the generation of figures. And I certainly want the appearance of the
@@ -163,25 +158,33 @@ class Document(Publisher):
         """
         self.publishme('Document Structure')
         
-    def saving(self):
+    def file_structure(self):
         """
-        ### HTML  
-        If the parameter `html_file` is set, the current document, corresponding to a sequence of calls to 
-        section-generating functions, will be processed by `nbconvert`. The resuling HTML file will be in 
-        a folder determined by `doc_path`. In that, figures will be found in `figs`.
-        
-        ### PDF
+        ## Web
+        The resulting Web document has two components: the HTML file with all the text and formatting, and, in the
+        same folder, a  subfolder "figs" with the figures, which are included via the HTML e.g., `<img src="figs/fig_1.png"/>`.
+                
+        The use case motivating this was to develop the document in Jupyter, and easiiy save it as a 
+        Web document. In order for the figures to be displayed in the notebook, the figures must be 
+        saved in its folder.
+       
+        Creating the Web document then entails creating (using nbconvert) the HTML file in the destination
+        document folder, and copying the figure folder into it.
+                
+        ### PDF?
         The nbformat option for this seems to fail. A better solution, in the works, is to use the
         utility [notebook-as-pdf](https://github.com/betatim/notebook-as-pdf). A problem with it, however, 
         is that it depends on a callable version chrome, which misses some dependencies, not possible to add without 
         root permission.
         """
-        self.publishme('Saving the document')
+        self.publishme('File structure')
         
     def __call__(self):
+        # assemble the document
         self.title_page()
         self.introduction()
         self.formatting_summary()
         self.document_structure()
-        self.saving()
-        self.finish()
+        self.file_structure()
+        self.save()
+        

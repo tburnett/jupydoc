@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+current_path = os.getcwd()
+
 def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwargs):
     """Format the docstring, as an alternative to matplotlib inline in jupyter notebooks
     
@@ -221,48 +223,33 @@ class Publisher(object):
    
     """
     def __init__(self, 
-            title_info={'title':'untitled'},
-             title:'Title for the document'='no title',
-             author:'Optional author line'=None,
-             doc_path:'path to store the document and figures'='docs', 
-             fignum=1, 
-             section_number:'Initial section number'=0, 
-             html_file:'if set, save the accumulated output to an HTML file when closed'='', 
-             pdf_file:'eventually implement'='', 
+             title_info:'Title, author,..'={},
+             doc_folder:'if set, save() will write the accumulated output to an HTML document file'='', 
              no_display:'set True to avoid Jupyter display output'=False,
             ):
         """
-        doc_path : None or string
-            Path to save figures
-            if None, use figs/<classname>
-        fignum : optional, default 1
-            First figure number to use
-        html_file : optional, default None
-            if set, save the accumulated output to an HTML file when closed
-        pdf_file : optional default None
-            If set, save the accumulated docstring output to the PDF file when closed.
-        """
-        self.doc_path= doc_path or 'docs/'
-        self.figure_path=f'figs/{self.__class__.__name__}'
-        os.makedirs(self.doc_path, exist_ok=True)
-        self.title_info=title_info
-        self._fignum=fignum-1
-        self.section_number = section_number
 
+        """
+        self.title_info=title_info
+        self.doc_folder = doc_folder
+        self.figure_path='figs' 
+    
+        if self.doc_folder:
+            os.makedirs(os.path.join(self.doc_folder, self.figure_path), exist_ok=True)
+        
         self.date=str(datetime.datetime.now())[:16]
-        self.pdf_file=pdf_file
-        self.html_file= f'{self.doc_path}/{html_file}' if html_file else ''
         self.no_display=no_display
-        self.data = ''
+
+        if not no_display:
+            # for the notebook
+            os.makedirs(self.figure_path, exist_ok=True)
+                
+        self.clear()
+                        
+   
     
     def __str__(self):
         return f'classname "{self.__class__.__name__}", title "{self.title_info["title"]}"'
-    
-    # Support the 'with ...'
-    def __enter__(self): return self
-    
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.finish()
 
     def _publish(self, text):
         """ add text to docuemnt, display with IPython if set"""        
@@ -325,13 +312,11 @@ class Publisher(object):
 
         # process it with helper function that returns markdown
         # need to ensure that HTML generated have ref that is relative to documtn
-        cwd = os.getcwd()
-        os.chdir(self.doc_path)
+
         md_data = doc_display( 
                     dict(name=name, doc=doc, locs=locs),  
                     no_display=True,
                     figure_path=self.figure_path, **kwargs)
-        os.chdir(cwd)
         
         # prepend formatted header 
         if section_name:
@@ -340,16 +325,33 @@ class Publisher(object):
         # and send if off
         self._publish(md_data)
         
-    def finish(self):
+       
+    def clear(self):
+        self.data=''
+        self._fignum=self.section_number=0
 
-        if self.pdf_file:
-            print('*** PDF generation not yet implemented!')
-        if self.html_file:
-            md_to_html(self.data, self.html_file )
-        
+    def save(self):
+        """ Create Web document
+        """
+        import shutil, glob
+        if not self.doc_folder: 
+            self.markdown("""
+            ---
+            Document not saved.""")
+            return
+        doc_figure_path = os.path.join(self.doc_folder, self.figure_path)
+        os.makedirs(doc_figure_path, exist_ok=True)
         self.markdown(f"""
             ---
-            Saved file to "{self.html_file}"
-            """
-        )
-        self.data=''
+            Document saved to "{self.doc_folder}"'
+            """)
+        
+        md_to_html(self.data, os.path.join(self.doc_folder,'index.html')) 
+        
+        #could have saved them properly to start
+        figs = glob.glob(self.figure_path+'/*')
+
+        for fig in figs:
+            shutil.copy2(fig,  doc_figure_path)
+        self.clear()
+            
