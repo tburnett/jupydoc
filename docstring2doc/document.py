@@ -15,6 +15,7 @@ class Document(Publisher):
                     author='T. Burnett <tburnett@uw.edu>',
                     ),
                 html_file='docstring2doc.html',
+                doc_path='.',
                 )
         
     def introduction(self):
@@ -34,7 +35,7 @@ class Document(Publisher):
         for markdown cells. Thus why not generate markdown text as a part of the processing that
         produces figures? A further key was that the "docstring" of a python function is easily
         accessible to via Python's inspection. A final key was the `str.format` function that will
-        replace curly-braketed fields in a string with representations of contained variables.
+        replace curly-bracketed fields in a string with representations of contained variables.
         
         Thus I, in effect, document a function that does some calculation, generating various figures,
         with that function's docstring. A further evolution of this was to have the function reflect
@@ -49,7 +50,7 @@ class Document(Publisher):
         immediatly following the code cell. 
         
         ### About this document
-        This document is iself a demonstration! It was generated using member functions
+        This document is itself a demonstration! It was generated using member functions
         of the class `docstring2doc.Document`, which inherits from `docstring2doc.Publisher`.
         Each such function represents a section in the document.
         
