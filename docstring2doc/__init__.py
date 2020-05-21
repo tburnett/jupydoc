@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def doc_display(funct, figure_path='docs/figs', fig_kwargs={}, df_kwargs={},  **kwargs):
+def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwargs):
     """Format the docstring, as an alternative to matplotlib inline in jupyter notebooks
     
     Parameters
@@ -15,7 +15,8 @@ def doc_display(funct, figure_path='docs/figs', fig_kwargs={}, df_kwargs={},  **
     funct : function object | dict
         if a dict, has keys name, doc, locs
         otherlwise, the calling function, used to obtain is name, the docstring, and locals
-    figure_path : string, optional, default 'docs/figs'
+    figure_path : string, optional, default 'figs'
+        path, in current folder, to save figures
     fig_kwargs : dict,  optional
         additional kwargs to pass to the savefig call.
     df_kwargs : dict, optional, default {"float_format":lambda x: f'{x:.3f}', "notebook":True, "max_rows":10, "show_dimensions":}
@@ -242,8 +243,8 @@ class Publisher(object):
             If set, save the accumulated docstring output to the PDF file when closed.
         """
         self.doc_path= doc_path or 'docs/'
-        self.fig_path=f'{self.doc_path}/figs/{self.__class__.__name__}'
-        os.makedirs(self.fig_path, exist_ok=True)
+        self.figure_path=f'figs/{self.__class__.__name__}'
+        os.makedirs(self.doc_path, exist_ok=True)
         self.title_info=title_info
         self._fignum=fignum-1
         self.section_number = section_number
@@ -322,11 +323,16 @@ class Publisher(object):
         funct =eval(f'self.{name}')
         doc = inspect.getdoc(funct)
 
-        # process it all with helper function that returns markdown
+        # process it with helper function that returns markdown
+        # need to ensure that HTML generated have ref that is relative to documtn
+        cwd = os.getcwd()
+        os.chdir(self.doc_path)
         md_data = doc_display( 
                     dict(name=name, doc=doc, locs=locs),  
                     no_display=True,
-                    figure_path=self.fig_path, **kwargs)
+                    figure_path=self.figure_path, **kwargs)
+        os.chdir(cwd)
+        
         # prepend formatted header 
         if section_name:
             header = f'\n\n## {self.section_number:d}. {section_name}\n\n'
