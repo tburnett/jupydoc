@@ -5,7 +5,7 @@ import numpy as np
 import pylab as plt
 import pandas as pd
 import os, sys
-from docstring2doc import Publisher
+from jupydoc import Publisher
 
 class Document(Publisher):
     
@@ -25,20 +25,28 @@ class Document(Publisher):
         be as dynamic as the generation of figures. And I certainly want the appearance of the
         notebook to reflect the appearance of any final document. 
         
-        A key to this was the fact that `IPython.display` is very flexible for generating formatted
-        output following a code cell. Especially, it interprets markdown text in the same way as 
-        for markdown cells. Thus why not generate markdown text as a part of the processing that
-        produces figures? A further key was that the "docstring" of a python function is easily
-        accessible to via Python's inspection. A final key was the `str.format` function that will
-        replace curly-bracketed fields in a string with representations of contained variables.
+        Some important features of the jupyter environment that are essential:
+
+        * IPython.display is very flexible for generating formatted output following a code cell. 
+        Especially, it interprets markdown text in the same way as for markdown cells. Thus why not 
+        generate markdown text as a part of the processing that produces figures?
+
+        * The "docstring" of a python function is easily accessible to via Python's inspection.
+
+        * The `str.format` function that replaces curly-bracketed fields in a string with representations
+        of expressions in curly brackets. That is used here with the `locals()` dictionary as an argument.
+
+        * The related package nbconvert which supports creation of an HTML document from a notebook,
+        in this case the Juptyer version of markdown. It is necessary to produce an idential-looking (almost)
+        document to what is rendered in the notebook.
         
-        Thus I, in effect, document a function that does some calculation, generating various figures,
-        with that function's docstring. A further evolution of this was to have the function reflect
+        Thus one can use this to document a function that does some calculation, generating various figures,
+        with that function's docstring. A further evolution of this idea was to have the function reflect
         a *section* of the final document. And to encapsulate the whole thing into a Python class,
         inheriting from a class that handles all the details. This completely addresses my frustration
         in that the code for such a class is all I need to procuce a nice document.
         
-        It is no longer necessary to maintain separate notebook files--but Jupyter/IPython is not only
+        It is no longer necessary to maintain separate notebook files&mdash;but Jupyter/IPython is not only
         crutial for producing the document, but the Jupyter environment is essential for developing the
         analysis and generating the associated documentation. The modular section-oriented structure
         allows invoking each function independently, with the resulting document section displayed
@@ -172,19 +180,64 @@ class Document(Publisher):
         document folder, and copying the figure folder into it.
                 
         ### PDF?
-        The nbformat option for this seems to fail. A better solution, in the works, is to use the
-        utility [notebook-as-pdf](https://github.com/betatim/notebook-as-pdf). A problem with it, however, 
-        is that it depends on a callable version chrome, which misses some dependencies, not possible to add without 
-        root permission.
+        Using nbconvert for this seems to fail. A better solution, in the works, is to use code that I 
+        found in [`notebook-as-pdf`](https://github.com/betatim/notebook-as-pdf), which uses a headless
+        chrome, relying on (`pyppeteer`)[https://pypi.org/project/pyppeteer/] to render the HTML to a PDF file.
         """
         self.publishme('File structure')
         
+    def workflow(self):
+        """
+        This facility has transformed the way I generate analysis code. The objective is to *minimize* notebooks. 
+        I now regard them as temporary, but essential, sratch pads for developing code. Such a process requires 
+        creating plots showing the results, validating assumptions about the data and analysis methods. 
+        So there are two coding elements in this procedure: the actual analysis, and the creation of associated plots.
+        
+        Thus I separate the two, with the ploting and discussion of which, put into members of a `jupydoc.Publisher` class.
+        
+        An interesting situation arises: How to "reuse" such member functions in a new, but related presentation analysis?
+        Related to this is what goes into the Jupyter notebook, which is being used to develop analysis and its 
+        associated documentation. With the goal of minimizing the notebook, my answer is multiple inheritance. 
+        So I create a class only for the notebook,
+        
+        ```
+        class LocalDoc(A,B...):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+            def new_section(self):
+                '''
+                <text>
+                '''
+                <code>
+                self.publishme('New Section')
+        ```
+        where each of the super classes, which also inherit from ju_doc.Publisher has a similar constructor. 
+        Any keywords are passed to all, presumably acted on by the one that recognizes them. All the respective 
+        member functions are of course available.
+        
+        Finally, to produce the HTML (and eventual PDF) document, I write a function that call the relevant 
+        sequence of member fuctions, followed by a self.save. For this document, that is `__call__`:
+        
+        ```
+        from jupydoc import document
+        doc=document.Document(
+            title_info= dict(
+                title='Producing documents in Jupyter',
+                author='T. Burnett <tburnett@uw.edu>',
+                ),
+            doc_folder='/nfs/farm/g/glast/u/burnett/git/tburnett.github.io/jupydoc',)
+        doc()
+        ```
+        """
+        self.publishme('Workflow')
+        
     def __call__(self):
-        # assemble the document
+        # assemble and save the document
         self.title_page()
         self.introduction()
         self.formatting_summary()
         self.document_structure()
         self.file_structure()
+        self.workflow()
         self.save()
         

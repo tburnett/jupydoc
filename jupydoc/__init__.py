@@ -2,7 +2,7 @@
 """
 
 import os, inspect, string, io, datetime
-#import IPython.display as display
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -214,11 +214,11 @@ def md_to_html(output, filename):
         f.write(output.encode('utf8'))
 
 class Publisher(object):
-    """Base class for generating a document in Jupyter/IPython.
-    A subclass must run super().__init__(). Then any member function that calls self.publishme()
+    """
+    Base class for generating a document in Jupyter/IPython.
+    A subclass must run `super().__init__()`. Then any member function that calls self.publishme()
     will have its docstring processed.
     
-    Implements the "with" construction. 
    
     """
     def __init__(self, 
@@ -244,14 +244,13 @@ class Publisher(object):
             os.makedirs(self.figure_path, exist_ok=True)
                 
         self.clear()
-                        
-   
+                           
     
     def __str__(self):
         return f'classname "{self.__class__.__name__}", title "{self.title_info["title"]}"'
 
     def _publish(self, text):
-        """ add text to docuemnt, display with IPython if set"""        
+        """ add text to the docuemnt, display with IPython if set"""        
         import IPython.display as display #only dependence on IPython
         self.data = self.data + '\n\n' + text
         
