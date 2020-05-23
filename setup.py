@@ -1,25 +1,27 @@
-import os
-from setuptools import find_packages, setup
+import setuptools
 
 
-HERE = os.path.dirname(__file__)
+with open("README.md", 'r') as fn:
+    long_description = fn.read()
 
-with open(os.path.join(HERE, "README.md"), encoding="utf8") as f:
-    readme = f.read()
-
-setup(
+setuptools.setup(
+    name="jupydoc-tburnett",
     author="Toby Burnett",
     author_email="tburnett@uw.edu",
     version="0.0.1",
     description="Generate documents using Jupyter and nbconvert",
     install_requires=["nbconvert", "jupyter",],
     keywords="jupyter ",
-    license="BSD3",
-    long_description=readme,
+    long_description=long_description,
     long_description_content_type="text/markdown",
-    name="jupydoc",
-    packages=find_packages(),
+
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
     python_requires=">=3.7",
     url="https://github.com/tburnett/jupydoc",
-    entry_points={},
+   
 )

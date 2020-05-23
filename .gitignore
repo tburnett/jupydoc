@@ -2,4 +2,7 @@
 *-checkpoint.*
 nohup.out
 .ipynb_checkpoints/*
+dist
+build
+*.egg-info
 
