@@ -173,7 +173,7 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
 
     return docx
 
-def md_to_html(output, filename):
+def md_to_html(output, filename, title='jupydoc'):
     """write nbconverted markdown to a file 
     
     parameters
@@ -210,6 +210,10 @@ def md_to_html(output, filename):
     # now pass it to nbconvert to write as an HTML file
     exporter = HTMLExporter()
     output, resources = exporter.from_notebook_node(nb) 
+    
+    # Change the title from default "Notebook"
+    output = output.replace('Notebook', title)
+    
     with open(filename, 'wb') as f:
         f.write(output.encode('utf8'))
 
@@ -355,12 +359,13 @@ class Publisher(object):
             return
         doc_figure_path = os.path.join(self.doc_folder, self.figure_path)
         os.makedirs(doc_figure_path, exist_ok=True)
+        title = self.title_info['title']
         self.markdown(f"""
             ---
-            Document saved to "{self.doc_folder}"'
+            Document "{title}" saved to "{self.doc_folder}"'
             """)
         
-        md_to_html(self.data, os.path.join(self.doc_folder,'index.html')) 
+        md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
         
         #could have saved them properly to start
         figs = glob.glob(self.figure_path+'/*')
