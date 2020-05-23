@@ -54,7 +54,7 @@ class Document(Publisher):
         
         ### About this document
         This document is itself a demonstration! It was generated using member functions
-        of the class `docstring2doc.Document`, which inherits from `docstring2doc.Publisher`.
+        of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
         Each such function represents a section in the document.
         
         """
