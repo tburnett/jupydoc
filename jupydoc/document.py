@@ -64,7 +64,7 @@ class Document(Publisher):
         r"""
         There are three elements in such a function: the docstring, written in 
         markdown, containing 
-        local names in curly-brackets, the code, and a final call `self.publishme(section_name)`.  
+        variable names in curly-brackets, the code, and a final call `self.publishme(section_name)`.  
         Unlike a formatted string, entries in curly brackets cannot be expressions.
         
         #### Local variables  
@@ -215,6 +215,12 @@ class Document(Publisher):
         Any keywords are passed to all, presumably acted on by the one that recognizes them. All the respective 
         member functions are of course available.
         
+        when adding sections to a class, the case may arise that instantiating the class may be time-consuming, 
+        discouraging developing the code in its source file.
+        Jupydoc requires that sections be implented with bound functions. In this case, I creating the object,
+        calling it `self`, then develop the code in Jupyper. Any figures will be displayed by default after the cell.
+        (Jupydoc clears all figures that it creates to avoid this in its processing.)
+        
         Finally, to produce the HTML (and eventual PDF) document, I write a function that call the relevant 
         sequence of member fuctions, followed by a self.save. For this document, that is `__call__`:
         
@@ -230,7 +236,41 @@ class Document(Publisher):
         ```
         """
         self.publishme('Workflow')
+    
+    def other_formatting_options(self):
+        r"""
+        Markdown text is designed to be readable and easy to compose, a huge difference from
+        the formal HTML, to which it is translated. One can of course insert HTML 
+        directly into the text, of course compromising the readabily, and requiring HTML knowledge. 
+        Jupydoc processing allows inserting predefined strings when processing the docstringtext, 
+        which represents a  compromise. 
         
+        Variable names in the docstring text come from three sources, each one updating the previous
+        set. 
+        1. Built-in. A class variable `predefined`. This is set to the useful values discussed here,
+        but of course the user may update or replace it.
+        2. The local variables available to the code in the function, locally defined or defined 
+        in the argument list, especially "self".
+        3. Varables defined in the call to `publishme`, collected with Python's `**kwargs` mechanism. 
+
+        #### Indenting
+        Indenting a paragraph is not directly possible with markdown. But we predefine:
+        
+        {{indent}}
+        : `{indent}` &mdash;the margin is predefined, easily changed by the user
+        
+        {{endp}}
+        : `{endp}` &mdash; Since it represents the end of a paragraph.
+        
+        Demonstration:
+        {indent}
+        This paragrah is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
+        <br>To start a new line line this, in this, or any other paragraph, in insert &lt;br&gt;. 
+        {endp}
+        
+        """
+        self.publishme('Other Formatting options')
+
     def __call__(self):
         # assemble and save the document
         self.title_page()
@@ -238,6 +278,19 @@ class Document(Publisher):
         self.formatting_summary()
         self.document_structure()
         self.file_structure()
+        self.other_formatting_options()
         self.workflow()
+        
         self.save()
         
+def main( title_info= dict(
+                title='Producing documents in Jupyter',
+                author='T. Burnett <tburnett@uw.edu>',
+                ),
+              doc_folder='jupydoc_document',
+            ):
+           
+    doc=Document(title_info=title_info, doc_folder=doc_folder, no_display=True)
+    doc()
+    
+## make this executable?

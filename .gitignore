@@ -4,5 +4,6 @@ nohup.out
 .ipynb_checkpoints/*
 dist
 build
+notebooks
 *.egg-info
 

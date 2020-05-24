@@ -6,10 +6,17 @@ import os, inspect, string, io, datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from setuptools import setup, find_packages
 
 current_path = os.getcwd()
 
-def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwargs):
+def doc_display(funct:'function object or dict with keys name, doc, locs', 
+                fig_folders:'path to one or more folders'=['.'],
+                fig_kwargs:'additional kwargs to pass to the savefig call'={}, 
+                df_kwargs:'additional kwargs to pass to the to_html call for a DataFrame'={}, 
+                predefined:'dict of predfinded variables'={},
+                **kwargs:'',
+               )->str:
     """Format the docstring, as an alternative to matplotlib inline in jupyter notebooks
     
     Parameters
@@ -17,8 +24,8 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
     funct : function object | dict
         if a dict, has keys name, doc, locs
         otherlwise, the calling function, used to obtain is name, the docstring, and locals
-    figure_path : string, optional, default 'figs'
-        path, in current folder, to save figures
+    fig_folders : list, default ['.']
+        save into a 'figs' folder in each of these. Document will refer to "figs/fig_x.png"
     fig_kwargs : dict,  optional
         additional kwargs to pass to the savefig call.
     df_kwargs : dict, optional, default {"float_format":lambda x: f'{x:.3f}', "notebook":True, "max_rows":10, "show_dimensions":}
@@ -57,24 +64,29 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
         back =inspect.currentframe().f_back
         name= inspect.getframeinfo(back).function
         locs = inspect.getargvalues(back).locals.copy() # since may modify
-
+        
     elif (type(funct) == dict) and (set(expected_keys) == set(funct.keys())):
         doc=funct['doc']
         name=funct['name']
-        locs = funct['locs'].copy()
+        locs = funct['locs']
     else:
         raise Exception(f'Expected a function or a dict with keys {expected_keys}: got {funct}')
-    
-    # add kwargs if any
-    locs.update(kwargs)
-    
+
+    # create variable dictionary: predefined, locals, kwargs
+    vars = predefined.copy()
+    vars.update(locs)
+    vars.update(kwargs)
+   
    
     # process each Figure or DataFrame found in local for display 
     
     class FigureWrapper(plt.Figure):
-        def __init__(self, fig):
+        def __init__(self, fig, folder_name='figs'):
             self.__dict__.update(fig.__dict__)
             self.fig = fig
+            self.folder_name=folder_name
+            for folder in fig_folders:
+                os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
             
         @property
         def html(self):
@@ -85,11 +97,13 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
             if not hasattr(self, '_html'):
                 fig=self.fig
                 n = fig.number
-                caption=getattr(fig,'caption', '').format(**locs)
+                caption=getattr(fig,'caption', '').format(**vars)
                 # save the figure to a file, then close it
                 fig.tight_layout(pad=1.05)
-                fn = f'{figure_path}/fig_{n}.png'
-                fig.savefig(fn, **fig_kwargs)
+                fn = os.path.join(self.folder_name, f'fig_{n}.png')
+                # actually save it for the document, perhaps both in the local, and document folders
+                for folder in fig_folders:
+                    fig.savefig(os.path.join(folder,fn), **fig_kwargs)
                 plt.close(fig) 
 
                 # add the HTML as an attribute, to insert the image, including optional caption
@@ -120,8 +134,7 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
 
             
     def figure_html(fig):
-        if hasattr(fig, 'html'): return
-        os.makedirs(figure_path, exist_ok=True)        
+        if hasattr(fig, 'html'): returnfig_fold
         return FigureWrapper(fig)
         
     def dataframe_html(df):
@@ -137,10 +150,10 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
         # process the reference: if recognized, there may be a new object
         newvalue = f(value)
         if newvalue is not None: 
-            locs[key] = newvalue
+            vars[key] = newvalue
             #print(f'key={key}, from {value.__class__.__name__} to  {newvalue.__class__.__name__}')
     
-    for key,value in locs.items():
+    for key,value in vars.items():
         processor(key,value)
    
     # format local references. Process Figure or DataFrame objects found to include .html representations.
@@ -167,9 +180,9 @@ def doc_display(funct, figure_path='figs', fig_kwargs={}, df_kwargs={},  **kwarg
                 return value.format(format_spec)
             #print(f'\tformatting {value} with spec {format_spec}') #', object of class {eval(value).__class__}')
             return format(value, format_spec)
-                        
-    docx = Formatter().vformat(doc+'\n', locs)       
-    # replaced: docx = doc.format(**locs)
+    #print(f'doc:{doc}\nvars:{vars}')                    
+    docx = Formatter().vformat(doc+'\n', vars)       
+    # enhances this: docx = doc.format(**vars)
 
     return docx
 
@@ -226,27 +239,29 @@ class Publisher(object):
    
     """
     def __init__(self, 
-             title_info:'Title, author,..'={},
+             title_info:'Title, author,..'={'title':'Untitled'},
              doc_folder:'if set, save() will write the accumulated output to an HTML document file'='', 
              no_display:'set True to avoid Jupyter display output'=False,
+             predefined:'predefined variables for formatting, perhaps'={},
             ):
         """
 
         """
         self.title_info=title_info
         self.doc_folder = doc_folder
-        self.figure_path='figs' 
+        self.predefined=predefined or \
+            dict(
+                margin_left='<p style="margin-left: 5%">',  
+                indent='<p style="margin-left: 5%">',
+                endp='</p>',
+            )
     
         if self.doc_folder:
-            os.makedirs(os.path.join(self.doc_folder, self.figure_path), exist_ok=True)
+            os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
         
         self.date=str(datetime.datetime.now())[:16]
         self.no_display=no_display
 
-        if not no_display:
-            # for the notebook
-            os.makedirs(self.figure_path, exist_ok=True)
-                
         self.clear()
                            
     
@@ -312,7 +327,8 @@ class Publisher(object):
     def publishme(self, 
                   section_name:'Optional name for the section'=None, 
                   section_number:'Optional number to apply'=None, 
-                  **kwargs:'not used')->None:
+                  **kwargs:'additional variable definitions',
+                 )->None:
         """
         """
         # numbering: a new section and 
@@ -332,10 +348,19 @@ class Publisher(object):
         # process it with helper function that returns markdown
         # need to ensure that HTML generated have ref that is relative to documtn
 
+        # three cases for saving figures:
+        local = '.'
+        if not self.doc_folder:  fig_folders = [local]
+        elif self.no_display:    fig_folders = [self.doc_folder]
+        else:                    fig_folders = [local,self.doc_folder]
+          
+        # Now use the helper function to do all the formatting
         md_data = doc_display( 
                     dict(name=name, doc=doc, locs=locs),  
                     no_display=True,
-                    figure_path=self.figure_path, **kwargs)
+                    fig_folders=fig_folders,
+                    predefined = self.predefined,
+                    **kwargs)
         
         # prepend formatted header 
         if section_name:
@@ -351,14 +376,11 @@ class Publisher(object):
     def save(self):
         """ Create Web document
         """
-        import shutil, glob
         if not self.doc_folder: 
             self.markdown("""
             ---
             Document not saved.""")
             return
-        doc_figure_path = os.path.join(self.doc_folder, self.figure_path)
-        os.makedirs(doc_figure_path, exist_ok=True)
         title = self.title_info['title']
         self.markdown(f"""
             ---
@@ -366,11 +388,8 @@ class Publisher(object):
             """)
         
         md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
+        if self.no_display:
+            print(f'"{title}" saved to "{self.doc_folder}"')
         
-        #could have saved them properly to start
-        figs = glob.glob(self.figure_path+'/*')
-
-        for fig in figs:
-            shutil.copy2(fig,  doc_figure_path)
         self.clear()
             
