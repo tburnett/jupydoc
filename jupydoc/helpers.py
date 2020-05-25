@@ -1,102 +1,20 @@
 """
-jupydoc helper functions
+jupydoc helper functions doc_formatter and md_to_html
+
 """
-import os, string, io, inspect
+import string 
+from nbconvert.exporters import  HTMLExporter
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 
-def doc_formatter(text:'text string to process',
-                vars:'variable dict', 
-                fig_folders:'path to one or more folders'=['.'],
-                fig_kwargs:'additional kwargs to pass to the savefig call'={}, 
-                df_kwargs:'additional kwargs to pass to the to_html call for a DataFrame'={}, 
-               )->str:
-    """Format the input text
+def doc_formatter(
+        text:'text string to process',
+        vars:'variable dict', 
+        object_replacer:'function that revises a variable dictionary'=lambda vars: None,
+    )->str:
     
-    """  
-    # check kwargs
-    dfkw = dict(float_format=lambda x: f'{x:.3f}', notebook=True, max_rows=10, show_dimensions=False, justify='right')
-    dfkw.update(df_kwargs)
-
-   
-    # process each Figure or DataFrame found in local for display 
+    # replace selected objects in the vars dict
+    object_replacer(vars)
     
-    class FigureWrapper(plt.Figure):
-        def __init__(self, fig, folder_name='figs'):
-            self.__dict__.update(fig.__dict__)
-            self.fig = fig
-            self.folder_name=folder_name
-            for folder in fig_folders:
-                os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
-            
-        @property
-        def html(self):
-            # backwards compatibility with previous version
-            return self.__str__()
-            
-        def __str__(self):
-            if not hasattr(self, '_html'):
-                fig=self.fig
-                n = fig.number
-                caption=getattr(fig,'caption', '').format(**vars)
-                # save the figure to a file, then close it
-                fig.tight_layout(pad=1.05)
-                fn = os.path.join(self.folder_name, f'fig_{n}.png')
-                # actually save it for the document, perhaps both in the local, and document folders
-                for folder in fig_folders:
-                    fig.savefig(os.path.join(folder,fn), **fig_kwargs)
-                plt.close(fig) 
-
-                # add the HTML as an attribute, to insert the image, including optional caption
-
-                self._html =  f'<figure> <img src="{fn}" alt="Figure {n} at {fn}">'\
-                        f' <figcaption>{caption}</figcaption>'\
-                        '</figure>\n'
-            return self._html
-        
-        def __repr__(self):
-            return self.__str__()
-
-        
-    class DataFrameWrapper(object): #pd.DataFrame):
-        def __init__(self, df):
-            #self.__dict__.update(df.__dict__) #fails?
-            self._df = df
-        def __repr__(self):
-            return self.__str__()
-        def __str__(self):
-            if not hasattr(self, '_html'):
-                self._html = self._df.to_html(**dfkw) # self._df._repr_html_()                
-            return self._html
-
-            
-    def figure_html(fig):
-        return FigureWrapper(fig)
-        
-    def dataframe_html(df):
-        if hasattr(df, 'html'): return None
-        return DataFrameWrapper(df)
-   
-    def processor(key, value):
-        # value: an object reference to be processed 
-
-        ptable = {plt.Figure: figure_html,
-                  pd.DataFrame: dataframe_html,
-                 }
-        f = ptable.get(value.__class__, lambda x: None)
-        
-        # process the reference: if recognized, there may be a new object
-        newvalue = f(value)
-        if newvalue is not None: 
-            vars[key] = newvalue
-            #print(f'key={key}, from {value.__class__.__name__} to  {newvalue.__class__.__name__}')
-    
-    for key,value in vars.items():
-        processor(key,value)
-   
-    # format local references. Process Figure or DataFrame objects found to include .html representations.
     # Use a string.Formatter subclass to ignore bracketed names that are not found
     #adapted from  https://stackoverflow.com/questions/3536303/python-string-format-suppress-silent-keyerror-indexerror
 
@@ -120,8 +38,7 @@ def doc_formatter(text:'text string to process',
                 return value.format(format_spec)
             #print(f'\tformatting {value} with spec {format_spec}') #', object of class {eval(value).__class__}')
             return format(value, format_spec)
-        
-    #print(f'doc:{doc}\nvariable names:{vars.keys()}')                    
+               
     docx = Formatter().vformat(text+'\n', vars)       
     # enhances this: docx = text.format(**vars)
 
@@ -135,7 +52,7 @@ def md_to_html(output, filename, title='jupydoc'):
     output : string | IPython.utils.capture.CapturedIO object
         if not a string extract the markdown from each of the outputs list 
     """
-    from nbconvert.exporters import  HTMLExporter
+
        
     if type(output)==str:
         md_text=output

@@ -7,6 +7,7 @@ from setuptools import setup, find_packages
 
 current_path = os.getcwd()
 from .helpers import doc_formatter, md_to_html
+from .replacer import ObjectReplacer
 
 class Publisher(object):
     """
@@ -136,16 +137,18 @@ class Publisher(object):
         vars = self.predefined.copy()
         vars.update(locs)
         vars.update(kwargs)
+        
+        # get and configure the object replacer
+        object_replacer = ObjectReplacer(fig_folders=fig_folders)
    
         # Now use the helper function to do all the formatting
         md_data = doc_formatter( 
-                    doc, 
-                    vars,  
-                    fig_folders=fig_folders,
-                )
-
+            doc, 
+            vars, 
+            object_replacer,
+            )
         
-        # prepend formatted header 
+        # prepend section header if requested
         if section_name:
             header = f'\n\n## {self.section_number:d}. {section_name}\n\n'
             md_data = header + md_data

@@ -53,13 +53,14 @@ class FigureWrapper(Wrapper,plt.Figure):
         return self._html
 
 class DataFrameWrapper(Wrapper): 
-    def __init__(self, df, vars,**kwargs):
+    def __init__(self, df, vars, **kwargs):
         super().__init__(vars)
         self._df = df
+        self.kw = kwargs
 
     def __str__(self):
         if not hasattr(self, '_html'):
-            self._html = self._df.to_html(index=False) #**dfkw) # self._df._repr_html_()                
+            self._html = self._df.to_html(**self.kw) #**dfkw) # self._df._repr_html_()                
         return self._html
 
 class DictWrapper(Wrapper):
@@ -70,29 +71,31 @@ class DictWrapper(Wrapper):
         return self.df.to_html(index=False)
 
 # Maps classes, and associated keywords to replacements for display purposes
-default_replace_table = {
-        plt.Figure:  (FigureWrapper, {'fig_folders': ['.'], } ),
-        pd.DataFrame: (DataFrameWrapper,{}),
-        dict:         (DictWrapper,{} ),
-     }
 
-classs Rekplacer(object):
-    def __init__(self, 
-             replace_table=default_replace_table, 
-            ):
-        self.replace_table = replace_table
+class ObjectReplacer(object):
+    def __init__(self, fig_folders=[], 
+                 df_kwargs= dict(float_format=lambda x: f'{x:.3f}', 
+                                 notebook=True, max_rows=10, 
+                                 index=False,
+                                 show_dimensions=False, 
+                                 justify='right'),
+                ):
+
+        # this sort of wired-in for now
+        self.replace_table = {
+                plt.Figure:  (FigureWrapper, {'fig_folders': fig_folders, }),
+                pd.DataFrame: (DataFrameWrapper,df_kwargs),
+                dict:         (DictWrapper,{} ),
+                }
         
     def __call__(self, vars):
         """for each value in the vars dict, replace it with a new object that
         implements return of appropriate HTML for the original object
         """
-        if not replace_table: return
-
         for key,value in vars.items():
 
-            new_class, kwargs = self.replace_table.get(value.__class__, None)
-
-            if new_class is None:
-                continue
-            newvalue = new_class(value, vars, **kwargs)
-            vars[key] = newvalue
+            new_class, kwargs = self.replace_table.get(value.__class__, (None,None))
+            
+            if new_class:
+                newvalue = new_class(value, vars, **kwargs)
+                vars[key] = newvalue
