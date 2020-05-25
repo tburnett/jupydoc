@@ -72,29 +72,44 @@ class DictWrapper(Wrapper):
 
 # Maps classes, and associated keywords to replacements for display purposes
 
-class ObjectReplacer(object):
-    def __init__(self, fig_folders=[], 
-                 df_kwargs= dict(float_format=lambda x: f'{x:.3f}', 
-                                 notebook=True, max_rows=10, 
-                                 index=False,
-                                 show_dimensions=False, 
-                                 justify='right'),
-                ):
-
-        # this sort of wired-in for now
-        self.replace_table = {
-                plt.Figure:  (FigureWrapper, {'fig_folders': fig_folders, }),
-                pd.DataFrame: (DataFrameWrapper,df_kwargs),
-                dict:         (DictWrapper,{} ),
-                }
+class ObjectReplacer(dict):
+    """
+    Functor that will replace objects in a variables dictionary
+    It is a dictionary,
+        key: a class to have it instances replaced
+        value: tuple with two elements: 
+            1. the replacement class, which implements a __str__ method
+            2. kwargs to apply to generating the 
+    """
+    def __init__(self):
+        # set up 
+        df_kwargs= dict( notebook=True, 
+                         max_rows=10, 
+                         index=False,
+                         show_dimensions=False, 
+                         justify='right',
+                         float_format=lambda x: f'{x:.3f}',
+                       )
+        self.update(dict(
+                Figure=    (FigureWrapper, dict(fig_folders=[],) ),
+                DataFrame= (DataFrameWrapper,df_kwargs),
+                dict=      (DictWrapper,{} ),
+                )
+            )
+  
+    def __repr__(self):
+        r= pd.DataFrame.from_dict(self,orient='index', columns=['wrapper class','keyword dict'])
+        r.index.name='key'
+        return r._repr_html_()
         
     def __call__(self, vars):
         """for each value in the vars dict, replace it with a new object that
         implements return of appropriate HTML for the original object
+        (Note uses the *name* as a key)
         """
         for key,value in vars.items():
 
-            new_class, kwargs = self.replace_table.get(value.__class__, (None,None))
+            new_class, kwargs = self.get(value.__class__.__name__, (None,None))
             
             if new_class:
                 newvalue = new_class(value, vars, **kwargs)

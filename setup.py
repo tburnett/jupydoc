@@ -11,7 +11,7 @@ setuptools.setup(
     version="0.0.1",
     description="Generate documents using Jupyter and nbconvert",
     install_requires=["nbconvert", "jupyter",],
-    keywords="jupyter ",
+    keywords="jupyter",
     long_description=long_description,
     long_description_content_type="text/markdown",
 

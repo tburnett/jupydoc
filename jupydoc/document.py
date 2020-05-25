@@ -16,7 +16,7 @@ class Document(Publisher):
         """
         ### Purpose
         This package addresses a long-term frustration I've had with using Jupyterlab for my
-        analysis. That is, how do I combine the output of a notebook, entries in my logbook, and
+        analysis. Which is, how do I combine the output of a notebook, entries in my logbook, and
         the python code to produce a document to present to collaborators, or translate to an actual 
         publishable document? And finally, how to maintain some sort of version control with inputs to such
         a document from several sources? Jupyter notebooks are tempting since they have markdown cells that
@@ -215,9 +215,9 @@ class Document(Publisher):
         Any keywords are passed to all, presumably acted on by the one that recognizes them. All the respective 
         member functions are of course available.
         
-        when adding sections to a class, the case may arise that instantiating the class may be time-consuming, 
+        When adding sections to a class, the case may arise that instantiating the class may be time-consuming, 
         discouraging developing the code in its source file.
-        Jupydoc requires that sections be implented with bound functions. In this case, I creating the object,
+        Jupydoc requires that sections be implemented with bound functions. In this case, I create the object,
         calling it `self`, then develop the code in Jupyper. Any figures will be displayed by default after the cell.
         (Jupydoc clears all figures that it creates to avoid this in its processing.)
         
@@ -269,6 +269,23 @@ class Document(Publisher):
         """
         self.publishme('Other Formatting options')
 
+    def object_replacement(self):
+        """A key element of jupydoc is the ability to recognize the class of a variable appearing in the document, and 
+        replace it with an instance of a "wrapper" class, which implements a replacement of the `__str__` method of the 
+        original class. This is implemented by default for Figure, Dataframe and dict.
+        It is all done in the class `jupydoc.replacement.ObjectReplacer`, which inherits from `dict`. An instance is in the Publisher instance.
+        The initial value of `self.object_replacer` is:
+        
+        {self.object_replacer}
+        
+        where the value is a tuple, the two columns displayed.
+        
+       
+        So one can modify this instance, using 'update`, to change current keyword args, or add a new wrapper class.
+        A wrapper class is instantiated with two args: the instance that it will interpret, and the kwargs. 
+        """
+        self.publishme('Object replacement')
+        
     def __call__(self):
         # assemble and save the document
         self.title_page()
@@ -278,6 +295,7 @@ class Document(Publisher):
         self.file_structure()
         self.other_formatting_options()
         self.workflow()
+        self.object_replacement()
         
         self.save()
         

@@ -4,8 +4,6 @@
 import os, inspect, datetime
 
 from setuptools import setup, find_packages
-
-current_path = os.getcwd()
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
 
@@ -20,33 +18,42 @@ class Publisher(object):
              title_info:'Title, author,..'={'title':'Untitled'},
              doc_folder:'if set, save() will write the accumulated output to an HTML document file'='', 
              no_display:'set True to avoid Jupyter display output'=False,
-             predefined:'predefined variables for formatting, perhaps'={},
             ):
         """
 
         """
         self.title_info=title_info
         self.doc_folder = doc_folder
-        self.predefined=predefined or \
-            dict(
+        self.no_display=no_display
+        self.predefined= dict(
                 margin_left='<p style="margin-left: 5%">',  
                 indent='<p style="margin-left: 5%">',
                 endp='</p>',
             )
-    
-        if self.doc_folder:
-            os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
-        
         self.date=str(datetime.datetime.now())[:16]
-        self.no_display=no_display
-
+ 
         self.clear()
+        
+        if doc_folder:
+            os.makedirs(os.path.join(doc_folder), exist_ok=True)
+        
+        # three cases for saving figures:
+        local = '.'
+        if not doc_folder:   fig_folders = [local]
+        elif   no_display:   fig_folders = [doc_folder]
+        else:                fig_folders = [local,doc_folder]
+            
+        # instantiate the object replacer and set "fig_folder" for the Figure processing
+        rp =self.object_replacer = ObjectReplacer()
+        assert 'Figure' in rp, 'Expected the replacement object to support plt.Figure'
+        #upate the qwargs for the Figure processing
+        rp['Figure'][1].update(fig_folders = fig_folders)
     
-    def __str__(self):
-        return f'classname "{self.__class__.__name__}", title "{self.title_info["title"]}"'
+    def __repr__(self):
+        return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self.title_info["title"]}"'
 
     def _publish(self, text):
-        """ add text to the docuemnt, display with IPython if set"""        
+        """ add text to the document, display with IPython if set"""        
         import IPython.display as display #only dependence on IPython
         self.data = self.data + '\n\n' + text
         
@@ -127,11 +134,7 @@ class Publisher(object):
         # process it with helper function that returns markdown
         # need to ensure that HTML generated have ref that is relative to documtn
 
-        # three cases for saving figures:
-        local = '.'
-        if not self.doc_folder:  fig_folders = [local]
-        elif self.no_display:    fig_folders = [self.doc_folder]
-        else:                    fig_folders = [local,self.doc_folder]
+
           
         # create variable dictionary: predefined, locals, kwargs
         vars = self.predefined.copy()
@@ -139,7 +142,7 @@ class Publisher(object):
         vars.update(kwargs)
         
         # run the object replacer
-        ObjectReplacer(fig_folders=fig_folders)(vars)
+        self.object_replacer(vars)
   
         # Now use the helper function to the formatting, replace {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
@@ -163,10 +166,10 @@ class Publisher(object):
             ---
             Document not saved.""")
             return
-        title = self.title_info['title']
+        title = self.title_info.get('title', '(untitled)')
         self.markdown(f"""
             ---
-            Document "{title}" saved to "{self.doc_folder}"'
+            Document "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc), saved to "{self.doc_folder}"'
             """)
         
         md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
