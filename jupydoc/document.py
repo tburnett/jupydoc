@@ -250,22 +250,20 @@ class Document(Publisher):
         1. Built-in. A class variable `predefined`. This is set to the useful values discussed here,
         but of course the user may update or replace it.
         2. The local variables available to the code in the function, locally defined or defined 
-        in the argument list, especially "self".
+        in the argument list, especially "self". (So predifined variables are also `self.predefined.var`)
         3. Varables defined in the call to `publishme`, collected with Python's `**kwargs` mechanism. 
+        These may override any of the previoius.
 
         #### Indenting
         Indenting a paragraph is not directly possible with markdown. But we predefine:
         
-        {{indent}}
-        : `{indent}` &mdash;the margin is predefined, easily changed by the user
-        
-        {{endp}}
-        : `{endp}` &mdash; Since it represents the end of a paragraph.
+        * {{indent}}: `{indent}` &mdash;the margin is predefined, easily changed by the user
+        *  {{endp}}: `{endp}` &mdash; Since it represents the end of a paragraph.
         
         Demonstration:
         {indent}
         This paragrah is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
-        <br>To start a new line line this, in this, or any other paragraph, in insert &lt;br&gt;. 
+        <br>To start a new line line this, in this, or any other paragraph, insert "&lt;br&gt;". 
         {endp}
         
         """
