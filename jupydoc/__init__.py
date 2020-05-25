@@ -138,15 +138,11 @@ class Publisher(object):
         vars.update(locs)
         vars.update(kwargs)
         
-        # get and configure the object replacer
-        object_replacer = ObjectReplacer(fig_folders=fig_folders)
-   
-        # Now use the helper function to do all the formatting
-        md_data = doc_formatter( 
-            doc, 
-            vars, 
-            object_replacer,
-            )
+        # run the object replacer
+        ObjectReplacer(fig_folders=fig_folders)(vars)
+  
+        # Now use the helper function to the formatting, replace {xx} if xx is recognized
+        md_data = doc_formatter(  doc,   vars,  )
         
         # prepend section header if requested
         if section_name:

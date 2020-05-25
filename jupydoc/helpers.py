@@ -5,15 +5,10 @@ jupydoc helper functions doc_formatter and md_to_html
 import string 
 from nbconvert.exporters import  HTMLExporter
 
-
 def doc_formatter(
         text:'text string to process',
         vars:'variable dict', 
-        object_replacer:'function that revises a variable dictionary'=lambda vars: None,
     )->str:
-    
-    # replace selected objects in the vars dict
-    object_replacer(vars)
     
     # Use a string.Formatter subclass to ignore bracketed names that are not found
     #adapted from  https://stackoverflow.com/questions/3536303/python-string-format-suppress-silent-keyerror-indexerror
