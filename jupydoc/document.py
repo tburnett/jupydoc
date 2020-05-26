@@ -10,7 +10,10 @@ from jupydoc import Publisher
 class Document(Publisher):
     
     def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+        super().__init__(title_info= dict(
+                title='Producing documents in Jupyter',
+                author='T. Burnett <tburnett@uw.edu>',
+                ))
         
     def introduction(self):
         """
@@ -56,9 +59,10 @@ class Document(Publisher):
         This document is itself a demonstration! It was generated using member functions
         of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
         Each such function represents a section in the document.
+        Since this is about 
         
         """
-        self.publishme('Introduction')
+        self.publishme('Introduction', 1)
         
     def formatting_summary(self):
         r"""
@@ -221,19 +225,15 @@ class Document(Publisher):
         calling it `self`, then develop the code in Jupyper. Any figures will be displayed by default after the cell.
         (Jupydoc clears all figures that it creates to avoid this in its processing.)
         
-        Finally, to produce the HTML (and eventual PDF) document, I write a function that call the relevant 
+        Finally, to produce the HTML (and eventual PDF) document, I write a function that calls the relevant 
         sequence of member fuctions, followed by a self.save. For this document, that is `__call__`:
         
         ```
-        from jupydoc import document
-        doc=document.Document(
-            title_info= dict(
-                title='Producing documents in Jupyter',
-                author='T. Burnett <tburnett@uw.edu>',
-                ),
-            doc_folder='/nfs/farm/g/glast/u/burnett/git/tburnett.github.io/jupydoc',)
+        from jupydoc import Document
+        doc=Document( doc_folder='/nfs/farm/g/glast/u/burnett/git/tburnett.github.io/jupydoc',)
         doc()
         ```
+        To produce a copy, or display it in your notebook, just try this online.
         """
         self.publishme('Workflow')
     
@@ -263,7 +263,7 @@ class Document(Publisher):
         Demonstration:
         {indent}
         This paragrah is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
-        <br>To start a new line line this, in this, or any other paragraph, insert "&lt;br&gt;". 
+        <br>To start a new line in this, or any other paragraph, insert "&lt;br&gt;". 
         {endp}
         
         """
@@ -273,7 +273,8 @@ class Document(Publisher):
         """A key element of jupydoc is the ability to recognize the class of a variable appearing in the document, and 
         replace it with an instance of a "wrapper" class, which implements a replacement of the `__str__` method of the 
         original class. This is implemented by default for Figure, Dataframe and dict.
-        It is all done in the class `jupydoc.replacement.ObjectReplacer`, which inherits from `dict`. An instance is in the Publisher instance.
+        It is all done in the class `jupydoc.replacement.ObjectReplacer`, which inherits from `dict`. 
+        An instance is in the Publisher instance.
         The initial value of `self.object_replacer` is:
         
         {self.object_replacer}
@@ -286,27 +287,32 @@ class Document(Publisher):
         """
         self.publishme('Object replacement')
         
-    def __call__(self):
-        # assemble and save the document
-        self.title_page()
-        self.introduction()
-        self.formatting_summary()
-        self.document_structure()
-        self.file_structure()
-        self.other_formatting_options()
-        self.workflow()
-        self.object_replacement()
+    def __call__(self, section_number=None):
+        sections = [
+            self.title_page,
+            self.introduction,
+            self.formatting_summary,
+            self.document_structure,
+            self.file_structure,
+            self.other_formatting_options,
+            self.workflow,
+            self.object_replacement,
+            ]
+        if section_number is not None:
+            n = section_number
+            #print(f'selected section {section_number}')
+            self.section_number = n-1 if n>0 else len(sections)+n 
+            sections[section_number]()
+            return
         
+        # assemble and save the whole document
+        for f in sections:
+            f()
         self.save()
         
-def main( title_info= dict(
-                title='Producing documents in Jupyter',
-                author='T. Burnett <tburnett@uw.edu>',
-                ),
-              doc_folder='jupydoc_document',
-            ):
+def main( doc_folder='jupydoc_document',):
            
-    doc=Document(title_info=title_info, doc_folder=doc_folder, no_display=True)
+    doc=Document(doc_folder=doc_folder, no_display=True)
     doc()
     
 ## make this executable?

@@ -1,5 +1,5 @@
 """
-THis defines a jupydoc helper function which manages creation of HTML for objects of selected classes
+THis defines a jupydoc helper which manages creation of HTML for objects of selected classes
  
 For such classes, replace the object in the variable dictionary with a new one that implements a __str__ function, which returns
 markdown, usually HTML.
@@ -25,7 +25,6 @@ class FigureWrapper(Wrapper,plt.Figure):
     def __init__(self, fig, vars, folder_name='figs', fig_folders=[]):
         super().__init__(vars)
         self.__dict__.update(fig.__dict__)
-        print(fig_folders)
         self.fig = fig
         self.folder_name=folder_name
         self.fig_folders=fig_folders
