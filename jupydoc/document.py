@@ -192,46 +192,60 @@ class Document(Publisher):
         
     def workflow(self):
         """
-        This facility has transformed the way I generate analysis code. The objective is to *minimize* notebooks. 
-        I now regard them as temporary, but essential, sratch pads for developing code. Such a process requires 
-        creating plots showing the results, validating assumptions about the data and analysis methods. 
-        So there are two coding elements in this procedure: the actual analysis, and the creation of associated plots.
+        #### Development
+        This facility has transformed the way I generate analysis code.  
+        I use notebooks only to develop the code *and* documentation. This is an incremental process, with one 
+        section at a time. But the computation up to the point of adding something in a new section is perhaps 
+        lengthy. Since changing code in the module requires reloading and re-executing it, it can be 
+        prohibitive to edit it.
         
-        Thus I separate the two, with the ploting and discussion of which, put into members of a `jupydoc.Publisher` class.
-        
-        An interesting situation arises: How to "reuse" such member functions in a new, but related presentation analysis?
-        Related to this is what goes into the Jupyter notebook, which is being used to develop analysis and its 
-        associated documentation. With the goal of minimizing the notebook, my answer is multiple inheritance. 
-        So I create a class only for the notebook,
-        
+        An approach I'm using is to create a new module, say "dev", only for the development code, with this pattern:        
+      
         ```
-        class LocalDoc(A,B...):
-            def __init__(self, **kwargs):
-                super().__init__(**kwargs)
+        from jupydoc import Publisher
+        class Development(Publisher): 
+            def __init__(self, *args **kwargs):
+                super().__init__( **kwargs)
+                ''' 
+                text to summarize setup
+                '''
+                # setup self to correspond to needs of code here
+                self.publishme('Setup')
+                
             def new_section(self):
                 '''
                 <text>
                 '''
-                <code>
+                # code using self
                 self.publishme('New Section')
         ```
-        where each of the super classes, which also inherit from ju_doc.Publisher has a similar constructor. 
-        Any keywords are passed to all, presumably acted on by the one that recognizes them. All the respective 
-        member functions are of course available.
         
-        When adding sections to a class, the case may arise that instantiating the class may be time-consuming, 
-        discouraging developing the code in its source file.
-        Jupydoc requires that sections be implemented with bound functions. In this case, I create the object,
-        calling it `self`, then develop the code in Jupyper. Any figures will be displayed by default after the cell.
-        (Jupydoc clears all figures that it creates to avoid this in its processing.)
+        In the notebook, I use `%autoreload` when executing the development module with code like. 
         
-        Finally, to produce the HTML (and eventual PDF) document, I write a function that calls the relevant 
+        ```
+        %aimport dev
+        from dev import Development
+        ```
+        
+        Followed by
+        ```
+        %autoreload 1
+        self=Development( input_data):
+        self.new_section()
+        ```
+        
+        To play with new code in the notebook before inserting into the module, I have "self" available. Executing such
+        cells may need a "%autoreload 0" to disable the automatic reloading of the development module.
+        
+        When I'm satisfied, I copy the function the section.
+        
+        #### Output to HTML
+        To produce the HTML (and eventual PDF) document, I add a member function that calls the relevant 
         sequence of member fuctions, followed by a self.save. For this document, that is `__call__`:
         
         ```
         from jupydoc import Document
         doc=Document( doc_folder='/nfs/farm/g/glast/u/burnett/git/tburnett.github.io/jupydoc',)
-        doc()
         ```
         To produce a copy, or display it in your notebook, just try this online.
         """
