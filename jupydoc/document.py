@@ -11,9 +11,10 @@ class Document(Publisher):
     
     def __init__(self,**kwargs):
         super().__init__(title_info= dict(
-                title='Producing documents in Jupyter',
+                title='Producing documents in Jupyter with jupydoc',
                 author='T. Burnett <tburnett@uw.edu>',
-                ))
+                ) ,**kwargs)
+            
         
     def introduction(self):
         """
@@ -92,13 +93,14 @@ class Document(Publisher):
         
         {fig1}
         
-        The display processing replaces the `fig1` reference in a copy of `locals()`
+        The display processing replaces the `fig1` reference in a copy of the local variable dictionary
         with a object that implements a `__str__()` function returning an HTML reference 
         to a saved png representation of the figure.   
         Note the convenience of defining a caption by adding the text as an attribute of
         the Figure object.  
-        Also, the `self.newfignum()` returns a new figure number. Its number can be referred to
-        in the text as `{{fig1.number}}`.
+        The `self.newfignum()` returns a new figure number. It is necessary to for all
+        the figures in a section to be unique. The actual number is set to be sequential for the whole document.
+        The actual number can be referred to in the text as `{{fig1.number}}`.
     
         
         #### DataFrames
@@ -237,7 +239,11 @@ class Document(Publisher):
         To play with new code in the notebook before inserting into the module, I have "self" available. Executing such
         cells may need a "%autoreload 0" to disable the automatic reloading of the development module.
         
-        When I'm satisfied, I copy the function the section.
+        While generating and testing a document, the display in the notebook may be large. For this reason,
+        it is possible to suppress display in the notebook by setting executing "display_on=False" to suppress notebook 
+        output. This does not affect the document itself, all of which will be written to the outpub folder. It is
+        very useful to a have a window open to the browser display of this file, to monitor the entire document.
+        
         
         #### Output to HTML
         To produce the HTML (and eventual PDF) document, I add a member function that calls the relevant 
@@ -280,7 +286,13 @@ class Document(Publisher):
         <br>To start a new line in this, or any other paragraph, insert "&lt;br&gt;". 
         {endp}
         
+        #### Preformatted text
+        The function `monospace(text)` is provided to achieve insertion of "preformatted" text.
+        It can be invokded with a text string, or an object, that returns a description of itself via its class `__str__` 
+        function. For example "test_string = self.monospace('This is a test')", with a corresponding  "{{test_string}}" will look like:
+        {test_string}
         """
+        test_string = self.monospace('This is a test')
         self.publishme('Other Formatting options')
 
     def object_replacement(self):

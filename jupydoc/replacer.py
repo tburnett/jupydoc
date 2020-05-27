@@ -22,23 +22,30 @@ class Wrapper(object):
         
 class FigureWrapper(Wrapper,plt.Figure):
     
-    def __init__(self, fig, vars, folder_name='figs', fig_folders=[]):
+    def __init__(self, fig, vars, folder_name='figs', fig_folders=[], fig_numberer=None):
         super().__init__(vars)
         self.__dict__.update(fig.__dict__)
         self.fig = fig
         self.folder_name=folder_name
         self.fig_folders=fig_folders
+        self.numberer=fig_numberer
+        self.number = fig.number = fig_numberer()
+
         for folder in fig_folders:
             os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
 
     def __str__(self):
-        if not hasattr(self, '_html'):
+        
+        if not hasattr(self, '_html') :
+        
+            # only has to do this once:
             fig=self.fig
-            n = fig.number
             caption=getattr(fig,'caption', '').format(**self.vars)
             # save the figure to a file, then close it
             fig.tight_layout(pad=1.05)
+            n =self.number
             fn = os.path.join(self.folder_name, f'fig_{n}.png')
+            browser_fn =fn
             # actually save it for the document, perhaps both in the local, and document folders
             for folder in self.fig_folders:
                 fig.savefig(os.path.join(folder,fn))#, **fig_kwargs)
@@ -46,10 +53,11 @@ class FigureWrapper(Wrapper,plt.Figure):
 
             # add the HTML as an attribute, to insert the image, including optional caption
 
-            self._html =  f'<figure> <img src="{fn}" alt="Figure {n} at {fn}">'\
+            self._html =  f'<figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
                     f' <figcaption>{caption}</figcaption>'\
                     '</figure>\n'
         return self._html
+       
 
 class DataFrameWrapper(Wrapper): 
     def __init__(self, df, vars, **kwargs):
@@ -69,6 +77,15 @@ class DictWrapper(Wrapper):
     def __str__(self):
         return self.df.to_html(index=False)
 
+class FigNumberer(object):
+    """ used"""
+    def __init__(self, previous_number=0):
+        self.number = previous_number
+    
+    def __call__(self):
+        self.number+=1
+        return self.number
+    
 # Maps classes, and associated keywords to replacements for display purposes
 
 class ObjectReplacer(dict):
@@ -80,7 +97,9 @@ class ObjectReplacer(dict):
             1. the replacement class, which implements a __str__ method
             2. kwargs to apply to generating the 
     """
-    def __init__(self):
+    def __init__(self, 
+                 previous_fignumber:'For figures'=0,
+                ):
         # set up 
         df_kwargs= dict( notebook=True, 
                          max_rows=10, 
@@ -90,7 +109,8 @@ class ObjectReplacer(dict):
                          float_format=lambda x: f'{x:.3f}',
                        )
         self.update(dict(
-                Figure=    (FigureWrapper, dict(fig_folders=[],) ),
+                Figure=    (FigureWrapper, dict(fig_folders=[],
+                                                fig_numberer=FigNumberer(previous_fignumber)) ),
                 DataFrame= (DataFrameWrapper,df_kwargs),
                 dict=      (DictWrapper,{} ),
                 )
@@ -104,7 +124,7 @@ class ObjectReplacer(dict):
     def __call__(self, vars):
         """for each value in the vars dict, replace it with a new object that
         implements return of appropriate HTML for the original object
-        (Note uses the *name* as a key)
+        (Note uses the *class name* as a key)
         """
         for key,value in vars.items():
 
@@ -113,3 +133,21 @@ class ObjectReplacer(dict):
             if new_class:
                 newvalue = new_class(value, vars, **kwargs)
                 vars[key] = newvalue
+                
+def test(previous=20):
+    # define a few figures, assign differned fignumbers
+    fig1, ax1 = plt.subplots(num=1) 
+    fig2, ax2 = plt.subplots(num=2) 
+    
+    # set up the replacer, to start after given value
+    r = ObjectReplacer(previous_fignumber=previous)
+    
+    # set up variable dictionary
+    vars = dict(fig1=fig1, fig2=fig2)
+    before = (vars['fig1'].number, vars['fig2'].number)
+    r(vars)
+    after = (vars['fig1'].number, vars['fig2'].number)
+    print(f'Figure nubers:\nbefore: {before}\nafter : {after}')
+    plt.close('all')
+    
+    assert after[0]==previous+1,f'Failed to set number: got {after[0]}'
