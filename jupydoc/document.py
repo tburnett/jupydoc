@@ -21,38 +21,39 @@ class Document(Publisher):
     def introduction(self):
         """
         ### What is it, and how does it work?
-        It is lightweight, some ~400 loc in Python exclusive of this document, with, besides depending on
+        It is lightweight, some ~400 lines of code in Python exclusive of this document, with, besides depending on
         IPython and nbconvert, non-essential dependencies on pandas, matplotlib, and numpy.   
-        The key elements that explain the design and operation are
+        The key elements that explain the design and operation are:
         
         * **Code and markdown cells in a Jupyter notebook**<br>
         The origin of this package was rooted in a desire to be able to combine the nice formatting capability of
-        markdown cells, with the output from from the computation in a code cell. By default, any matplotlib
-        figures created in its computation will automatically appear below the cell. This behaviour, it turns out, can be controlled 
-        by code executed in the cell. The key here is that code can create markdown text, which will be interpred
-        just as the text in a markown cell. This includes LaTex.
+        markdown cells, with the output from the computation in a code cell. By default, any matplotlib
+        figures created in its computation will automatically appear below the cell. This behavior, it turns out, can be controlled 
+        by code executed in the cell. The key here is that code can create markdown text, which will be interpreted
+        just as the text in a markdown cell. This includes LaTex.
          
-        * **Python [inspection][https://docs.python.org/3/library/inspect.html)**<br>
+        * **Python [inspection](https://docs.python.org/3/library/inspect.html)**<br>
         The inspection capability gives access to two important elements of a function:
-         * docstring&mdash; a text string immediatly following the function declaration.
-         * synbol table&mdash;in python terms, a "dict" with variable names as keys, and values the actual value of the
+         * docstring&mdash; a text string immediately following the function declaration.
+         * symbol table&mdash;in python terms, a "dict" with variable names as keys, and values the actual value of the
         variables
         
         * **Python string format method**<br>
-        Since python 2.6, text strings have had a "format" method, which intrprets {{...}}, replacing what it finds between the
-        curly brackets with an evaluation of it as an expression. (With python 3, this is built into special format strings.)
+        Since python 2.6, text strings have had a "format" method, which interprets occurrences of"{{...}}", 
+        replacing what it finds between the
+        curly brackets with its evaluation as an expression. (With python 3, this is built into special format strings.)
         
-        * **[nbconvert][https://nbconvert.readthedocs.io/en/latest/]**<br>
-        This separate package supports creation of an HTML document from a notebook, specifically interpreting Jupyter's version of markdwon
-        in this case the Juptyer version of markdown. It is necessary to produce an (almost) idential-looking 
-        document to what is rendered in the notebook.
+        * **[nbconvert](https://nbconvert.readthedocs.io/en/latest/)**<br>
+        This separate package supports creation of an HTML document from a notebook, specifically 
+        interpreting Jupyter's version of markdown, in this case the Juptyer version of markdown. 
+        It is necessary to produce an (almost) identical-looking  document to what is rendered in the notebook.
         
         ### What is it good for?
         
         * **A document like this**<br>
-        This document is itself a demonstration, testing all the features it desribes! It was generated using 
+        This document is itself a demonstration, testing all the features it describes! It was generated using 
         member functions  of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
-        Each such function represents a section in the document.This document is in fact testing and 
+        Each such function represents a section in the document. The code that produced this document is in fact testing and 
         describing the code that produces it.
                
         * **Simple Jupyter-based analyses**<br>
@@ -60,12 +61,12 @@ class Document(Publisher):
         including output plots, say, in the area below a single cell.
         
         * **Personal notebook**<br>
-        Rahter than cutting and pasting single plots to a personal notebook, this allows the clipping 
+        Rather than cutting and pasting single plots to a personal notebook, this allows the clipping 
         to include many details, with LaTex formulas perhaps.
         
-        * **Pesentations and analysis documents**<br>
+        * **Presentations and analysis documents**<br>
         Sharing ones analysis results with others is a small step from the personal notebook. The days of 
-        requring Powerpoint to make presentations seem to be over, so the document can be the presentation medium.
+        needing PowerPoint to make presentations seem to be over, so the document can be the presentation medium.
         
         * **Publication?**<br>
         Well, I'd not go that far, but the evolution to such should be easy, especially if relevant LaTex
@@ -188,7 +189,7 @@ class Document(Publisher):
         The resulting Web document has two components: the HTML file with all the text and formatting, and, in the
         same folder, a  subfolder "figs" with the figures, which are included via the HTML e.g., `<img src="figs/fig_1.png"/>`.
                 
-        The use case motivating this was to develop the document in Jupyter, and easiiy save it as a 
+        The use case motivating this was to develop the document in Jupyter, and easily save it as a 
         Web document. In order for the figures to be displayed in the notebook, the figures must be 
         saved in its folder.
        
@@ -251,7 +252,7 @@ class Document(Publisher):
         
         While generating and testing a document, the display in the notebook may be large. For this reason,
         it is possible to suppress display in the notebook by setting executing "display_on=False" to suppress notebook 
-        output. This does not affect the document itself, all of which will be written to the outpub folder. It is
+        output. This does not affect the document itself, all of which will be written to the "doc_folder" folder. It is
         very useful to a have a window open to the browser display of this file, to monitor the entire document.
         
         
@@ -271,8 +272,8 @@ class Document(Publisher):
         r"""
         Markdown text is designed to be readable and easy to compose, a huge difference from
         the formal HTML, to which it is translated. One can of course insert HTML 
-        directly into the text, of course compromising the readabily, and requiring HTML knowledge. 
-        Jupydoc processing allows inserting predefined strings when processing the docstringtext, 
+        directly into the text, of course compromising the readability, and requiring HTML knowledge. 
+        Jupydoc processing allows inserting predefined strings when processing the docstring text, 
         which represents a  compromise. 
         
         Variable names in the docstring text come from three sources, each one updating the previous
@@ -280,9 +281,9 @@ class Document(Publisher):
         1. Built-in. A class variable `predefined`. This is set to the useful values discussed here,
         but of course the user may update or replace it.
         2. The local variables available to the code in the function, locally defined or defined 
-        in the argument list, especially "self". (So predifined variables are also `self.predefined.var`)
-        3. Varables defined in the call to `publishme`, collected with Python's `**kwargs` mechanism. 
-        These may override any of the previoius.
+        in the argument list, especially "self". (So predefined variables are also `self.predefined.var`)
+        3. Variables defined in the call to `publishme`, collected with Python's `**kwargs` mechanism. 
+        These may override any of the previous.
 
         #### Indenting
         Indenting a paragraph is not directly possible with markdown. But we predefine:
@@ -292,23 +293,24 @@ class Document(Publisher):
         
         Demonstration:
         {indent}
-        This paragrah is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
+        This paragraph is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
         <br>To start a new line in this, or any other paragraph, insert "&lt;br&gt;". 
         {endp}
         
         #### Preformatted text
         The function `monospace(text)` is provided to achieve insertion of "preformatted" text with a monospace font.
-        It can be invokded with a text string, or any object, that returns a description of itself via its class `__str__` 
-        function. For example "test_string = self.monospace('This is a test')", with a corresponding  "{{test_string}}" will look like:
+        It can be invoked with a text string, or any object, that returns a description of itself via its class `__str__` 
+        function. For example "test_string = self.monospace('This is a multi-line test.\nAfter a newline.')", 
+        with a corresponding  "{{test_string}}" will look like:
         {test_string}
         """
-        test_string = self.monospace('This is a test')
+        test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
         self.publishme('Other Formatting options')
 
     def object_replacement(self):
         """A key element of jupydoc is the ability to recognize the class of a variable appearing in the document, and 
         replace it with an instance of a "wrapper" class, which implements a alternative to the `__str__` method of the 
-        original class. This is implemented by default for Figure, Dataframe and dict.
+        original class. This is implemented by default for Figure, DataFrame and dict.
         It is all done in the class `jupydoc.replacer.ObjectReplacer`, which inherits from `dict`. 
         An instance is in the Publisher instance.
         The initial value of `self.object_replacer` is:
@@ -320,7 +322,7 @@ class Document(Publisher):
        
         So in the constructor of a subclass, one can modify this instance, using 'update`, to change current keyword args, or 
         add a new wrapper class.
-        A wrapper class is instantiated with two args: the instance that it will interpret, and the kwargs. 
+        A wrapper class is instantiated with two arguments: the instance that it will interpret, and the kwargs. 
         """
         #---------------------------------------------------------------------------------
         self.publishme('Object replacement')
