@@ -1,4 +1,4 @@
-# Generating documents in Jupyter: jupydoc
+# Generating documents in Jupyterlab: jupydoc
 
 This package allows a Jupyter user to produce nicely formatted documention of an analysis,
 at the same time as performing the analysis.
@@ -12,7 +12,7 @@ From the introduction:
 ### What is it, and how does it work?
 Key elements that explain the design and operation:
 
-* **Code and markdown cells in a Jupyter notebook**<br>
+* **Code and markdown cells in a Jupyterlb notebook**<br>
 The origin of this package was rooted in a desire to be able to combine the nice formatting capability of
 markdown cells, with the output from from the computation in a code cell. By default, any matplotlib
 figures created in its computation will automatically appear below the cell. This behaviour, it turns out, can be controlled 
@@ -34,22 +34,35 @@ This separate package supports creation of an HTML document from a notebook, spe
 in this case the Juptyer version of markdown. It is necessary to produce an (almost) idential-looking 
 document to what is rendered in the notebook.
 
-### Usage
+### What is it good for?
 
-Thus one can document a function that does some calculation, generating various figures,
-with that function's docstring. A further evolution of this idea was to have the function reflect
-a *section* of a document. And to make it part of a Python class,
-which inherits from a class that handles all the details. This completely addresses my frustration
-in that the code for such a class is all I need to procuce a nice document.
+* **A document like this**<br>
+This document is itself a demonstration, testing all the features it describes! It was generated using 
+member functions  of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
+Each such function represents a section in the document. The code that produced this document is in fact testing and 
+describing the code that produces it.
 
-The notebook is not the document, only a means to execute the code that creates the document, with perhaps a preview
-appearing in the notebook, 
+* **Simple Jupyterlab-based analyses**<br>
+Rather than spreading output among several cells, this encourages making a coherent description, 
+including output plots, say, in the area below a single cell.
+
+* **Personal notebook**<br>
+Rather than cutting and pasting single plots to a personal notebook, this allows the clipping 
+to include many details, with LaTex formulas perhaps.
+
+* **Presentations and analysis documents**<br>
+Sharing ones analysis results with others is a small step from the personal notebook. The days of 
+needing PowerPoint to make presentations seem to be over, so the document can be the presentation medium.
+
+* **Publication?**<br>
+Well, I'd not go that far, but the evolution to such should be easy, especially if relevant LaTex
+formulae, plots with captions and relevant description have already been done.
 
 ---
 
 To try out the development version, put its single folder into your path (get it via clone or zip).
 
-On the road to PyPI, the version from a pypi learning test can be installed thus:
+On the road to PyPI, very old version from a pypi learning test can be installed thus:
 ```
 python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps jupydoc-tburnett
 
