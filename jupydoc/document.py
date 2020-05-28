@@ -8,78 +8,88 @@ import os, sys
 from jupydoc import Publisher
 
 class Document(Publisher):
-    
+    0
     def __init__(self,**kwargs):
-        super().__init__(title_info= dict(
+        super().__init__(
+            title_info= dict(
                 title='Producing documents in Jupyter with jupydoc',
                 author='T. Burnett <tburnett@uw.edu>',
-                ) ,**kwargs)
-            
-        
+                ) ,
+            **kwargs
+        )
+                    
     def introduction(self):
         """
-        ### Purpose
-        This package addresses a long-term frustration I've had with using Jupyterlab for my
-        analysis. Which is, how do I combine the output of a notebook, entries in my logbook, and
-        the python code to produce a document to present to collaborators, or translate to an actual 
-        publishable document? And finally, how to maintain some sort of version control with inputs to such
-        a document from several sources? Jupyter notebooks are tempting since they have markdown cells that
-        provide for nice formatting, even including LaTex. And of course the figures are nicely 
-        inserted in the output. But I wanted to have the text reflect the calcualations, that is,
-        be as dynamic as the generation of figures. And I certainly want the appearance of the
-        notebook to reflect the appearance of any final document. 
+        ### What is it, and how does it work?
+        It is lightweight, some ~400 loc in Python exclusive of this document, with, besides depending on
+        IPython and nbconvert, non-essential dependencies on pandas, matplotlib, and numpy.   
+        The key elements that explain the design and operation are
         
-        Some important features of the jupyter environment that are essential:
-
-        * IPython.display is very flexible for generating formatted output following a code cell. 
-        Especially, it interprets markdown text in the same way as for markdown cells. Thus why not 
-        generate markdown text as a part of the processing that produces figures?
-
-        * The "docstring" of a python function is easily accessible to via Python's inspection.
-
-        * The `str.format` function that replaces curly-bracketed fields in a string with representations
-        of expressions in curly brackets. That is used here with the `locals()` dictionary as an argument.
-
-        * The related package nbconvert which supports creation of an HTML document from a notebook,
-        in this case the Juptyer version of markdown. It is necessary to produce an idential-looking (almost)
+        * **Code and markdown cells in a Jupyter notebook**<br>
+        The origin of this package was rooted in a desire to be able to combine the nice formatting capability of
+        markdown cells, with the output from from the computation in a code cell. By default, any matplotlib
+        figures created in its computation will automatically appear below the cell. This behaviour, it turns out, can be controlled 
+        by code executed in the cell. The key here is that code can create markdown text, which will be interpred
+        just as the text in a markown cell. This includes LaTex.
+         
+        * **Python [inspection][https://docs.python.org/3/library/inspect.html)**<br>
+        The inspection capability gives access to two important elements of a function:
+         * docstring&mdash; a text string immediatly following the function declaration.
+         * synbol table&mdash;in python terms, a "dict" with variable names as keys, and values the actual value of the
+        variables
+        
+        * **Python string format method**<br>
+        Since python 2.6, text strings have had a "format" method, which intrprets {{...}}, replacing what it finds between the
+        curly brackets with an evaluation of it as an expression. (With python 3, this is built into special format strings.)
+        
+        * **[nbconvert][https://nbconvert.readthedocs.io/en/latest/]**<br>
+        This separate package supports creation of an HTML document from a notebook, specifically interpreting Jupyter's version of markdwon
+        in this case the Juptyer version of markdown. It is necessary to produce an (almost) idential-looking 
         document to what is rendered in the notebook.
         
-        Thus one can use this to document a function that does some calculation, generating various figures,
-        with that function's docstring. A further evolution of this idea was to have the function reflect
-        a *section* of the final document. And to encapsulate the whole thing into a Python class,
-        inheriting from a class that handles all the details. This completely addresses my frustration
-        in that the code for such a class is all I need to procuce a nice document.
+        ### What is it good for?
         
-        It is no longer necessary to maintain separate notebook files&mdash;but Jupyter/IPython is not only
-        crutial for producing the document, but the Jupyter environment is essential for developing the
-        analysis and generating the associated documentation. The modular section-oriented structure
-        allows invoking each function independently, with the resulting document section displayed
-        immediatly following the code cell. 
+        * **A document like this**<br>
+        This document is itself a demonstration, testing all the features it desribes! It was generated using 
+        member functions  of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
+        Each such function represents a section in the document.This document is in fact testing and 
+        describing the code that produces it.
+               
+        * **Simple Jupyter-based analyses**<br>
+        Rather than spreading output among several cells, this encourages making a coherent description, 
+        including output plots, say, in the area below a single cell.
         
-        ### About this document
-        This document is itself a demonstration! It was generated using member functions
-        of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
-        Each such function represents a section in the document.
-        Since this is about 
+        * **Personal notebook**<br>
+        Rahter than cutting and pasting single plots to a personal notebook, this allows the clipping 
+        to include many details, with LaTex formulas perhaps.
         
+        * **Pesentations and analysis documents**<br>
+        Sharing ones analysis results with others is a small step from the personal notebook. The days of 
+        requring Powerpoint to make presentations seem to be over, so the document can be the presentation medium.
+        
+        * **Publication?**<br>
+        Well, I'd not go that far, but the evolution to such should be easy, especially if relevant LaTex
+        formulae, plots with captions and relevant description have already been done.
+ 
         """
         self.publishme('Introduction', 1)
         
     def formatting_summary(self):
         r"""
-        There are three elements in such a function: the docstring, written in 
-        markdown, containing 
-        variable names in curly-brackets, the code, and a final call `self.publishme(section_name)`.  
+        A member function of a class inheriting from `jupydoc.Publisher` needs to have three elements; the docstring, written in 
+        markdown, containing  variable names in curly-brackets, the code, and a final call `self.publishme(section_name)`.  
         Unlike a formatted string, entries in curly brackets cannot be expressions.
         
         #### Local variables  
-        Any variable, say from an expression in the code `q=1/3`, can be interpreted
-        with `"q={{q:.3f}}"`, resulting in  
-        q={q:.3f}.    
+        Any variable, say from an expression in the code `q=1/3`, can be interpreted in the docstring
+        with `"q={{q:.3f}}"`, resulting in 
+        {indent}
+        q={q:.3f}.        
+        {endp}
         
         #### Figures
         
-        Any number of Matplotlib Figure objects can be added, with unique numbers.
+        Any number of Matplotlib Figure objects can be included.
         An entry "{{fig1}}", along with code that defines `fig1` like this:
         ```
         x = np.linspace(0,10)
@@ -99,8 +109,8 @@ class Document(Publisher):
         Note the convenience of defining a caption by adding the text as an attribute of
         the Figure object.  
         The `self.newfignum()` returns a new figure number. It is necessary to for all
-        the figures in a section to be unique. The actual number is set to be sequential for the whole document.
-        The actual number can be referred to in the text as `{{fig1.number}}`.
+        the figures in a section to be unique. But the actual number is set to be sequential for the whole document.
+        It can be referred to in the text as `{{fig1.number}}`.
     
         
         #### DataFrames
@@ -287,8 +297,8 @@ class Document(Publisher):
         {endp}
         
         #### Preformatted text
-        The function `monospace(text)` is provided to achieve insertion of "preformatted" text.
-        It can be invokded with a text string, or an object, that returns a description of itself via its class `__str__` 
+        The function `monospace(text)` is provided to achieve insertion of "preformatted" text with a monospace font.
+        It can be invokded with a text string, or any object, that returns a description of itself via its class `__str__` 
         function. For example "test_string = self.monospace('This is a test')", with a corresponding  "{{test_string}}" will look like:
         {test_string}
         """
@@ -297,9 +307,9 @@ class Document(Publisher):
 
     def object_replacement(self):
         """A key element of jupydoc is the ability to recognize the class of a variable appearing in the document, and 
-        replace it with an instance of a "wrapper" class, which implements a replacement of the `__str__` method of the 
+        replace it with an instance of a "wrapper" class, which implements a alternative to the `__str__` method of the 
         original class. This is implemented by default for Figure, Dataframe and dict.
-        It is all done in the class `jupydoc.replacement.ObjectReplacer`, which inherits from `dict`. 
+        It is all done in the class `jupydoc.replacer.ObjectReplacer`, which inherits from `dict`. 
         An instance is in the Publisher instance.
         The initial value of `self.object_replacer` is:
         
@@ -308,9 +318,11 @@ class Document(Publisher):
         where the value is a tuple, the two columns displayed.
         
        
-        So one can modify this instance, using 'update`, to change current keyword args, or add a new wrapper class.
+        So in the constructor of a subclass, one can modify this instance, using 'update`, to change current keyword args, or 
+        add a new wrapper class.
         A wrapper class is instantiated with two args: the instance that it will interpret, and the kwargs. 
         """
+        #---------------------------------------------------------------------------------
         self.publishme('Object replacement')
         
     def __call__(self, section_number=None):

@@ -61,6 +61,7 @@ class FigureWrapper(Wrapper,plt.Figure):
 
 class DataFrameWrapper(Wrapper): 
     def __init__(self, df, vars, **kwargs):
+
         super().__init__(vars)
         self._df = df
         self.kw = kwargs
