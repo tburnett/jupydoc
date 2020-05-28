@@ -24,11 +24,11 @@ which will be interpreted just as the text in a markdown cell. This includes LaT
 * **Python [inspection](https://docs.python.org/3/library/inspect.html)**<br>
 The inspection capability gives access to two important elements of a function:
   * docstring&mdash; a text string immediately following the function declaration.
-  * symbol table&mdash;in python terms, a "dict" with variable names as keys, and values the actual value of the
-variables
+  * symbol table&mdash;in python terms, a "dict" with variable names as keys, and where where each value is a
+           reference to the object represented by the name
 
 * **Python string format method**<br>
-Since python 2.6, text strings have had a "format" method, which interprets occurrences of"{{...}}", 
+Since python 2.6, text strings have had a "format" method, which interprets occurrences of "{{...}}", 
 replacing what it finds between the
 curly brackets with its evaluation as an expression. (With python 3, this is built into special format strings.)
 
