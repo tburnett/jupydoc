@@ -12,8 +12,8 @@ class Document(Publisher):
     def __init__(self,**kwargs):
         super().__init__(
             title_info= dict(
-                title='Producing documents in Jupyter with jupydoc',
-                author='T. Burnett <tburnett@uw.edu>',
+                title='Producing documents in Jupyterlab with Jupydoc',
+                author='T. Burnett <tburnett@uw.edu>\nUniversity of Washington',
                 ) ,
             **kwargs
         )
@@ -25,27 +25,27 @@ class Document(Publisher):
         IPython and nbconvert, non-essential dependencies on pandas, matplotlib, and numpy.   
         The key elements that explain the design and operation are:
         
-        * **Code and markdown cells in a Jupyter notebook**<br>
+        * **Code and markdown cells in a Jupyterlab notebook**<br>
         The origin of this package was rooted in a desire to be able to combine the nice formatting capability of
         markdown cells, with the output from the computation in a code cell. By default, any matplotlib
-        figures created in its computation will automatically appear below the cell. This behavior, it turns out, can be controlled 
-        by code executed in the cell. The key here is that code can create markdown text, which will be interpreted
-        just as the text in a markdown cell. This includes LaTex.
+        figures created in its computation will automatically appear below the cell. This behavior, it turns out,
+        can be controlled  by code executed in the cell. The key here is that code can create markdown text,
+        which will be interpreted just as the text in a markdown cell. This includes LaTex.
          
         * **Python [inspection](https://docs.python.org/3/library/inspect.html)**<br>
         The inspection capability gives access to two important elements of a function:
          * docstring&mdash; a text string immediately following the function declaration.
-         * symbol table&mdash;in python terms, a "dict" with variable names as keys, and values the actual value of the
-        variables
+         * symbol table&mdash;in python terms, a "dict" with variable names as keys, and where each value is a
+           reference to the object represented by the name
         
         * **Python string format method**<br>
-        Since python 2.6, text strings have had a "format" method, which interprets occurrences of"{{...}}", 
+        Since python 2.6, text strings have had a "format" method, which interprets occurrences of "{{...}}", 
         replacing what it finds between the
         curly brackets with its evaluation as an expression. (With python 3, this is built into special format strings.)
         
         * **[nbconvert](https://nbconvert.readthedocs.io/en/latest/)**<br>
         This separate package supports creation of an HTML document from a notebook, specifically 
-        interpreting Jupyter's version of markdown, in this case the Juptyer version of markdown. 
+        interpreting Jupyterlab's version of markdown. 
         It is necessary to produce an (almost) identical-looking  document to what is rendered in the notebook.
         
         ### What is it good for?
@@ -53,16 +53,17 @@ class Document(Publisher):
         * **A document like this**<br>
         This document is itself a demonstration, testing all the features it describes! It was generated using 
         member functions  of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
-        Each such function represents a section in the document. The code that produced this document is in fact testing and 
+        Each such function represents a section of the document. The code that produced this document is in fact testing and 
         describing the code that produces it.
                
-        * **Simple Jupyter-based analyses**<br>
+        * **Simple Jupyterlab-based analyses**<br>
         Rather than spreading output among several cells, this encourages making a coherent description, 
-        including output plots, say, in the area below a single cell.
+        including  plots, formulae, tables, etc. in the area below a single cell.
         
         * **Personal notebook**<br>
         Rather than cutting and pasting single plots to a personal notebook, this allows the clipping 
-        to include many details, with LaTex formulas perhaps.
+        to include many details, with LaTex formulas perhaps. Since it is easy to produce web pages at the
+        same time, they could function as a notebook.
         
         * **Presentations and analysis documents**<br>
         Sharing ones analysis results with others is a small step from the personal notebook. The days of 
@@ -73,7 +74,7 @@ class Document(Publisher):
         formulae, plots with captions and relevant description have already been done.
  
         """
-        self.publishme('Introduction', 1)
+        self.publishme('Introduction')
         
     def formatting_summary(self):
         r"""
@@ -162,26 +163,54 @@ class Document(Publisher):
         dfhead = df.head()
         
         self.publishme('Docstring Formatting')
-        
-    def document_structure(self):
+    def title(self):
         """
-        ### Title page
         The document has an optional title page containing the title, a date, 
         and perhaps other text. This is managed by setting the dictionary `self.title_info` with
         keys "title", "author" perhaps "subtitle" and "abstract".
-        The page is produced with a call to `title_page`.
+        The page is produced with a call to `self.title_page`.
+        """
+        self.publishme('Title page')
         
-        ### Sections
-        Each member function, with a docstring and call to `self.publishme(`*section_name*`)` will 
+    def sections(self):
+        """
+        Each member function, with a docstring and call to `self.publishme(`*section_title*`)` will 
         generate a numbered section. The numbers are sequential as called by default, but can be specified
         by setting `self.section_number` in the code.
+        """    
+        self.publishme('Sections')
         
-        ### Other text
+    def subsections(self):
+        """
+        One can define a subsection with the **same** function structure as for a section. To be a subsection,
+        a call to it must be at the end of the code for the section to which it belongs, after its call to `self.publishme`.
+        
+        Any symbols accessible in the section are available in the docstring portion here. For example,
+        the section to which this subsection belongs set a random number $r$ to {r:.3f}.
+        """
+        self.publishme('Subsections')
+        
+    def other_text(self):
+        """
         Text not fitting into the section structure can be added with a call to the member function
         `markdown`, providing a text string. 
-        
         """
+        self.publishme('Other text')
+    def document_structure(self):
+        """
+        Jupylab provides for many of the features of a formal document: title, sections, and subsections.
+        This section illustrates the use of numbered subsections.
+        
+        The code of this section set a random number $r$ to {r:.3f}
+        
+        Future enhancements could include a table of contents, appendices, and links within the document.
+        """
+        r = np.random.random(1)[0] # will be available for subsection documents
         self.publishme('Document Structure')
+        self.title()
+        self.sections()
+        self.subsections()
+        self.other_text()
         
     def file_structure(self):
         """
@@ -327,7 +356,10 @@ class Document(Publisher):
         #---------------------------------------------------------------------------------
         self.publishme('Object replacement')
         
-    def __call__(self, section_number=None):
+    def __call__(self, start=None, stop=None):
+        """assemble and save the document if doc_folder is set
+        Choose a range of sections to display in the notebook
+        """
         sections = [
             self.title_page,
             self.introduction,
@@ -338,16 +370,20 @@ class Document(Publisher):
             self.workflow,
             self.object_replacement,
             ]
-        if section_number is not None:
-            n = section_number
-            #print(f'selected section {section_number}')
-            self.section_number = n-1 if n>0 else len(sections)+n 
-            sections[section_number]()
-            return
+        if start and start<0: start+=len(sections)
+        if stop is None:
+            stop=start
+        elif stop<0: stop+=len(sections)
         
         # assemble and save the whole document
-        for f in sections:
+        self.clear()
+        self.display_on=False
+
+        for i,f in enumerate(sections):
+            if i==start:
+                self.display_on=True
             f()
+            if i==stop: self.display_on=False
         self.save()
         
 def main( doc_folder='jupydoc_document',):

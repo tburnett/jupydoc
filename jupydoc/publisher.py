@@ -1,4 +1,4 @@
-"""Generate documents for Jupyter display 
+"""Generate documents for Jupyterlab display 
 """
 
 import os, inspect, datetime
@@ -72,7 +72,7 @@ class Publisher(object):
             ti = self.title_info
             title=ti.get('title', 'untitled?')
             subtitle=ti.get('subtitle', '')
-            author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;')
+            author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
             abstract=ti.get('abstract', '')
             abstract_text=f'<p style="margint: 0% 10%" >ABSTRACT: {abstact}</p>' if abstract else ''
             author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
@@ -102,48 +102,69 @@ class Publisher(object):
         return self._fignum
     
     def publishme(self, 
-                  section_name:'Optional name for the section'=None, 
-                  section_number:'Optional number to apply, otherwise incremens'=None,
+                  section_title:'Optional title for the section'=None, 
                   **kwargs:'additional variable definitions',
                  )->None:
         """
         """
         import inspect
         
-        # numbering: a new section and 
-        self.section_name = section_name
-        self.section_number = section_number or self.section_number+1
+        self.section_title = section_title
          
-        # use inspect to get caller frame, the function name, and locals dict
+        # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
-        name= inspect.getframeinfo(back).function
+        name= self.name = inspect.getframeinfo(back).function
         locs = inspect.getargvalues(back).locals
-        
-        # construct the calling function object to get its docstring
-        funct =eval(f'self.{name}')
-        doc = inspect.getdoc(funct)
+        doc = inspect.getdoc(eval(f'self.{name}'))
 
-        # create variable dictionary: predefined, locals, kwargs
-        vars = self.predefined.copy()
-        vars.update(locs)
-        vars.update(kwargs)
+        # see if this is a subsection by checking the name of the calling function
+        back2 = back.f_back
+        self.prev_name = inspect.getframeinfo(back2).function
         
+        # is this a section?
+        if self.prev_name!=self.section_name:
+            # no: initiize for a new section
+            self.section_name=name  
+            self.section_number +=1
+            self.subsection_number=0
+            hchars ='##'
+            hnumber=f'{self.section_number:}'
+            
+            # create variable dictionary: predefined, symbol table from calling function, kwargs
+            vars = self.predefined.copy()
+            vars.update(locs)
+            vars.update(kwargs)
+            self._saved_symbols = vars
+        else: 
+            # yes: this name is the saved section name
+            self.subsection_number +=1
+            hchars = '###'
+            hnumber=f'{self.section_number:}.{self.subsection_number}'
+            
+            # add the locals and kwargs to section symbol list
+            vars = self._saved_symbols.copy()
+            vars.update(locs)
+            vars.update(kwargs)
+ 
         # run the object replacer
         self.object_replacer(vars)
   
         # Now use the helper function to the formatting, replace {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
         
-        # prepend section header if requested
-        if section_name:
-            header = f'\n\n## {self.section_number:d}. {section_name}\n\n'
+        # prepend section or subsection header if requested
+        if section_title:
+            header = f'\n\n{hchars} {hnumber}. {section_title}\n\n'                
             md_data = header + md_data
+            
         # send it off
         self._publish(md_data)
        
     def clear(self):
         self.data=''
-        self._fignum=self.section_number=0
+        self._fignum=self.section_number=self.subsection_number=0
+        self.section_name='' 
+        self.class_name=self.__class__.__name__
 
     def save(self):
         """ Create Web document
@@ -161,11 +182,9 @@ class Publisher(object):
         
         os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
         md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
-        if self._no_display:
-            print(f'"{title}" saved to "{self.doc_folder}"')
+        print(f'"{title}" saved to "{self.doc_folder}"')
         
-        self.clear()
-            
+             
     #-----------------------------------------------------------
     # Extra convenience functions to generate markdown
 
