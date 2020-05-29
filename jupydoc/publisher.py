@@ -23,8 +23,8 @@ class Publisher(object):
 
         """
         self.title_info=title_info
-        self.doc_folder = doc_folder
-        self._no_display=no_display
+        self.doc_folder = doc_folder 
+        self._no_display = no_display
         self.display_on = not no_display # user can set
         self.predefined= dict(
                 margin_left='<p style="margin-left: 5%">',  
@@ -32,15 +32,13 @@ class Publisher(object):
                 endp='</p>',
             )
         self.date=str(datetime.datetime.now())[:16]
- 
         self.clear()
         
-        
-        #  always saving figures
-        local = '.'
-        if not doc_folder:   fig_folders = [local]
-        else:                fig_folders = [local,doc_folder]
-            
+        #  always saving figures locally, also to document destination if set
+        fig_folders = ['.']
+        if self.doc_folder:   
+            fig_folders.append(self.doc_folder)
+             
         # instantiate the object replacer: set "fig_folder" for the Figure processing, and set the first figure number
         rp =self.object_replacer = ObjectReplacer(previous_fignumber=previous_fignumber)
         assert 'Figure' in rp, 'Expected the replacement object to support plt.Figure'
