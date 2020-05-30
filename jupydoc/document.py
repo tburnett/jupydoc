@@ -1,36 +1,49 @@
 """
-Generate illustrative document
+Producing documents using Jupyterlab with Jupydoc
+
 """
 import numpy as np
 import pylab as plt
 import pandas as pd
-import os, sys
+
 from jupydoc import Publisher
 
 class Document(Publisher):
-    0
-    def __init__(self,**kwargs):
-        super().__init__(
-            title_info= dict(
-                title='Producing documents in Jupyterlab with Jupydoc',
-                author='T. Burnett <tburnett@uw.edu>\nUniversity of Washington',
-                ) ,
-            **kwargs
-        )
+    """
+    title: Producing documents using Jupyterlab with Jupydoc
+    author: Toby Burnett <tburnett@uw.edu>\n
+            University of Washington\n
+   
+    sections: title_page introduction formatting_summary document_structure
+        file_structure other_formatting_options object_replacement workflow
+    """ 
+    
+    def __init__(self,  **kwargs):
+        super().__init__( **kwargs)
                     
     def introduction(self):
-        """
+        """Introduction
+        
+        ### What it is **not**
+        Jupydoc, despite the name, does not actually depend on Jupyterlab. It is not a nice way to turn 
+        detailed notebooks into documents: If you want that, see this 
+        [system](http://blog.juliusschulz.de/blog/ultimate-ipython-notebook). It takes an different
+        approach: Jupyterlab is a wonderful development environment, but the *medium* is a Python class, not
+        a Jupyterlab notebook.
+        
         ### What is it, and how does it work?
-        It is lightweight, some ~400 lines of code in Python exclusive of this document, with, besides depending on
-        IPython and nbconvert, non-essential dependencies on pandas, matplotlib, and numpy.   
-        The key elements that explain the design and operation are:
+        It is lightweight, some ~400 lines of code in Python exclusive of this document, depending on
+        IPython and nbconvert, and also with non-essential dependencies on pandas, matplotlib, and numpy.   
+        Some points to illustrate the design and operation are:
         
         * **Code and markdown cells in a Jupyterlab notebook**<br>
         The origin of this package was rooted in a desire to be able to combine the nice formatting capability of
         markdown cells, with the output from the computation in a code cell. By default, any matplotlib
         figures created in its computation will automatically appear below the cell. This behavior, it turns out,
         can be controlled  by code executed in the cell. The key here is that code can create markdown text,
-        which will be interpreted just as the text in a markdown cell. This includes LaTex.
+        which will be interpreted just as the text in a markdown cell. This includes LaTex. The markdown so created
+        is nicely rendered in the notebook. This is accomplishted by IPython. So a notebook is not actually required, 
+        see `nbconvert` below.
          
         * **Python [inspection](https://docs.python.org/3/library/inspect.html)**<br>
         The inspection capability gives access to two important elements of a function:
@@ -44,7 +57,7 @@ class Document(Publisher):
         curly brackets with its evaluation as an expression. (With python 3, this is built into special format strings.)
         
         * **[nbconvert](https://nbconvert.readthedocs.io/en/latest/)**<br>
-        This separate package supports creation of an HTML document from a notebook, specifically 
+        This separate package supports creation of an HTML document from notebook-formatted data, specifically 
         interpreting Jupyterlab's version of markdown. 
         It is necessary to produce an (almost) identical-looking  document to what is rendered in the notebook.
         
@@ -74,12 +87,15 @@ class Document(Publisher):
         formulae, plots with captions and relevant description have already been done.
  
         """
-        self.publishme('Introduction')
+        self.publishme()
         
     def formatting_summary(self):
         r"""
-        A member function of a class inheriting from `jupydoc.Publisher` needs to have three elements; the docstring, written in 
-        markdown, containing  variable names in curly-brackets, the code, and a final call `self.publishme(section_name)`.  
+        A member function of a class inheriting from `jupydoc.Publisher` should have three elements:
+        * a *docstring*, comment text that will be interpreted as markdown, which may contain  variable
+        names in curly-brackets, 
+        * Python executable code, presumably creating objects to be discussed, 
+        * a line `self.publishme(`*section_name* `)`, where the optional *section_name* will be the header for output. 
         Unlike a formatted string, entries in curly brackets cannot be expressions.
         
         #### Local variables  
@@ -133,6 +149,7 @@ class Document(Publisher):
         ```
         \begin{{align*}}
         \sin^2\theta + \cos^2\theta =1
+        q={q}
         \end{{align*}}
         ```
         
@@ -140,13 +157,15 @@ class Document(Publisher):
             \begin{align*}
             \sin^2\theta + \cos^2\theta =1
             \end{align*}
-        
+            
+        The "{{}}" formatting may modify LaTex expressions: e.g. 
+        `$q^2={{qsq:.3f}}$` &rarr; $q^2={qsq:.3f}$.
         ---
         The capability shown here for the Figure and DataFrame objects could be easily extended to other
-        classes. For user objects it only necessary to define a `__str__` function to the class.
+        classes. For user objects it only necessary to define an appro class `__str__` function.
         """
-        q = 1/3
-        xlim=(0,10)
+        q = 1/3; qsq=q*q
+        xlim=(0,10,21)
         plt.rc('font', size=14)
         x=np.linspace(*xlim)
         df= pd.DataFrame([x,x**2,np.sqrt(x)], index='x xx sqrtx'.split()).T
@@ -163,57 +182,106 @@ class Document(Publisher):
         dfhead = df.head()
         
         self.publishme('Docstring Formatting')
+        
     def title(self):
-        """
+        """Title page
+        
         The document has an optional title page containing the title, a date, 
-        and perhaps other text. This is managed by setting the dictionary `self.title_info` with
-        keys "title", "author" perhaps "subtitle" and "abstract".
+        and perhaps an abstract. This is set either with an argument  to  the superclass `self.title_info` with
+        keys "title", "author", and "abstract", or by providing the three fields in the class docstring, separated
+        by a blank line.
+        
         The page is produced with a call to `self.title_page`.
         """
-        self.publishme('Title page')
+        self.publishme()
         
     def sections(self):
-        """
-        Each member function, with a docstring and call to `self.publishme(`*section_title*`)` will 
-        generate a numbered section. The numbers are sequential as called by default, but can be specified
+        """Sections
+        
+        Each member function, with a docstring and call to `self.publishme` will 
+        generate a numbered section. 
+        The optional section heading can be specified either as an argument to `publishme` or as the
+        first line of the function docstring, followed by a blank line.
+        The numbers are sequential as called by default, but can be specified
         by setting `self.section_number` in the code.
         """    
-        self.publishme('Sections')
+        self.publishme()
         
     def subsections(self):
-        """
+        """Subsections
+        
         One can define a subsection with the **same** function structure as for a section. To be a subsection,
         a call to it must be at the end of the code for the section to which it belongs, after its call to `self.publishme`.
         
         Any symbols accessible in the section are available in the docstring portion here. For example,
         the section to which this subsection belongs set a random number $r$ to {r:.3f}.
         """
-        self.publishme('Subsections')
+        self.publishme()
         
     def other_text(self):
-        """
+        """Other text
+        
         Text not fitting into the section structure can be added with a call to the member function
         `markdown`, providing a text string. 
         """
-        self.publishme('Other text')
-    def document_structure(self):
+        self.publishme()
+        
+    def assembly(self):
+        """Assembly
+        
+        Assembling the document requires calling the section functions in the desired order, starting with 
+        the built in `title_page`. This may be done by hand of course, by adding a function to do that to
+        the user subclass, or from code external to the class. But a simpler way, in the spirt of the class code
+        transparently defining itself: There are up to four fields in the *class* docstring, 
+        separated by empty lines: title, author, abstract, and section list. The section list is a list of the
+        section function names, separated by blanks on one or more lines. For this document, for example, it is
+        
+        {section_name_text}
+        
+        The Publisher superclass defines a `__call__` function, making it callable. So to produce, and write out if the output 
+        document folder has been specified, one simply calls the document object.
+        
+        For development in the Jupyterlab environment, one may display all, or a range of sections. Optional calls to
+        the function can be
+        * a (start,stop) range of indeces
+        * a single integer, the index of the section function in the list
+        * the name of the section
+        
+        Figures are added to a "figs" folder in the current folder, as well as the destination document folder.
+        
         """
-        Jupylab provides for many of the features of a formal document: title, sections, and subsections.
+        section_name_text = self.monospace("""title_page introduction formatting_summary document_structure
+    file_structure other_formatting_options object_replacement workflow""")
+        
+        self.publishme()
+        
+    def document_structure(self):
+        """Document Structure
+        
+        The output document may be a single page without any title or section organization. This section discusses
+        the more complete use case, with a title page, sections, and perhaps subsections as for the current document.
+        
+        There is of course a close correlation with the structure of the Python class that defines the document.
         This section illustrates the use of numbered subsections.
         
-        The code of this section set a random number $r$ to {r:.3f}
+        The code of this section sets a random number $r$ to {r:.3f} &mdast; the symbol "r" will be available
+        to any of its subsection documents. 
         
         Future enhancements could include a table of contents, appendices, and links within the document.
         """
+        #------------------------
         r = np.random.random(1)[0] # will be available for subsection documents
-        self.publishme('Document Structure')
+        self.publishme()
         self.title()
         self.sections()
         self.subsections()
         self.other_text()
+        self.assembly()
         
     def file_structure(self):
         """
+        File structure
+        
         ## Web
         The resulting Web document has two components: the HTML file with all the text and formatting, and, in the
         same folder, a  subfolder "figs" with the figures, which are included via the HTML e.g., `<img src="figs/fig_1.png"/>`.
@@ -230,10 +298,12 @@ class Document(Publisher):
         found in [`notebook-as-pdf`](https://github.com/betatim/notebook-as-pdf), which uses a headless
         chrome, relying on (`pyppeteer`)[https://pypi.org/project/pyppeteer/] to render the HTML to a PDF file.
         """
-        self.publishme('File structure')
+        self.publishme()
         
     def workflow(self):
         """
+        Workflow
+        
         #### Development
         This facility has transformed the way I generate analysis code.  
         I use notebooks only to develop the code *and* documentation. This is an incremental process, with one 
@@ -246,7 +316,10 @@ class Document(Publisher):
         ```
         from jupydoc import Publisher
         class Development(Publisher): 
-            def __init__(self, *args **kwargs):
+            '''title: The title of this document
+               sections: new_section
+            '''
+            def __init__(self, **kwargs):
                 super().__init__( **kwargs)
                 ''' 
                 text to summarize setup
@@ -255,11 +328,11 @@ class Document(Publisher):
                 self.publishme('Setup')
                 
             def new_section(self):
-                '''
+                '''New Section
                 <text>
                 '''
                 # code using self
-                self.publishme('New Section')
+                self.publishme()
         ```
         
         In the notebook, I use `%autoreload` when executing the development module with code like. 
@@ -280,25 +353,16 @@ class Document(Publisher):
         cells may need a "%autoreload 0" to disable the automatic reloading of the development module.
         
         While generating and testing a document, the display in the notebook may be large. For this reason,
-        it is possible to suppress display in the notebook by setting executing "display_on=False" to suppress notebook 
-        output. This does not affect the document itself, all of which will be written to the "doc_folder" folder. It is
+        This does not affect the document itself, all of which will be written to the "doc_folder" folder. It is
         very useful to a have a window open to the browser display of this file, to monitor the entire document.
         
-        
-        #### Output to HTML
-        To produce the HTML (and eventual PDF) document, I add a member function that calls the relevant 
-        sequence of member fuctions, followed by a self.save. For this document, that is `__call__`:
-        
-        ```
-        from jupydoc import Document
-        doc=Document( doc_folder='/nfs/farm/g/glast/u/burnett/git/tburnett.github.io/jupydoc',)
-        ```
-        To produce a copy, or display it in your notebook, just try this online.
         """
-        self.publishme('Workflow')
+        self.publishme()
     
     def other_formatting_options(self):
         r"""
+        Other Formatting options
+        
         Markdown text is designed to be readable and easy to compose, a huge difference from
         the formal HTML, to which it is translated. One can of course insert HTML 
         directly into the text, of course compromising the readability, and requiring HTML knowledge. 
@@ -315,7 +379,7 @@ class Document(Publisher):
         These may override any of the previous.
 
         #### Indenting
-        Indenting a paragraph is not directly possible with markdown. But we predefine:
+        Indenting a paragraph is not directly possible with markdown. But we can easily insert the appropriate HTML
         
         * {{indent}}: `{indent}` &mdash;the margin is predefined, easily changed by the user
         *  {{endp}}: `{endp}` &mdash; Since it represents the end of a paragraph.
@@ -327,26 +391,32 @@ class Document(Publisher):
         {endp}
         
         #### Preformatted text
-        The function `monospace(text)` is provided to achieve insertion of "preformatted" text with a monospace font.
-        It can be invoked with a text string, or any object, that returns a description of itself via its class `__str__` 
+        The function `monospace(*text*)` is provided to achieve insertion of "preformatted" text with a monospace font.
+        It can be invoked with a text string, or any object which returns a description of itself via its class `__str__` 
         function. For example "test_string = self.monospace('This is a multi-line test.\nAfter a newline.')", 
         with a corresponding  "{{test_string}}" will look like:
         {test_string}
         """
         test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
-        self.publishme('Other Formatting options')
+        self.publishme()
 
     def object_replacement(self):
-        """A key element of jupydoc is the ability to recognize the class of a variable appearing in the document, and 
+        """
+        Some technical details
+        
+        ### Object replacement
+        
+        A key feature of jupydoc is its ability to recognize the class of a variable appearing in the document, and 
         replace it with an instance of a "wrapper" class, which implements a alternative to the `__str__` method of the 
-        original class. This is implemented by default for Figure, DataFrame and dict.
-        It is all done in the class `jupydoc.replacer.ObjectReplacer`, which inherits from `dict`. 
+        original class. This is done by default for Figure, DataFrame and dict.
+        It happens in the class `jupydoc.replacer.ObjectReplacer`, which inherits from `dict`. 
         An instance is in the Publisher instance.
         The initial value of `self.object_replacer` is:
         
         {self.object_replacer}
         
-        where the value is a tuple, the two columns displayed.
+        (illustrating the replacement for a Python dict)
+        The value is a tuple, the two columns displayed.
         
        
         So in the constructor of a subclass, one can modify this instance, using 'update`, to change current keyword args, or 
@@ -354,37 +424,8 @@ class Document(Publisher):
         A wrapper class is instantiated with two arguments: the instance that it will interpret, and the kwargs. 
         """
         #---------------------------------------------------------------------------------
-        self.publishme('Object replacement')
+        self.publishme()
         
-    def __call__(self, start=None, stop=None):
-        """assemble and save the document if doc_folder is set
-        Choose a range of sections to display in the notebook
-        """
-        sections = [
-            self.title_page,
-            self.introduction,
-            self.formatting_summary,
-            self.document_structure,
-            self.file_structure,
-            self.other_formatting_options,
-            self.workflow,
-            self.object_replacement,
-            ]
-        if start and start<0: start+=len(sections)
-        if stop is None:
-            stop=start
-        elif stop<0: stop+=len(sections)
-        
-        # assemble and save the whole document
-        self.clear()
-        self.display_on=False
-
-        for i,f in enumerate(sections):
-            if i==start:
-                self.display_on=True
-            f()
-            if i==stop: self.display_on=False
-        self.save()
         
 def main( doc_folder='jupydoc_document',):
            

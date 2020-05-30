@@ -95,3 +95,20 @@ def test_formatter():
     print(f'input to doc_display is the text:\n{text}')
     r = doc_formatter(text, vars)    
     print(f'Resulting string:\n "{r}"'  ) 
+    
+def parse_fields(string):
+    # helper function to deal with blank line delimiters in a string
+    lines = string.split('\n')
+    slines = [x.strip() for x in lines]
+    if len(slines[0])>0:
+                slines = ['']+slines
+    delim = []
+    for i, x in enumerate(slines):
+        if len(x)==0:
+            delim.append(i)
+    a = delim[0]
+    fields = []
+    for b in delim[1:]:
+        fields.append('\n'.join(slines[a+1:b]))
+        a=b
+    return fields

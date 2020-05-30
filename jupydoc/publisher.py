@@ -2,6 +2,7 @@
 """
 
 import os, inspect, datetime
+import yaml
 
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
@@ -14,18 +15,39 @@ class Publisher(object):
     """
 
     def __init__(self, 
-             title_info:'Title, author,..'={'title':'Untitled'},
-             doc_folder:'if set, save() will write the accumulated output to an HTML document file'='', 
-             no_display:'set True to avoid Jupyter display output'=False,
-             previous_fignumber:'to start at other than fig1'=0,
+             doc_folder:'if set, save() will write the accumulated output to an HTML document index.html in this folder'='', 
+             no_display:'set True to disable IPython display output'=False,
+             **kwargs
             ):
         """
 
         """
-        self.title_info=title_info
+        # document information from kwargs if set, or yaml-format class docsting
+        docstring = self.__doc__
+        doc_info = yaml.safe_load(docstring) if docstring else {} 
+        if not type(doc_info)==dict: doc_info={}
+        self.title_info = kwargs.get('title_info', 
+                                    dict(title=doc_info.get('title', ''),
+                                        author=doc_info.get('author', ''),
+                                        abstract=doc_info.get('abstract', ''),
+                                        )
+                              )
+        self.section_names=kwargs.get('section_names',
+                                      doc_info.get('sections','title_page')
+                                     ).split()         
+        self.section_functions = []
+        for name in self.section_names:
+            try:
+                self.section_functions.append(eval(f'self.{name}'))
+            except Exception as err:
+                raise Exception(f'{err}: Section name {name} not defined?')
+
+        # output, display stuff
         self.doc_folder = doc_folder 
         self._no_display = no_display
         self.display_on = not no_display # user can set
+        
+        # predefind symbols for convenience
         self.predefined= dict(
                 margin_left='<p style="margin-left: 5%">',  
                 indent='<p style="margin-left: 5%">',
@@ -40,7 +62,7 @@ class Publisher(object):
             fig_folders.append(self.doc_folder)
              
         # instantiate the object replacer: set "fig_folder" for the Figure processing, and set the first figure number
-        rp =self.object_replacer = ObjectReplacer(previous_fignumber=previous_fignumber)
+        rp =self.object_replacer = ObjectReplacer()
         assert 'Figure' in rp, 'Expected the replacement object to support plt.Figure'
         #upate the qwargs for the Figure processing
         rp['Figure'][1].update(fig_folders = fig_folders)
@@ -72,7 +94,7 @@ class Publisher(object):
             subtitle=ti.get('subtitle', '')
             author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
             abstract=ti.get('abstract', '')
-            abstract_text=f'<p style="margint: 0% 10%" >ABSTRACT: {abstact}</p>' if abstract else ''
+            abstract_text=f'<p style="margint: 0% 10%" >ABSTRACT: {abstract}</p>' if abstract else ''
             author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
             title_line=f'<H1>{title}</H1>' if title else '*no title*' 
             subtitle_line=f'<p> {subtitle}</p>' if subtitle else '' 
@@ -114,6 +136,14 @@ class Publisher(object):
         name= self.name = inspect.getframeinfo(back).function
         locs = inspect.getargvalues(back).locals
         doc = inspect.getdoc(eval(f'self.{name}'))
+        
+        # check for first non-blank line follwed by a blank line to define title
+        if section_title is None:
+            doc_lines = doc.split('\n')
+            first = 0 if  doc_lines[0] else 1
+            if doc_lines[first+1]=='':
+                section_title = doc_lines[0]
+                doc = '\n'.join(doc_lines[first+2:])
 
         # see if this is a subsection by checking the name of the calling function
         back2 = back.f_back
@@ -180,7 +210,7 @@ class Publisher(object):
         
         os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
         md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
-        print(f'"{title}" saved to "{self.doc_folder}"')
+        print(f'\n------\nDocument "{title}" saved to\n    "{self.doc_folder}"')
         
              
     #-----------------------------------------------------------
@@ -193,3 +223,41 @@ class Publisher(object):
         text = str(text).replace('\n', '<br>')
         return f'<p style="margin-left: {indent}"><samp>{text}</samp></p>'
     
+    def __call__(self, start=None, stop=None):
+        """assemble and save the document if doc_folder is set
+        Choose a range of sections to display in the notebook
+        """
+        assert hasattr(self, 'section_names') and len(self.section_names)>0,\
+            'Must be a least one section in section_names'
+        
+        def process(start, stop=None):
+
+            if start and start<0: start+=len(self.section_names)
+            if stop is None:
+                stop=start
+            elif stop<0: stop+=len(self.section_names)
+
+            # assemble the document by calling all the section functions, displaying the selected subset
+            # close, and save it if self.doc_folder is set
+            self.clear()
+            self.display_on=False
+
+            for i,function in enumerate(self.section_functions):
+                if i==start:
+                    self.display_on=True
+                function()
+                if i==stop: self.display_on=False
+
+        if type(start)==str:
+            start=start.strip()
+            if start=='all':
+                process(0,-1) # display all
+            else:
+                names = self.section_names
+                assert start in names, f'Name {start} not in lins of section names, {names}'
+                process(names.index(start))
+        else:
+            if start is None:start=stop=len(self.section_names) #display none
+            process(start,stop)
+
+        self.save()

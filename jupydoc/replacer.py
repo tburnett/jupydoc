@@ -44,7 +44,7 @@ class FigureWrapper(Wrapper,plt.Figure):
             # save the figure to a file, then close it
             fig.tight_layout(pad=1.05)
             n =self.number
-            fn = os.path.join(self.folder_name, f'fig_{n}.png')
+            fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
             browser_fn =fn
             # actually save it for the document, perhaps both in the local, and document folders
             for folder in self.fig_folders:
