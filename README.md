@@ -97,4 +97,4 @@ which displays, below the code cell, the following:
 ## An analysis code development paradigm shift:
 I've used this to fundamentally change my analysis, with a focus on documenting code and results as I generate them. It is sitll
 in development, but the current, fairly stable situation is documented (using jupydoc of course) 
-[here](https://tburnett.github.io/jupydoc-workflow/)
+**[here](https://tburnett.github.io/jupydoc-workflow/)**.
