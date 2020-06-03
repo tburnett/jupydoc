@@ -40,8 +40,8 @@ see `nbconvert` below.
  
 * **Python [inspection](https://docs.python.org/3/library/inspect.html)**
 The inspection capability gives access to two important elements of a function:
- * docstring&mdash; a text string immediately following the function declaration.
- * symbol table&mdash;in python terms, a "dict" with variable names as keys, and where each value is a
+  * docstring&mdash; a text string immediately following the function declaration.
+  * symbol table&mdash;in python terms, a "dict" with variable names as keys, and where each value is a
    reference to the object represented by the name
 
 * **Python string format method**<br>
