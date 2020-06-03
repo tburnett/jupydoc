@@ -6,11 +6,13 @@ markdown, usually HTML.
 
 Implemented here: Figure, Dataframe, dict
 """
-import os
+import os, shutil
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+document_folders = ['.']
+                     
 class Wrapper(object):
     """Base class for the replacement classes
     """
@@ -22,7 +24,8 @@ class Wrapper(object):
         
 class FigureWrapper(Wrapper,plt.Figure):
     
-    def __init__(self, fig, vars, folder_name='figs', fig_folders=[], fig_numberer=None):
+    def __init__(self, fig, vars, folder_name='figs', fig_folders=[], fig_numberer=None,
+                fig_class='jupydoc_fig'):
         super().__init__(vars)
         self.__dict__.update(fig.__dict__)
         self.fig = fig
@@ -30,6 +33,7 @@ class FigureWrapper(Wrapper,plt.Figure):
         self.fig_folders=fig_folders
         self.numberer=fig_numberer
         self.number = fig.number = fig_numberer()
+        self.fig_class=fig_class 
 
         for folder in fig_folders:
             os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
@@ -53,11 +57,21 @@ class FigureWrapper(Wrapper,plt.Figure):
 
             # add the HTML as an attribute, to insert the image, including optional caption
 
-            self._html =  f'<figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
+            self._html =  f'<div class="{self.fig_class}"><figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
                     f' <figcaption>{caption}</figcaption>'\
-                    '</figure>\n'
+                    '</figure></div>\n'
         return self._html
        
+
+class JupydocImageWrapper(Wrapper):
+    def __init__(self, img, vars, **kwargs):
+        super().__init__(vars)
+        self.img=img
+        for df in document_folders):
+            img.saveto(df)
+
+    def __str__(self):
+        return str(self.img)
 
 class DataFrameWrapper(Wrapper): 
     def __init__(self, df, vars, **kwargs):
@@ -78,6 +92,13 @@ class DictWrapper(Wrapper):
     def __str__(self):
         return self.df.to_html(index=False)
 
+def check_image_file(filename):
+    if not os.path.isfile(filename): return False
+    ext = os.path.splitext(filename)[-1]
+    return ext  in ['.png', '.jpg']
+
+
+
 class FigNumberer(object):
     """ used"""
     def __init__(self, previous_number=0):
@@ -93,14 +114,19 @@ class ObjectReplacer(dict):
     """
     Functor that will replace objects in a variables dictionary
     It is a dictionary,
-        key: a class to have it instances replaced
+        key: a name of a class to have its instances replaced
         value: tuple with two elements: 
             1. the replacement class, which implements a __str__ method
-            2. kwargs to apply to generating the 
+            2. kwargs to apply to new object
     """
     def __init__(self, 
-                 previous_fignumber:'For figures'=0,
+                  folders:'one or more document folders to save images'=['.'], 
                 ):
+        self.set_folders(folders)
+        
+    def set_folders(self, folders):
+        global document_folders
+        document_folders = folders
         # set up 
         df_kwargs= dict( notebook=True, 
                          max_rows=10, 
@@ -110,12 +136,15 @@ class ObjectReplacer(dict):
                          float_format=lambda x: f'{x:.3f}',
                        )
         self.update(dict(
-                Figure=    (FigureWrapper, dict(fig_folders=[],
-                                                fig_numberer=FigNumberer(previous_fignumber)) ),
-                DataFrame= (DataFrameWrapper,df_kwargs),
-                dict=      (DictWrapper,{} ),
+                Figure=    (FigureWrapper, dict(fig_folders=folders,
+                                                fig_numberer=FigNumberer() )
+                           ),
+                DataFrame= (DataFrameWrapper, df_kwargs)),
+                dict=      (DictWrapper, {} ),
+                #disable for now str=       (StringWrapper, dict(img_folders=folders,) ),
+                JupydocImage =(JupydocImageWrapper, {}),
                 )
-            )
+            
   
     def __repr__(self):
         r= pd.DataFrame.from_dict(self,orient='index', columns=['wrapper class','keyword dict'])

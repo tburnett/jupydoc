@@ -2,36 +2,47 @@
 Producing documents using Jupyterlab with Jupydoc
 
 """
+import os
 import numpy as np
 import pylab as plt
 import pandas as pd
 
 from jupydoc import Publisher
 
-class Document(Publisher):
+class JupyDoc(Publisher):
     """
-    title: Producing documents using Jupyterlab with Jupydoc
-    author: Toby Burnett <tburnett@uw.edu>\n
-            University of Washington\n
+    title: |
+            Jupydoc: Generate documents with Python code 
+            Introduction and demonstration
+    author: |
+            Toby Burnett <tburnett@uw.edu>
+            University of Washington
    
     sections: title_page introduction formatting_summary document_structure
         file_structure other_formatting_options object_replacement workflow
     """ 
     
     def __init__(self,  **kwargs):
+        doc_folder = kwargs.get('doc_folder', None)
+        if doc_folder and doc_folder[0]!='/':
+            doc_folder = os.path.join(doc_path, doc_folder)
+        kwargs['doc_folder'] = doc_folder
         super().__init__( **kwargs)
                     
     def introduction(self):
         """Introduction
         
         ### What it is **not**
-        Jupydoc, despite the name, does not actually depend on Jupyterlab. It is not a nice way to turn 
+        Jupydoc, despite the name, does not explicitly depend on Jupyterlab. It is not a nice way to turn 
         detailed notebooks into documents: If you want that, see this 
-        [system](http://blog.juliusschulz.de/blog/ultimate-ipython-notebook). It takes an different
-        approach: Jupyterlab is a wonderful development environment, but the *medium* is a Python class, not
-        a Jupyterlab notebook.
+        [system](http://blog.juliusschulz.de/blog/ultimate-ipython-notebook). 
         
         ### What is it, and how does it work?
+        Jupydoc is not centered on a jupyterlab notebook. It is designed to make it easy to *develop* a
+        document with a noteboook, but the *medium* is a Python class, not a  notebook. Since it is
+        based on code, that implies developing the code at well&mdash;the document may represent the
+        code development itself.
+        
         It is lightweight, some ~400 lines of code in Python exclusive of this document, depending on
         IPython and nbconvert, and also with non-essential dependencies on pandas, matplotlib, and numpy.   
         Some points to illustrate the design and operation are:
@@ -79,7 +90,7 @@ class Document(Publisher):
         same time, they could function as a notebook.
         
         * **Presentations and analysis documents**<br>
-        Sharing ones analysis results with others is a small step from the personal notebook. The days of 
+        Sharing one's analysis results with others is a small step from the personal notebook. The days of 
         needing PowerPoint to make presentations seem to be over, so the document can be the presentation medium.
         
         * **Publication?**<br>
@@ -96,7 +107,9 @@ class Document(Publisher):
         names in curly-brackets, 
         * Python executable code, presumably creating objects to be discussed, 
         * a line `self.publishme(`*section_name* `)`, where the optional *section_name* will be the header for output. 
-        Unlike a formatted string, entries in curly brackets cannot be expressions.
+        Unlike a formatted string, entries in curly brackets cannot be expressions. An alternative is that,
+        if it is not present, the first line of the docstring, if followed by a blank line, will be the section 
+        header.
         
         #### Local variables  
         Any variable, say from an expression in the code `q=1/3`, can be interpreted in the docstring
@@ -118,7 +131,6 @@ class Document(Publisher):
                 shows $x^2$ vs. $x$.'''
         ```
         produces:
-        
         {fig1}
         
         The display processing replaces the `fig1` reference in a copy of the local variable dictionary
@@ -127,16 +139,33 @@ class Document(Publisher):
         Note the convenience of defining a caption by adding the text as an attribute of
         the Figure object.  
         The `self.newfignum()` returns a new figure number. It is necessary to for all
-        the figures in a section to be unique. But the actual number is set to be sequential for the whole document.
+        the figures in a section to be unique. But the actual number is set to be sequential for
+        the whole document.
         It can be referred to in the text as `{{fig1.number}}`.
     
+        #### Images
+        Images be inserted into the docucument, as follows: 
+        The jupydoc function <samp>image</samp> is provided for this purpose. In the code, set an accessible variable with
+        a call `self.image(filename)':
+        ```
+        launch_image = self.image("/nfs/farm/g/glast/u/burnett/images/launch.jpg",
+                            caption="The launch of Fermi on a Delta II on June 11, 2008", width=300)
+        
+        ```
+        
+        referred to in this text as "{{launch_image}}, will produce this:
+       
+        {launch_image}
+        
+        One can set the width or height.
+        
         
         #### DataFrames
         A `pandas.DataFrame` object is treated similarly. 
         
         The code
         ```
-        df = pd.DataFrame.from_dict(dict(x=x, xx=x**2)).T
+        df = pd.DataFrame.from_dict(dict(x=x, xx=x**2), orient='index')
         
         ```
         
@@ -149,7 +178,6 @@ class Document(Publisher):
         ```
         \begin{{align*}}
         \sin^2\theta + \cos^2\theta =1
-        q={q}
         \end{{align*}}
         ```
         
@@ -162,7 +190,8 @@ class Document(Publisher):
         `$q^2={{qsq:.3f}}$` &rarr; $q^2={qsq:.3f}$.
         ---
         The capability shown here for the Figure and DataFrame objects could be easily extended to other
-        classes. For user objects it only necessary to define an appro class `__str__` function.
+        classes. For user objects it only necessary to define an appropriate class `__str__` function.
+        
         """
         q = 1/3; qsq=q*q
         xlim=(0,10,21)
@@ -178,8 +207,11 @@ class Document(Publisher):
                 shows $x^2$ vs. $x$.    
                ."""
         
-        df = pd.DataFrame.from_dict(dict(x=x, xx=x**2))
+        df = pd.DataFrame.from_dict(dict(x=x, xx=x**2), orient='index')
         dfhead = df.head()
+     
+        launch_image = self.image("/nfs/farm/g/glast/u/burnett/images/fermi-launch.jpg",
+                            caption="The launch of Fermi on a Delta II on June 11, 2008", width=300)
         
         self.publishme('Docstring Formatting')
         
@@ -193,6 +225,7 @@ class Document(Publisher):
         
         The page is produced with a call to `self.title_page`.
         """
+       
         self.publishme()
         
     def sections(self):

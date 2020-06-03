@@ -7,10 +7,17 @@ import yaml
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
 
+jupydoc_css =\
+"""
+<style>
+.jupydoc_fig { text-align: center; }
+</style>
+"""
+
 class Publisher(object):
     """
     Base class for generating a document in Jupyter/IPython.
-    A subclass must run `super().__init__()`. Then any member function that calls self.publishme()
+    A subclass must run `super().__init__(**kwargs)`. Then any member function that calls self.publishme()
     will have its docstring processed.
     """
 
@@ -22,19 +29,21 @@ class Publisher(object):
         """
 
         """
+        
         # document information from kwargs if set, or yaml-format class docsting
         docstring = self.__doc__
         doc_info = yaml.safe_load(docstring) if docstring else {} 
         if not type(doc_info)==dict: doc_info={}
         self.title_info = kwargs.get('title_info', 
-                                    dict(title=doc_info.get('title', ''),
-                                        author=doc_info.get('author', ''),
-                                        abstract=doc_info.get('abstract', ''),
+                                    dict(title=doc_info.pop('title', ''),
+                                        author=doc_info.pop('author', ''),
+                                        abstract=doc_info.pop('abstract', ''),
                                         )
                               )
         self.section_names=kwargs.get('section_names',
-                                      doc_info.get('sections','title_page')
-                                     ).split()         
+                                      doc_info.pop('sections','title_page')
+                                     ).split()    
+        self.info = doc_info # any other stuff available to user
         self.section_functions = []
         for name in self.section_names:
             try:
@@ -56,16 +65,16 @@ class Publisher(object):
         self.date=str(datetime.datetime.now())[:16]
         self.clear()
         
-        #  always saving figures locally, also to document destination if set
+        #  always saving figures and images locally, also to document destination if set
         fig_folders = ['.']
         if self.doc_folder:   
             fig_folders.append(self.doc_folder)
              
         # instantiate the object replacer: set "fig_folder" for the Figure processing, and set the first figure number
-        rp =self.object_replacer = ObjectReplacer()
-        assert 'Figure' in rp, 'Expected the replacement object to support plt.Figure'
-        #upate the qwargs for the Figure processing
-        rp['Figure'][1].update(fig_folders = fig_folders)
+        rp =self.object_replacer = ObjectReplacer(folders=fig_folders)
+#         assert 'Figure' in rp, 'Expected the replacement object to support plt.Figure'
+#         #upate the qwargs for the Figure processing
+#         rp['Figure'][1].update(fig_folders = fig_folders)
     
     def __repr__(self):
         return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self.title_info["title"]}"'
@@ -74,36 +83,39 @@ class Publisher(object):
         """ add text to the document, display with IPython if set"""        
         import IPython.display as display #only dependence on IPython
         self.data = self.data + '\n\n' + text
-        
+         
         if self.display_on: 
             # perhaps not generating display for this section
             display.display(display.Markdown(text)) 
         
-    def title_page(self, text:'additional text'='', **kwargs):
+    def title_page(self):
         """
-        {title_line}
+        <header>
+        <h1>{title}</h1>
+        <h2>{subtitle}</h2>
         {date_line} 
-        {subtitle_line}
         {author_line}
         {abstract_text}
-        {text}
+        </header>
         """
         if self.title_info:
             ti = self.title_info
-            title=ti.get('title', 'untitled?')
-            subtitle=ti.get('subtitle', '')
+            ts=ti.get('title', 'untitled?').split('\n')
+            ts=self.title_info['title'].split('\n')
+            title=ts[0]
+            subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
             author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
             abstract=ti.get('abstract', '')
             abstract_text=f'<p style="margint: 0% 10%" >ABSTRACT: {abstract}</p>' if abstract else ''
             author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
-            title_line=f'<H1>{title}</H1>' if title else '*no title*' 
-            subtitle_line=f'<p> {subtitle}</p>' if subtitle else '' 
+            title_line=f'<h1 text-align:center;>{title}</h1>' if title else '*no title*' 
+            subtitle_line=f'<H2> {subtitle}</H2>' if subtitle else '' 
         else:
-            # No info: only date and text
-            title_line=date_line=subtitle_line=abstract_text=''
+            # No info: only date
+            title=subtitle=date_line=author_line=abstract_text=''
             
         date_line=f'<p style="text-align: right;">{self.date}</p>'
-        self.publishme(**kwargs)
+        self.publishme()
         self.section_number=0
             
     def markdown(self, text:"markdown text to add to document",
@@ -117,10 +129,6 @@ class Publisher(object):
             text= inspect.cleandoc(text)
         self._publish(text)
 
-    def newfignum(self) -> "a new figure number":
-        self._fignum+=1
-        return self._fignum
-    
     def publishme(self, 
                   section_title:'Optional title for the section'=None, 
                   **kwargs:'additional variable definitions',
@@ -189,48 +197,21 @@ class Publisher(object):
         self._publish(md_data)
        
     def clear(self):
-        self.data=''
+        self.data=jupydoc_css
         self._fignum=self.section_number=self.subsection_number=0
         self.section_name='' 
         self.class_name=self.__class__.__name__
 
-    def save(self):
-        """ Create Web document
-        """
-        if not self.doc_folder: 
-            self.markdown("""
-            ---
-            Document not saved.""")
-            return
-        title = self.title_info.get('title', '(untitled)')
-        self.markdown(f"""
-            ---
-            Document "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc), saved to "{self.doc_folder}"'
-            """)
-        
-        os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
-        md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
-        print(f'\n------\nDocument "{title}" saved to\n    "{self.doc_folder}"')
-        
-             
-    #-----------------------------------------------------------
-    # Extra convenience functions to generate markdown
 
-        
-    def monospace(self, text:'Either a string, or an object', 
-                  indent='5%')->str:
-
-        text = str(text).replace('\n', '<br>')
-        return f'<p style="margin-left: {indent}"><samp>{text}</samp></p>'
-    
-    def __call__(self, start=None, stop=None):
+    def __call__(self, start=None, stop=None, 
+                 display_only:'set to only use the display'=False):
         """assemble and save the document if doc_folder is set
         Choose a range of sections to display in the notebook
         """
         assert hasattr(self, 'section_names') and len(self.section_names)>0,\
             'Must be a least one section in section_names'
         
-        def process(start, stop=None):
+        def run(start, stop=None):
 
             if start and start<0: start+=len(self.section_names)
             if stop is None:
@@ -251,13 +232,91 @@ class Publisher(object):
         if type(start)==str:
             start=start.strip()
             if start=='all':
-                process(0,-1) # display all
+                run(start=0,stop=-1) # display all
             else:
                 names = self.section_names
                 assert start in names, f'Name {start} not in lins of section names, {names}'
-                process(names.index(start))
+                run(names.index(start))
         else:
             if start is None:start=stop=len(self.section_names) #display none
-            process(start,stop)
+            run(start,stop=stop)
 
-        self.save()
+        if not display_only:
+            self.save()
+    
+    def save(self):
+        """ Create Web document
+        """
+        if not self.doc_folder: 
+            self.markdown("""
+            ---
+            Document not saved.""")
+            return
+        title = self.title_info.get('title', '(untitled)')
+        #source_text = f'in source in samp>{source_file}</samp><br>'
+        source_text = self.info.get('filename', '')
+
+        self.markdown(f"""
+            ---
+            Document "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br> 
+            created by class <samp>{self.__class__.__name__}</samp> {source_text}<br>
+            saved to <samp>{self.doc_folder}</samp>
+            """)
+        
+        os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
+        md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
+         
+        print(f'\n------\nsaved to  "{self.doc_folder}"')
+        
+     
+    def image(self, filename, 
+              caption=None, 
+              width=None,height=None, 
+              browser_subfolder:'The subfolder in the HTML location'='images',
+              image_extensions=['.png', '.jpg', '.gif', '.jpeg'],
+              fig_style='jupydoc_fig',
+             )->'a JupydocImage object that generates HTML':
+        
+        assert os.path.isfile(filename), f'File {filename} not found'
+        _, ext = os.path.splitext(filename)
+        assert ext in image_extensions,\
+            f'File {filename} not an image? "{ext}" not in {image_extensions}' 
+               
+        class JupydocImage(object):
+            def __init__(self):
+                _, self.name=os.path.split(filename) 
+                self.browser_subfolder = browser_subfolder
+            def set_browser_folder(self, folder):
+                self.browser_subfolder = folder
+            def saveto(self, whereto):
+                import shutil
+                full_path = os.path.join(whereto, self.browser_subfolder)
+                os.makedirs(full_path, exist_ok=True)
+                shutil.copyfile(filename, os.path.join(full_path,self.name) )
+
+            def __str__(self):
+                h = '' if not height else f'height={height}'
+                w  = '' if not width  else f'width={width}'
+                browser_fn = self.browser_subfolder+'/'+self.name
+                return f'<div class="{fig_style}"><figure> <img src="{browser_fn}" {h} {w}'\
+                    f'  alt="Image {self.name} at {browser_fn}">'\
+                    f' \n  <figcaption>{caption}</figcaption>'\
+                    '\n</figure></div>\n'
+        return JupydocImage()        
+    #-----------------------------------------------------------
+    # User convenience functions
+
+    def newfignum(self) -> "a new figure number":
+        self._fignum+=1
+        return self._fignum
+        
+    def monospace(self, text:'Either a string, or an object', 
+                  indent='5%')->str:
+
+        text = str(text).replace('\n', '<br>')
+        return f'<p style="margin-left: {indent}"><samp>{text}</samp></p>'
+    
+    def add_caption(self, 
+                text:'text of caption for most recent figure'):
+        fig = plt.gcf()
+        fig.caption=f'Fig. {fig.number}.{text}'
