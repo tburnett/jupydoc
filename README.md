@@ -38,7 +38,7 @@ which will be interpreted just as the text in a markdown cell. This includes LaT
 is nicely rendered in the notebook. This is accomplishted by IPython. So a notebook is not actually required, 
 see `nbconvert` below.
  
-* **Python [inspection](https://docs.python.org/3/library/inspect.html)**&lt;br&gt;
+* **Python [inspection](https://docs.python.org/3/library/inspect.html)**
 The inspection capability gives access to two important elements of a function:
  * docstring&mdash; a text string immediately following the function declaration.
  * symbol table&mdash;in python terms, a "dict" with variable names as keys, and where each value is a
@@ -49,7 +49,7 @@ Since python 2.6, text strings have had a "format" method, which interprets occu
 replacing what it finds between the
 curly brackets with its evaluation as an expression. (With python 3, this is built into special format strings.)
 
-* **[nbconvert](https://nbconvert.readthedocs.io/en/latest/)**&lt;br&gt;
+* **[nbconvert](https://nbconvert.readthedocs.io/en/latest/)**
 This separate package supports creation of an HTML document from notebook-formatted data, specifically 
 interpreting Jupyterlab's version of markdown. 
 It is necessary to produce an (almost) identical-looking  document to what is rendered in the notebook.
