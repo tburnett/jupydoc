@@ -25,7 +25,7 @@ document with a noteboook, but the *medium* is a Python class, not a  notebook. 
 based on code, that implies developing the code at well&mdash;the document may represent the
 code development itself.
 
-It is lightweight, some ~400 lines of code in Python exclusive of this document, depending on
+It is lightweight, some ~600 lines of code in Python exclusive of this document, depending on
 IPython and nbconvert, and also with non-essential dependencies on pandas, matplotlib, and numpy.   
 Some points to illustrate the design and operation are:
 
