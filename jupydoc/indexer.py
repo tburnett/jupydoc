@@ -148,7 +148,7 @@ def set_paths(path:'', module=None, submodules=None):
         if hasattr(submodule, 'docspath'):
             submodule_docspath = submodule.docspath   
             if not os.path.isdir(submodule_docspath):
-                print(f'Warning: Did not find a folder {subdocspath} from {submodule_name}')
+                print(f'Warning: Did not find a folder {submodule_docspath} from {submodule_name}')
         else:
             submudule_docspath = docspath
             
@@ -185,9 +185,9 @@ def get_doc(name:'module.class'='',
     submodule_names = get_info().keys()
     if not name:
         print(f'submodules: {submodule_names} ')
-        for sname in submodule_names:
-            db = submodule_docspath.get(sname, docspath)
-            print(f'{sname} {db}')
+#         for sname in submodule_names:
+#             db = submodule_docspath.get(sname, docspath)
+#             print(f'{sname} {db}')
         return
     sname = name.split('.')
     submodule_name, class_name = (sname[0],'') if len(sname)<2 else sname
