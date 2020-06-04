@@ -67,7 +67,7 @@ class JupydocImageWrapper(Wrapper):
     def __init__(self, img, vars, **kwargs):
         super().__init__(vars)
         self.img=img
-        for df in document_folders):
+        for df in document_folders:
             img.saveto(df)
 
     def __str__(self):

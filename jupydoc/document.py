@@ -9,7 +9,7 @@ import pandas as pd
 
 from jupydoc import Publisher
 
-class JupyDoc(Publisher):
+class Document(Publisher):
     """
     title: |
             Jupydoc: Generate documents with Python code 

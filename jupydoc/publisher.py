@@ -276,7 +276,7 @@ class Publisher(object):
               image_extensions=['.png', '.jpg', '.gif', '.jpeg'],
               fig_style='jupydoc_fig',
              )->'a JupydocImage object that generates HTML':
-        
+        filename = os.path.expandvars(filename)
         assert os.path.isfile(filename), f'File {filename} not found'
         _, ext = os.path.splitext(filename)
         assert ext in image_extensions,\
