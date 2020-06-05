@@ -8,7 +8,7 @@ import matplotlib.pylab as plt
 from .indexer import DocIndex
 from .indexer import get_path
 
-class Publisher(jupydoc.Publisher):
+class DocPublisher(jupydoc.Publisher):
     """title: Derived publisher for local use
     """
     def __init__(self, **kwargs):
