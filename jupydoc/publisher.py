@@ -22,7 +22,7 @@ class Publisher(object):
     """
 
     def __init__(self, 
-             doc_folder:'if set, save() will write the accumulated output to an HTML document index.html in this folder'='', 
+             docpath:'if set, save() will write the accumulated output to an HTML document index.html in this folder'='', 
              no_display:'set True to disable IPython display output'=False,
              **kwargs
             ):
@@ -52,7 +52,7 @@ class Publisher(object):
                 raise Exception(f'{err}: Section name {name} not defined?')
 
         # output, display stuff
-        self.doc_folder = doc_folder 
+        self.docpath = docpath
         self._no_display = no_display
         self.display_on = not no_display # user can set
         
@@ -67,8 +67,8 @@ class Publisher(object):
         
         #  always saving figures and images locally, also to document destination if set
         fig_folders = ['.']
-        if self.doc_folder:   
-            fig_folders.append(self.doc_folder)
+        if self.docpath:   
+            fig_folders.append(self.docpath)
              
         # instantiate the object replacer: set "fig_folder" for the Figure processing, and set the first figure number
         rp =self.object_replacer = ObjectReplacer(folders=fig_folders)
@@ -205,7 +205,7 @@ class Publisher(object):
 
     def __call__(self, start=None, stop=None, 
                  display_only:'set to only use the display'=False):
-        """assemble and save the document if doc_folder is set
+        """assemble and save the document if docpath is set
         Choose a range of sections to display in the notebook
         """
         assert hasattr(self, 'section_names') and len(self.section_names)>0,\
@@ -219,7 +219,7 @@ class Publisher(object):
             elif stop<0: stop+=len(self.section_names)
 
             # assemble the document by calling all the section functions, displaying the selected subset
-            # close, and save it if self.doc_folder is set
+            # close, and save it if self.docpath is set
             self.clear()
             self.display_on=False
 
@@ -247,7 +247,7 @@ class Publisher(object):
     def save(self):
         """ Create Web document
         """
-        if not self.doc_folder: 
+        if not self.docpath: 
             self.markdown("""
             ---
             Document not saved.""")
@@ -260,13 +260,13 @@ class Publisher(object):
             ---
             Document "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br> 
             created by class <samp>{self.__class__.__name__}</samp> {source_text}<br>
-            saved to <samp>{self.doc_folder}</samp>
+            saved to <samp>{self.docpath}</samp>
             """)
         
-        os.makedirs(os.path.join(self.doc_folder), exist_ok=True)
-        md_to_html(self.data, os.path.join(self.doc_folder,'index.html'), title) 
+        os.makedirs(os.path.join(self.docpath), exist_ok=True)
+        md_to_html(self.data, os.path.join(self.docpath,'index.html'), title) 
          
-        print(f'\n------\nsaved to  "{self.doc_folder}"')
+        print(f'\n------\nsaved to  "{self.docpath}"')
         
      
     def image(self, filename, 

@@ -3,10 +3,9 @@ local enhancement of jupydoc
 """
 import os
 import jupydoc
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 
-from .indexer import DocIndex
-from .indexer import get_path
+from .indexer import DocIndex, get_docs_info
 
 class DocPublisher(jupydoc.Publisher):
     """title: Derived publisher for local use
@@ -23,10 +22,13 @@ class DocPublisher(jupydoc.Publisher):
         filename = stack[1].filename
         module_name = filename.split('/')[-2]
         name = module_name +'.'+ self.__class__.__name__        
-        self.doc_folder = get_path(name)
+        
+        # where documents  will be stored, from spec in our module
+        self.docpath = os.path.join(get_docs_info()['docspath'], name)
+        os.makedirs(self.docpath, exist_ok=True)
         
         # reset the replacer instantiated by base 'class'
-        folders = [self.doc_folder]
+        folders = [self.docpath]
         if not self._no_display:
             # so figures or images will go into local foder
             folders.append('.')
@@ -35,7 +37,7 @@ class DocPublisher(jupydoc.Publisher):
         self.info.update(docname=name, filename=filename)
         
     def setup_save(self):        
-        indexer = DocIndex(self.doc_folder)
+        indexer = DocIndex(self.docpath)
         #  update the entry in the index
         t = dict()
         docname = self.info.get('docname', None)

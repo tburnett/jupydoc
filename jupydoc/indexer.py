@@ -15,7 +15,7 @@ background-color:white;
 }
 table.greyGridTable {
   border: 2px solid #FFFFFF;
-  width: 80%;
+  width: 90%;
   text-align: left;
   border-collapse: collapse;
 }
@@ -56,9 +56,10 @@ List of documents maintained here
 """
 class DocIndex(dict ):
 
-    def __init__(self, document):
+    def __init__(self, document, verbose=False):
         assert os.path.isdir(document), f'Expect a document folder, not {document}'
         self.docspath, _ = os.path.split(document)
+        self.verbose=verbose
         self.index_file = os.path.join(self.docspath, 'index.yaml')
         if os.path.exists(self.index_file):
             try:
@@ -95,7 +96,7 @@ class DocIndex(dict ):
             filename = os.path.join(self.docspath, 'index.html')
         doc = doc_head 
         doc+=f"""<h2>Jupydoc Documents</h2>
-        List of documents at {docspath}<br><br>
+        List of documents at {self.docspath}<br><br>
         """
         doc+= f'<table class="{classname}">\n<thead>\n <tr>\n'
         for head in heads:
@@ -118,94 +119,135 @@ class DocIndex(dict ):
         doc += f'</tbody></table>\n</body>'
         with open(filename, 'w') as out:
             out.write(doc)
-        print(f'Wrote file {filename}')
+        if self.verbose: print(f'Wrote file {filename}')
         return
 ######################################################################    
-# globals
-docspath=''
-module_name = '' # must be set from module
-submodule_names = [] # set to a list of submodule names exported by package
-submodule_info ={}
+# global dict with everything to preserve between calls
+# set by set_docs_info
 
-#print('indexer reloaded!')
+docs_info={}
 
-def set_paths(path:'', module=None, submodules=None):
-    """ Set globals: the  module variable for use by Indexer 
+def get_docs_info():
+    return docs_info
+
+
+def set_docs_info( module_name, path='', verbose=False):
+    """ Set the global dict docs_info: for use by Indexer 
     """
     import importlib
-    global docspath, module_name, submodule_names, submodule_info
     
-    # set default docspath
-    docspath = os.path.realpath(path)
-    if module is None: return
+    info={}
 
-    module_name = module
-    submodule_names = submodules
-    
+    info['module']=module_name
+    info['docspath'] = os.path.realpath(path)
+    module = importlib.import_module(module_name)
+    submodule_names = module.__all__
+    docspath = module.docspath
+    if verbose: print(f'Found submodules {submodule_names}')
+    subs=info['submodule'] = {}
+
     # import each submodule as a check, get each declared docpath if any 
     for submodule_name in submodule_names:
+        if verbose: print(f'checking {submodule_name}...', end='')
+        
         submodule = importlib.import_module('.'+submodule_name, package=module_name)
+        importlib.reload(submodule)
         if hasattr(submodule, 'docspath'):
             submodule_docspath = submodule.docspath   
             if not os.path.isdir(submodule_docspath):
-                print(f'Warning: Did not find a folder {submodule_docspath} from {submodule_name}')
+                print(f'Warning: Did not find a folder'\
+                      f' {submodule_docspath} from {submodule_name}')
         else:
-            submudule_docspath = docspath
+            submodule_docspath = docspath
             
         if not hasattr(submodule, '__all__') or not submodule.__all__:
-            print(f'submodule {submodule_name} did not declare any exported classes with "__all__"')
+            if verbose: print(f'submodule {submodule_name} did not declare any'\
+                  f'exported classes with "__all__"')
             continue
         export_names = submodule.__all__
         assert type(export_names[0])==str, '__all__ not a list of strings?'
-        submodule_info[submodule_name]=dict(docspath=os.path.abspath(submodule_docspath),
+        if verbose: print(f'setting {submodule_name}')
+        subs[submodule_name]=dict(docspath=os.path.abspath(submodule_docspath),
                                            export_names=export_names,)
-        
-    return  
-
-
-def get_info():
-    return submodule_info
-
-def get_path(docname:'submodule_name.class_name')->'folder name to store document':
-    submodule,classname = docname.split('.')
-    info = submodule_info[submodule]
-    assert classname in info['export_names']
-    return submodule_info[submodule]['docspath']+'/'+docname
-
-def get_module_name():
-    return module_name
+    info['submodule']=subs
+    info['current_module'] =None  
     
-# function that will return any document class by name
-def get_doc(name:'module.class'='', 
-           )->'the document class':
-    import os, importlib
-    global docspath,  submodule_docspath
+    # set the global
+    global docs_info
+    docs_info=info
+    return  info
+
+def lookup(name):
+    t = name.split('.')
+    if len(t)>1:
+        module_name,class_name = t 
+    else:
+        module_name, class_name = None, t[0]
+
+    info = docs_info['submodule'] #get_info()
+    if module_name: 
+        module_info = info.get(module_name, None)
+        if not module_info: return None
+        if class_name not in module_info['export_names']: return None
+        return module_name, class_name, module_info.get('docspath', '')
+
+    for module_name, v  in info.items():    
+        if class_name in  v['export_names']:
+            return module_name, class_name, v.get('docspath','')
+    return None
+
+def get_class(submodule_name, class_name, reload=True):
+
+    # for a submodule name, and a class name that it exposes, return the class object,
+    # and the .py module it is in
+    import sys, importlib
+    submodule = sys.modules[submodule_name]
+    cls = eval(f'submodule.{class_name}')
+    src_module_name = cls.__module__     
+    src_module = sys.modules[src_module_name] 
     
-    #module_name,submodule_names = get_module_names()
-    submodule_names = get_info().keys()
-    if not name:
-        print(f'submodules: {submodule_names} ')
-#         for sname in submodule_names:
-#             db = submodule_docspath.get(sname, docspath)
-#             print(f'{sname} {db}')
+    if reload: 
+        importlib.reload(src_module)
+        # new versions of src_module and the class
+        src_module = sys.modules[src_module_name]
+        cls = eval(f'src_module.{class_name}')
+    return  cls
+
+def get_doc(
+        name:'"" or "module" or "module.class"'='', 
+        noreload:'flag to not reload'=False,
+        verbose=False,
+        )->'the document class':
+    
+    import os, sys, importlib
+    global docs_info
+    if verbose:print(f'Called with {name}')
+    
+    t = lookup(name)
+    
+    if not t:
+        info = docs_info
+        print(f'Available document classes: {info}')
         return
-    sname = name.split('.')
-    submodule_name, class_name = (sname[0],'') if len(sname)<2 else sname
+   
+    submodule_name, class_name, docspath= t
     
-    info = get_info()
-    submodule_name, class_name = name.split('.')
+    docs_info['docspath'] = docspath  # give access to current class's submodule spec
+    module_name = docs_info['module'] 
+    if verbose: print(f'Processing {module_name}.{submodule_name}.{class_name},'\
+                      f'\n   docspath={docspath}')
+ 
+    to_reload = not noreload and  docs_info['current_module']
+    reloaded = '(reloaded)' if to_reload else ''
+    cls = get_class(
+            module_name+'.'+submodule_name, 
+            class_name, 
+            reload= to_reload)
     
-    # import the module, get its declared docpath if any
-    module = importlib.import_module('.'+submodule_name, package=get_module_name())
+    docs_info['current_module'] = cls.__module__
     
-    subdocspath = get_path(name)
-    #print(f'Found {submodule_name}.docspath: {subdocspath}')
+    if verbose: print(f'Got the class {cls}')  
+        
+    print(f'Returning  {reloaded} {cls.__module__}.{class_name}')
     
-    export_names = module.__all__
-    assert type(export_names[0])==str, '__all__ not a list of strings?'
-    if not class_name:
-        print(f'submodule {submodule_name} has document classes {export_names}')
-        return      
-    assert class_name in export_names, f'class name "{class_name}" not found in {export_names}'
-    r =  eval('module'+'.'+class_name)
-    return r
+    return cls
