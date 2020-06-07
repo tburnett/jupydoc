@@ -11,47 +11,41 @@ class DocMan(dict):
                  package_name:'Name of a document package',
                  verbose=False,
                 ):
-        global docman_instance
+
         self.verbose=verbose
-        try:
-            self.package= importlib.import_module(package_name)
-        except Exception as msg:
-            print(f'Failed to import {package_name}: {msg}')
-            return
-        self.package_path = self.package.__path__[0]
-        self.package_name = package_name
+        self.load(package_name)
         
-        docspath = getattr(self.package, 'docspath', '')
-        if not docspath:
-            print(f'Document package {package_name} needs to specify "docspath"')
-            return
-        if docspath[0]!='/':
-            docspath = os.path.join(self.package_path, docspath)
-        if os.path.exists(docspath):
-            if  not os.path.isdir(docspath):
-                print(f'Document folder {docspath} is not a directory')
-                return
-        else:
-            try:
-                os.makedirs(docspath, exist_ok=True)
-            except Exception as msg:
-                print('Could not make folder {docspath}: {msg}')
-                return
-        
-        # default docspath from parent module. Perhaps more from submodules
-        self.docspath = docspath
-        self.docpaths={}
-        self.docpaths[package_name]=docspath
-        info = self.setup()
+    def load(self, package_name):
+        global docman_instance
+        verbose=self.verbose
+        docman_instance = None
+
+        info = self.setup(package_name)
         if info:
             self.update(info)
             docman_instance = self
-        else:
-            # something failed
-            docman_instance = None
+
+
         
-    def setup(self):
+    def setup(self, package_name):
         verbose = self.verbose
+        
+        def make_module(package_name):
+            try:
+                package = importlib.import_module(package_name)
+            except Exception as e:
+                print(f'Could not import {package_name}: {e.__class__.__name__}{e.args}')
+                return None
+            docspath = getattr(package, 'docspath', '')
+            if not docspath:
+                print(f'Primary module must define docspath')
+                return None
+            package_path = package.__path__[0]
+            if docspath[0]!='/':
+                docspath = os.path.join(package_path, docspath)
+            self.package_name = package_name
+            self.docpaths=dict(package=docspath)
+            return package
         
         def get_subfolders(package_path):
             # return a list the folders under the source module
@@ -64,7 +58,7 @@ class DocMan(dict):
         
         def make_submodule(doc_folder):
             # make a  submodule from the submodule_path
-            submodule = importlib.import_module(f'.{doc_folder}', package=self.package_name)
+            submodule = importlib.import_module(f'.{doc_folder}', package=package_name)
             docspath =  getattr(submodule, 'docspath', '')
             if docspath:
                 self.docpaths[doc_folder] = docspath
@@ -86,26 +80,19 @@ class DocMan(dict):
             _, spath =os.path.split(submodule_path)
             srcinfo = {}
             old_path, sys.path[0] = sys.path[0], submodule_path
-
+            submodule_name = '.'.join(submodule_path.split('/')[-2:])
             for srcfile in srcfiles:
                 _,file = os.path.split(srcfile)
                 name, _ = os.path.splitext(file)
+                module_name = f'{submodule_name}.{name}'
                 try:
-                    if verbose: print(f'   {name}: importing, ', end='')
-                    src_module = importlib.import_module(name)
+                    if verbose: print(f'   {submodule_name}: importing, ', end='')
+                    src_module = importlib.import_module(module_name)
                 except Exception as e:
                     ename, args,tb = e.__class__.__name__, e.args, e.__traceback__
                     _,subpath = os.path.split(submodule_path) 
                     print(f'\n {ename} at {subpath}.{name}.py:{tb.tb_lasti} {args}')
                     continue
-                try:
-                    newname = spath+'.'+name
-                    if verbose: print(f' renaming to "{newname}"', end='\n\t\t')
-                    sys.modules[newname] = src_module   
-                    src_module = importlib.import_module(newname)
-                except Exception as e:
-                    print(f'\nException:{e.__class__.__name__} {e.vars}')
-
                 try:
                     if verbose: print(f'reloading, ', end='')
                     importlib.reload(src_module)
@@ -117,10 +104,14 @@ class DocMan(dict):
 
             sys.path[0]=old_path
             return srcinfo
-        
+        #--------------------------
+        package = make_module(package_name)
+        if not package: return None
+        self.package_path = package.__path__[0]
         doc_info = {}
         subfolders = get_subfolders(self.package_path)
         if verbose: print(f'Procssing list of subfolders: {subfolders}')
+        
         for subfolder in subfolders:
             if verbose: print(f'  {subfolder}/:')
             submodule_path = make_submodule(subfolder)
@@ -132,9 +123,11 @@ class DocMan(dict):
         return doc_info
     
     def __str__(self):
-        ret = f'{self.package_name}/\n'
+        ret = f'{self.package_name}/  --> {self.docpaths["package"]}\n'
         for key, value in self.items():
-            ret+= f'  {key}/\n'
+            tofolder = self.docpaths.get(key, '')
+            txt = f'--> {tofolder}' if tofolder else '' 
+            ret+= f'  {key}/  {txt}\n'
             for subkey, subvalue in value.items():
                 ret+= f'    {subkey+".py":20s} {subvalue}\n'
         return ret
@@ -170,15 +163,23 @@ class DocMan(dict):
             return None
      
         submodule_name,srcmodule_name, class_name = found.split('.')
-        module_name = submodule_name+'.'+srcmodule_name
-        if self.verbose: print(f'try to return {module_name}.{class_name}()')
+        # construct compound module name
+        module_name = '.'.join([self.package_name,submodule_name, srcmodule_name]) 
+        assert module_name in sys.modules, f'{module_name} not a module?'
         
-        module = sys.modules.get(module_name, None)
+        if self.verbose: print(f'try to return {module_name}()')
+        module = importlib.import_module(module_name)
         if module is None:
             print(f'module {module_name} not found?')
             return None
+        if self.verbose:
+            print(f'reloading module {module.__name__}')
+        try:
+            importlib.reload(module)
+        except Exception as e:
+            print(f'Fail reload {module_name}: {e.__class__}, {e.args}')
         
-        docspath = self.docpaths.get(submodule_name, self.docspath)
+        docspath = self.docpaths.get(submodule_name, self.docpaths['package'])
         if self.verbose: print(f'module {submodule_name}, docspath={docspath}')
         try:
             obj = eval(f'module.{class_name}')(docspath=docspath, **kwargs)
