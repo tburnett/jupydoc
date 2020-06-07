@@ -5,7 +5,8 @@ import os
 import jupydoc
 #import matplotlib.pylab as plt
 
-from .indexer import DocIndex, get_docs_info
+from .indexer import DocIndex#, get_docs_info
+from .doc_manager import docman_instance as docman
 
 class DocPublisher(jupydoc.Publisher):
     """title: Derived publisher for local use
@@ -21,11 +22,8 @@ class DocPublisher(jupydoc.Publisher):
         stack = inspect.stack()
         filename = stack[1].filename
         module_name = filename.split('/')[-2]
-        name = module_name +'.'+ self.__class__.__name__        
-        
-        # where documents  will be stored, from spec in our module
-        self.docpath = os.path.join(get_docs_info()['docspath'], name)
-        os.makedirs(self.docpath, exist_ok=True)
+        name = module_name +'.'+ self.__class__.__name__  
+        self.info.update(docname=name, filename=filename)
         
         # reset the replacer instantiated by base 'class'
         folders = [self.docpath]
@@ -33,15 +31,26 @@ class DocPublisher(jupydoc.Publisher):
             # so figures or images will go into local foder
             folders.append('.')
         self.object_replacer.set_folders(folders)
-            
-        self.info.update(docname=name, filename=filename)
+        
+        docspath = kwargs.pop('docspath', '')
+        if docspath: self.set_docpath(docspath)
+        
+    def set_docpath(self,
+                    docspath:'Abs path to the folder where this doc will be saved'):
+        # where documents  will be stored, from spec in our module
+        
+        self.docpath = os.path.join(docspath, self.info['docname'])
+        os.makedirs(self.docpath, exist_ok=True)
         
     def setup_save(self):        
+
         indexer = DocIndex(self.docpath)
         #  update the entry in the index
         t = dict()
         docname = self.info.get('docname', None)
-        assert docname is not None,f'No name?: {self.info}'
+        if None:
+            print(f'No name for the document?: {self.info}')
+            return
         t[docname] = dict(
                 title=self.title_info['title'], 
                 date=self.date, 
@@ -54,7 +63,12 @@ class DocPublisher(jupydoc.Publisher):
         
     def save(self):
         # overide the file save to update the entry in the index
-        self.indexer = indexer = self.setup_save()
+        if not self.docpath:
+            print(f'No document path defined')
+            return
+        indexer = self.setup_save()
+        if not indexer: return
+        self.indexer = indexer 
         indexer.to_html()
         indexer.save()        
         super().save()

@@ -7,10 +7,12 @@ import yaml
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
 
+## special style stuff or start of document
 jupydoc_css =\
 """
-<style>
-.jupydoc_fig { text-align: center; }
+<style >
+ .jupydoc_fig { text-align: center; }
+ .errorText {color:red;}
 </style>
 """
 
@@ -253,7 +255,7 @@ class Publisher(object):
             Document not saved.""")
             return
         title = self.title_info.get('title', '(untitled)')
-        #source_text = f'in source in samp>{source_file}</samp><br>'
+
         source_text = self.info.get('filename', '')
 
         self.markdown(f"""
@@ -276,25 +278,35 @@ class Publisher(object):
               image_extensions=['.png', '.jpg', '.gif', '.jpeg'],
               fig_style='jupydoc_fig',
              )->'a JupydocImage object that generates HTML':
+        error=''
         filename = os.path.expandvars(filename)
-        assert os.path.isfile(filename), f'File {filename} not found'
-        _, ext = os.path.splitext(filename)
-        assert ext in image_extensions,\
-            f'File {filename} not an image? "{ext}" not in {image_extensions}' 
-               
+        if not os.path.isfile(filename):
+            error = f'File {filename} not found'
+        else:
+            _, ext = os.path.splitext(filename)
+            if not ext in image_extensions:
+                error = f'File {filename} not an image? "{ext}" not in {image_extensions}' 
+
         class JupydocImage(object):
             def __init__(self):
+                self.error = error
+                if self.error: 
+                    return
                 _, self.name=os.path.split(filename) 
                 self.browser_subfolder = browser_subfolder
+
             def set_browser_folder(self, folder):
                 self.browser_subfolder = folder
             def saveto(self, whereto):
                 import shutil
+                if self.error: return
                 full_path = os.path.join(whereto, self.browser_subfolder)
                 os.makedirs(full_path, exist_ok=True)
                 shutil.copyfile(filename, os.path.join(full_path,self.name) )
 
             def __str__(self):
+                if self.error:
+                    return f'<p class="errorText"> {self.error}</p'
                 h = '' if not height else f'height={height}'
                 w  = '' if not width  else f'width={width}'
                 browser_fn = self.browser_subfolder+'/'+self.name

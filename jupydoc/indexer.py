@@ -196,10 +196,11 @@ def lookup(name):
             return module_name, class_name, v.get('docspath','')
     return None
 
-def get_class(submodule_name, class_name, reload=True):
+def get_class(submodule_name, class_name, reload=True, verbose=False):
 
-    # for a submodule name, and a class name that it exposes, return the class object,
-    # and the .py module it is in
+    # for a submodule name, and a class name that it exposes, return the class object
+    # reload the module under the submodule that contains the class source if requested
+    
     import sys, importlib
     submodule = sys.modules[submodule_name]
     cls = eval(f'submodule.{class_name}')
@@ -207,6 +208,7 @@ def get_class(submodule_name, class_name, reload=True):
     src_module = sys.modules[src_module_name] 
     
     if reload: 
+        if verbose: print(f'Reloading {src_module}')
         importlib.reload(src_module)
         # new versions of src_module and the class
         src_module = sys.modules[src_module_name]
@@ -223,6 +225,7 @@ def get_doc(
     global docs_info
     if verbose:print(f'Called with {name}')
     
+    # parse the name: '' | 'class' | submdule.class
     t = lookup(name)
     
     if not t:
@@ -232,6 +235,7 @@ def get_doc(
    
     submodule_name, class_name, docspath= t
     
+    
     docs_info['docspath'] = docspath  # give access to current class's submodule spec
     module_name = docs_info['module'] 
     if verbose: print(f'Processing {module_name}.{submodule_name}.{class_name},'\
@@ -239,15 +243,16 @@ def get_doc(
  
     to_reload = not noreload and  docs_info['current_module']
     reloaded = '(reloaded)' if to_reload else ''
+    
+    # get the class object
     cls = get_class(
             module_name+'.'+submodule_name, 
             class_name, 
-            reload= to_reload)
-    
+            reload= to_reload, verbose=verbose)
+    # if called again, maybe will reload
     docs_info['current_module'] = cls.__module__
     
     if verbose: print(f'Got the class {cls}')  
-        
     print(f'Returning  {reloaded} {cls.__module__}.{class_name}')
     
     return cls
