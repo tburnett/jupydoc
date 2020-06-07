@@ -64,10 +64,12 @@ class FigureWrapper(Wrapper,plt.Figure):
        
 
 class JupydocImageWrapper(Wrapper):
-    def __init__(self, img, vars, **kwargs):
+    def __init__(self, img, vars, folder_name='images', **kwargs):
         super().__init__(vars)
         self.img=img
+        
         for df in document_folders:
+            os.makedirs(os.path.join(df, folder_name),exist_ok=True)
             img.saveto(df)
 
     def __str__(self):
@@ -144,7 +146,10 @@ class ObjectReplacer(dict):
                 #disable for now str=       (StringWrapper, dict(img_folders=folders,) ),
                 JupydocImage =(JupydocImageWrapper, {}),
                 )
-            
+    @property
+    def folders(self):
+        return document_folders
+
   
     def __repr__(self):
         r= pd.DataFrame.from_dict(self,orient='index', columns=['wrapper class','keyword dict'])

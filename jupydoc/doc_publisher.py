@@ -25,13 +25,6 @@ class DocPublisher(jupydoc.Publisher):
         name = module_name +'.'+ self.__class__.__name__  
         self.info.update(docname=name, filename=filename)
         
-        # reset the replacer instantiated by base 'class'
-        folders = [self.docpath]
-        if not self._no_display:
-            # so figures or images will go into local foder
-            folders.append('.')
-        self.object_replacer.set_folders(folders)
-        
         docspath = kwargs.pop('docspath', '')
         if docspath: self.set_docpath(docspath)
         
@@ -41,6 +34,12 @@ class DocPublisher(jupydoc.Publisher):
         
         self.docpath = os.path.join(docspath, self.info['docname'])
         os.makedirs(self.docpath, exist_ok=True)
+        # reset the replacer instantiated by base 'class'
+        folders = [self.docpath]
+        if not self._no_display:
+            # so figures or images will go into local foder
+            folders.append('.')
+        self.object_replacer.set_folders(folders)
         
     def setup_save(self):        
 
