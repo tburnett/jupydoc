@@ -102,7 +102,6 @@ class Publisher(object):
         """
         if self.title_info:
             ti = self.title_info
-            ts=ti.get('title', 'untitled?').split('\n')
             ts=self.title_info['title'].split('\n')
             title=ts[0]
             subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
@@ -272,7 +271,7 @@ class Publisher(object):
         
      
     def image(self, filename, 
-              caption=None, 
+              caption='', 
               width=None,height=None, 
               browser_subfolder:'The subfolder in the HTML location'='images',
               image_extensions=['.png', '.jpg', '.gif', '.jpeg'],

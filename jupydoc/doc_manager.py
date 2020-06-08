@@ -91,7 +91,7 @@ class DocMan(dict):
                 except Exception as e:
                     ename, args,tb = e.__class__.__name__, e.args, e.__traceback__
                     _,subpath = os.path.split(submodule_path) 
-                    print(f'\n {ename} at {subpath}.{name}.py:{tb.tb_lasti} {args}')
+                    print(f'\n {ename} at {subpath}.{name}.py:{tb.tb_lasti} {args[0]}')
                     continue
                 try:
                     if verbose: print(f'reloading, ', end='')
@@ -177,10 +177,13 @@ class DocMan(dict):
         try:
             importlib.reload(module)
         except Exception as e:
-            print(f'Fail reload {module_name}: {e.__class__}, {e.args}')
+            ename, args,tb = e.__class__.__name__, e.args, e.__traceback__
+              
+            print(f'\n {ename} at {srcmodule_name}.py:{tb.tb_lasti} {args[0]} ')
+            return None
         
         docspath = self.docpaths.get(submodule_name, self.docpaths['package'])
-        if self.verbose: print(f'module {submodule_name}, docspath={docspath}')
+        if self.verbose: print(f'module {srcmodle_name}.py:, docspath={docspath}')
         try:
             obj = eval(f'module.{class_name}')(docspath=docspath, **kwargs)
         except Exception as e:
