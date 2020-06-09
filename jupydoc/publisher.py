@@ -36,20 +36,21 @@ class Publisher(object):
         docstring = self.__doc__
         doc_info = yaml.safe_load(docstring) if docstring else {} 
         if not type(doc_info)==dict: doc_info={}
-        self.title_info = kwargs.get('title_info', 
+        self._title_info = kwargs.get('_title_info', 
                                     dict(title=doc_info.pop('title', ''),
                                         author=doc_info.pop('author', ''),
                                         abstract=doc_info.pop('abstract', ''),
                                         )
                               )
-        self.section_names=kwargs.get('section_names',
+        self._section_names=kwargs.get('_section_names',
                                       doc_info.pop('sections','title_page')
-                                     ).split()    
+                                     ).split()   
+        self._section_index = {} # perhaps a TOC? 
         self.info = doc_info # any other stuff available to user
-        self.section_functions = []
-        for name in self.section_names:
+        self._section_functions = []
+        for name in self._section_names:
             try:
-                self.section_functions.append(eval(f'self.{name}'))
+                self._section_functions.append(eval(f'self.{name}'))
             except Exception as err:
                 raise Exception(f'{err}: Section name {name} not defined?')
 
@@ -79,7 +80,7 @@ class Publisher(object):
 #         rp['Figure'][1].update(fig_folders = fig_folders)
     
     def __repr__(self):
-        return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self.title_info["title"]}"'
+        return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self._title_info["title"]}"'
 
     def _publish(self, text):
         """ add text to the document, display with IPython if set"""        
@@ -93,16 +94,16 @@ class Publisher(object):
     def title_page(self):
         """
         <header>
-        <h1>{title}</h1>
+        <a id="title_page"> <h1>{title}</h1> </a>
         <h2>{subtitle}</h2>
         {date_line} 
         {author_line}
         {abstract_text}
         </header>
         """
-        if self.title_info:
-            ti = self.title_info
-            ts=self.title_info['title'].split('\n')
+        if self._title_info:
+            ti = self._title_info
+            ts=self._title_info['title'].split('\n')
             title=ts[0]
             subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
             author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
@@ -111,6 +112,8 @@ class Publisher(object):
             author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
             title_line=f'<h1 text-align:center;>{title}</h1>' if title else '*no title*' 
             subtitle_line=f'<H2> {subtitle}</H2>' if subtitle else '' 
+
+            self._section_index['title_page'] = ['0', title]
         else:
             # No info: only date
             title=subtitle=date_line=author_line=abstract_text=''
@@ -176,13 +179,14 @@ class Publisher(object):
             # yes: this name is the saved section name
             self.subsection_number +=1
             hchars = '###'
+            # maybe make numbering optional?
             hnumber=f'{self.section_number:}.{self.subsection_number}'
             
             # add the locals and kwargs to section symbol list
             vars = self._saved_symbols.copy()
             vars.update(locs)
             vars.update(kwargs)
- 
+
         # run the object replacer
         self.object_replacer(vars)
   
@@ -191,7 +195,10 @@ class Publisher(object):
         
         # prepend section or subsection header if requested
         if section_title:
-            header = f'\n\n{hchars} {hnumber}. {section_title}\n\n'                
+            # save to index dict
+            self._section_index[name] = [hnumber, section_title]
+            # add header id, the name of this section
+            header = f'\n\n{hchars} {hnumber}. <a id={self.section_name}>{section_title} </a>\n\n'                
             md_data = header + md_data
             
         # send it off
@@ -209,22 +216,22 @@ class Publisher(object):
         """assemble and save the document if docpath is set
         Choose a range of sections to display in the notebook
         """
-        assert hasattr(self, 'section_names') and len(self.section_names)>0,\
-            'Must be a least one section in section_names'
+        assert hasattr(self, '_section_names') and len(self._section_names)>0,\
+            'Must be a least one section in _section_names'
         
         def run(start, stop=None):
 
-            if start and start<0: start+=len(self.section_names)
+            if start and start<0: start+=len(self._section_names)
             if stop is None:
                 stop=start
-            elif stop<0: stop+=len(self.section_names)
+            elif stop<0: stop+=len(self._section_names)
 
             # assemble the document by calling all the section functions, displaying the selected subset
             # close, and save it if self.docpath is set
             self.clear()
             self.display_on=False
 
-            for i,function in enumerate(self.section_functions):
+            for i,function in enumerate(self._section_functions):
                 if i==start:
                     self.display_on=True
                 function()
@@ -235,11 +242,11 @@ class Publisher(object):
             if start=='all':
                 run(start=0,stop=-1) # display all
             else:
-                names = self.section_names
+                names = self._section_names
                 assert start in names, f'Name {start} not in lins of section names, {names}'
                 run(names.index(start))
         else:
-            if start is None:start=stop=len(self.section_names) #display none
+            if start is None:start=stop=len(self._section_names) #display none
             run(start,stop=stop)
 
         if not display_only:
@@ -253,7 +260,7 @@ class Publisher(object):
             ---
             Document not saved.""")
             return
-        title = self.title_info.get('title', '(untitled)')
+        title = self._title_info.get('title', '(untitled)')
 
         source_text = self.info.get('filename', '')
 
