@@ -107,7 +107,6 @@ class JupyDoc(DocPublisher):
         * **Publication?**<br>
         Well, I'd not go that far, but the evolution to such should be easy, especially if relevant LaTex
         formulae, plots with captions and relevant description have already been done.
-         {linkto_top}
         """
         self.publishme()
         
@@ -203,7 +202,6 @@ class JupyDoc(DocPublisher):
         The capability shown here for the Figure and DataFrame objects could be easily extended to other
         classes. For user objects it only necessary to define an appropriate class `__str__` function.
         
-        {linkto_top}
         """
         #---------------------------------------------------------------------------------
         q = 1/3; qsq=q*q
@@ -251,7 +249,7 @@ class JupyDoc(DocPublisher):
         first line of the function docstring, followed by a blank line.
         The numbers are sequential as called by default, but can be specified
         by setting `self.section_number` in the code.
-                 {linkto_top}
+    
         """    
         self.publishme()
         
@@ -329,7 +327,7 @@ class JupyDoc(DocPublisher):
         in any of its subsection documents. 
         
         Future enhancements could include a table of contents, appendices, and links within the document.
-                 {linkto_top}
+
         """
         #------------------------
         r = np.random.random(1)[0] # will be available for subsection documents
@@ -489,7 +487,6 @@ class JupyDoc(DocPublisher):
         add a new wrapper class.
         A wrapper class is instantiated with two arguments: the instance that it will interpret, and the kwargs. 
         
-        {linkto_top}
         """
         #---------------------------------------------------------------------------------
         self.publishme()

@@ -6,14 +6,14 @@ import pylab as plt
 import pandas as pd
 
 from jupydoc import DocPublisher
-__docs__ = ['DocsDesign', 'Workflow']
+__docs__ = ['MultipleDocs', 'Workflow']
 
-class DocsDesign(DocPublisher):
+class MultipleDocs(DocPublisher):
     """
-    title: Jupydoc Extension to  Multiple Documents 
+    title: Jupydoc Support for  Multiple Documents 
     author: Toby Burnett
     sections: 
-        title_page setup usage code_development future_tasks
+        title_page setup usage code_development 
         
     abstract: I Discuss the design that extends the basic 
         jupydoc, and how it manages multiple documents.
@@ -25,13 +25,12 @@ class DocsDesign(DocPublisher):
     def setup(self):
         """Setup
         
-        The basic Jupydoc makes it easy to combine creating documents with code development.
-        But that implies a need for a system to manage and index perhaps many documents. 
-        Thus there needs to be two file structures&mdash;
-        the python source code, and the corresponding documents. 
-        In either realm, it should be easy to find the appropriate file.
-              
-        I show the user iterface as an introduction to the design. Here is the contents
+        The basic Jupydoc makes it easy to create documents in the JupyterLab environmant
+        perhaps combined with code development or analysis.
+        This describes additional support to manage and index multiple documents, both the source files
+        and the output documents.
+                      
+        The user iterface is very straightforward. Here is the contents
         of a JupyterLab notebook, a single cell:
         ```
         from jupydoc import DocMan
@@ -39,22 +38,24 @@ class DocsDesign(DocPublisher):
         dm
         ```
         The first line imports the Jupydoc document manager <samp>DocMan</samp>. The second
-        instantiates it with the name of the package, or folder containing source documents. It must be in the Python path. The last line generates a summary of the file structure
+        instantiates it with the name of the package, or folder containing source documents. 
+        It must be in the Python path, or have been already loaded. 
+        The last line generates a summary of the file structure
         and available document classes: 
         ```
         
-            Source files and doc classes:
-                docsrc.jupydoc_doc.py          ['JupyDoc']
-                docsrc.workflow.py             ['DocsDesign', 'Workflow']
+            Modules                         Classes
+             docsrc.jupydoc_doc             ['JupyDoc']
+             docsrc.workflow                ['DocsDesign', 'Workflow']
         ```
-        This is a list of the python module file names that have been imported to discover
+        This is a list of the python module names that have been imported to discover
         their declared class names.
         The package containing these files has of necessity an `__init__.py`. It must declare
         a variable "docspath" to associate another folder with the output. In this case it is
         ```
         docspath = '../docs'
         ```
-        So generated documents are in the same folder as this package.
+        So the generated documents are in the same folder as this package.
 
         The source file needs to declare class(es) that it contains. For the present one has
         the lines:
@@ -78,7 +79,10 @@ class DocsDesign(DocPublisher):
         To support the document structure, the class docstring, which is in 
         [yaml](https://en.wikipedia.org/wiki/YAML),
         is used to define document properties.
+        {linkto_top}
         """
+        
+
         #-------------------------
         self.publishme()
         
@@ -135,7 +139,7 @@ class DocsDesign(DocPublisher):
         Here is what the index looks like:
         
         {index_image}
-        
+         {linkto_top}
         """
         screen_image= self.image("$HOME/images/jupydoc-screen.png", caption='')
         index_image = self.image("$HOME/images/jupydoc-index.png", caption='')
@@ -150,6 +154,7 @@ class DocsDesign(DocPublisher):
         and invoked from here.
         Detailed figure-generating code could be external, where it could be shared by
         different section functions.
+        {linkto_top}
         """
         self.publishme()
         
@@ -161,7 +166,8 @@ class DocsDesign(DocPublisher):
         * Add anchors and generate a table of contents with links to the sections.
         * Perhaps make the package nesting flexible, beyond the two present levels.
         * (new items as they occur to me as the first user)
-         
+        
+        {linkto_top}
         """
         self.publishme()
         
