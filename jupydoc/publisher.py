@@ -13,6 +13,7 @@ jupydoc_css =\
 <style >
  .jupydoc_fig { text-align: center; }
  .errorText {color:red;}
+  hr.thick{border-top: 3px solid black;}
 </style>
 """
 
@@ -64,7 +65,11 @@ class Publisher(object):
                 margin_left='<p style="margin-left: 5%">',  
                 indent='<p style="margin-left: 5%">',
                 endp='</p>',
+                linkto_top = '<a href="top">top</a>'
             )
+        for i,name in enumerate(self._section_names):
+            self.predefined[f'linkto_{name}'] = '<a href="#{name}">Section {i}</a>'
+
         self.date=str(datetime.datetime.now())[:16]
         self.clear()
         
@@ -75,9 +80,7 @@ class Publisher(object):
              
         # instantiate the object replacer: set "fig_folder" for the Figure processing, and set the first figure number
         rp =self.object_replacer = ObjectReplacer(folders=fig_folders)
-#         assert 'Figure' in rp, 'Expected the replacement object to support plt.Figure'
-#         #upate the qwargs for the Figure processing
-#         rp['Figure'][1].update(fig_folders = fig_folders)
+
     
     def __repr__(self):
         return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self._title_info["title"]}"'
@@ -169,6 +172,7 @@ class Publisher(object):
             self.subsection_number=0
             hchars ='##'
             hnumber=f'{self.section_number:}'
+            footer =   '<p style="text-align: right;"><a href="#title_page">top</a></p>' 
             
             # create variable dictionary: predefined, symbol table from calling function, kwargs
             vars = self.predefined.copy()
@@ -181,6 +185,7 @@ class Publisher(object):
             hchars = '###'
             # maybe make numbering optional?
             hnumber=f'{self.section_number:}.{self.subsection_number}'
+            footer = ''
             
             # add the locals and kwargs to section symbol list
             vars = self._saved_symbols.copy()
@@ -198,14 +203,16 @@ class Publisher(object):
             # save to index dict
             self._section_index[name] = [hnumber, section_title]
             # add header id, the name of this section
-            header = f'\n\n{hchars} {hnumber}. <a id={self.section_name}>{section_title} </a>\n\n'                
-            md_data = header + md_data
+            header = f'\n\n{hchars} {hnumber}. {section_title} <a id="{self.section_name}"></a>\n\n'    
+                      
+            md_data = header + md_data + footer
+
             
         # send it off
         self._publish(md_data)
        
     def clear(self):
-        self.data=jupydoc_css
+        self.data=jupydoc_css + '<a id="top"></a>'
         self._fignum=self.section_number=self.subsection_number=0
         self.section_name='' 
         self.class_name=self.__class__.__name__
@@ -264,12 +271,11 @@ class Publisher(object):
 
         source_text = self.info.get('filename', '')
 
-        self.markdown(f"""
-            ---
-            Document "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br> 
-            created by class <samp>{self.__class__.__name__}</samp> {source_text}<br>
-            saved to <samp>{self.docpath}</samp>
-            """)
+        self.markdown(
+            f'<hr class="thick">\nDocument "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br>'\
+            f'\nCreated by class <samp>{self.__class__.__name__}</samp> {source_text}<br>'\
+            f'\nSaved to <samp>{self.docpath}</samp>'
+            )
         
         os.makedirs(os.path.join(self.docpath), exist_ok=True)
         md_to_html(self.data, os.path.join(self.docpath,'index.html'), title) 

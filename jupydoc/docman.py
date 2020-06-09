@@ -215,6 +215,6 @@ class DocMan(object):
             obj = eval(f'module.{classname}')(docspath=docspath, **kwargs)
         except Exception as e:
             print(f'{e.__class__.__name__}: {e.args}')
-            return None
+            return e
         return obj
    
