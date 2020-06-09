@@ -15,8 +15,11 @@ packages = modules = None
 class Modules(dict):
     # manage list of modules, python files 
     def __init__(self):
-        pass
+        self.nsys = len(sys.modules)
 
+    def user_modules(self):
+        return list(sys.modules.keys())[self.nsys-1:]
+        
     def check(self, path, m):
         # if this file is a module, and it has a __docs__, add to package list
         name, ext = os.path.splitext(m)
@@ -25,11 +28,9 @@ class Modules(dict):
         ll = len(rootpath)+1
         # make package name from file path
         p = path[ll:].replace('/', '.')
-        try:
-            mdl = import_module(name, package=p)
-        except Exception as e:
-            print(f'Failed to create {p}.{name}: {e.__repr__()}')
-            return 
+        mdl = import_module(name, package=p)
+        if not mdl:  return 
+        
         # ok, now check for __docs__ in the compiled module
         docs = getattr(mdl, '__docs__', [])
         if docs:
@@ -37,10 +38,10 @@ class Modules(dict):
             return True
         
     def __str__(self):
-        r = f'{"Modules":30s}  Classes'
+        r = f'{"Modules":40s} Classes'
         ll = len(rootpath)+1
         for name, docs in self.items():
-            r += f'\n {name:30s} {docs}'
+            r += f'\n {name:40s} {docs}'
         return r
     def __repr__(self): return str(self)
     
@@ -54,26 +55,24 @@ class Packages(dict):
     def check(self, path):
         ok = os.path.isfile(path+'/__init__.py')
         rploc =  len(rootpath)
-        if ok:
-            p, m = os.path.split(path[rploc+1:])
-            if not p: 
-                return True # first time
+        if not ok: return
+        p, m = os.path.split(path[rploc+1:])
+        if not p: 
+            return True # first time
 
-            if verbose: print(f'create new package {p}.{m} ?')
-            try:
-                pk = import_module(m, package=p)
-            except Exception as e:
-                raise
-                print(f'Failed to create {p}.{m}: {e.__repr__()}')
-                return False
-            self.add_entry(pk)
+        if verbose: print(f'create new package {p}.{m} ?')
+        pk = import_module(m, package=p)
+        if not pk: return
+        self.add_entry(pk)
         return ok 
 
     def add_entry(self, package):
         if not package: return
         docspath = getattr(package, 'docspath', '')
+        if not docspath: return
         if docspath[0]!='/':
             docspath = os.path.join(packagepath, docspath)
+        if verbose: print(f'Added docspath {docspath}')
         self[package.__name__] = docspath
         return True 
 
@@ -84,32 +83,44 @@ class Packages(dict):
         return r
     def __repr__(self): return str(self)
     
+def traceback_message(e):
+    import traceback
+    tb = e.__traceback__
 
+    traceback.print_tb(tb, -1)
+    
 def import_module(name, package=None):
     # return a module object, creating if package specified, which must be the name
     # of an existing module
     if verbose: print(f'Try to import {name}, {package}')
     if not package:
-        # already a module: get it and try to relaod      
-        module  = importlib.import_module(name)
-
+        # already a module: get it and try to reload
+        try:
+            module  = importlib.import_module(name)
+        except Exception as e:
+            print(f'Failed to import existing module {name}')
+            return
         try:
             importlib.reload(module)
             return module
         except Exception as e:
             # compilation error, maybe
-            ename, args,tb = e.__class__.__name__, e.args, e.__traceback__
-            print(f'\n {ename} at {srcmodule_name}.py:{tb.tb_lasti} {args[0]} ')
+            print(f'Failed to import module {name}: ')
+            traceback_message(e)
             return None
     # create new module
     if verbose: print(f'')
     try:
+        # maybe don't need this? Doesn't seem to hurt.
+        #importlib.reload(sys.modules[package]) # since already exists, reload
         return importlib.import_module('.'+name, package=package)
     except Exception as e:
-        print(f'Failed to create {package}.{name}: {e.__repr__()}')
-        raise
-    
-   
+        print(f'Failed trying to create new module adding .{name}'\
+              f'to existing module {package}:\n {e}')
+        # compilation error, maybe
+        traceback_message(e)
+        return None
+
 def find_modules( path):
     if verbose: print(f'check package {path} for subpackages and modules:')
 
@@ -183,7 +194,9 @@ class DocMan(object):
         for doc in docs:
             self.lookup_module[doc] = module.__name__
         modules[module.__name__] = docs
-
+    def user_modules(self):
+        return modules.user_modules()
+                    
     @property
     def doc_classes(self):
         return list(self.lookup_module.keys())
@@ -205,6 +218,7 @@ class DocMan(object):
         package_name = self.lookup_module.get(classname, None)
         if not package_name:
             print(f'{classname} not found in {self.doc_classes}')
+            return
 
         # get the module containing the class declaration
         module = import_module(package_name)
