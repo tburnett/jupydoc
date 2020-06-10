@@ -38,10 +38,16 @@ class Modules(dict):
             return True
         
     def __str__(self):
-        r = f'{"Modules":40s} Classes'
-        ll = len(rootpath)+1
-        for name, docs in self.items():
-            r += f'\n {name:40s} {docs}'
+        r = f'{"Modules":30}{"Classes"}\n'
+        tab=' '*2
+        current = ['']*5
+        for name, docs in dict(self).items():
+            fields = name.split('.'); n=len(fields)
+            for i, field in enumerate(fields[:-1]):
+                if field != current[i]:
+                    current[i]=field
+                    r+= tab*(i+1) + field+'.\n'
+            r+= tab*(n)+ f'{fields[-1]:20s}'+ tab*2+ f'{docs}\n'
         return r
     def __repr__(self): return str(self)
     
