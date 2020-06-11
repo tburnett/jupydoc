@@ -30,30 +30,60 @@ class Publisher(object):
              **kwargs
             ):
         """
-
         """
         
-        # document information from kwargs if set, or yaml-format class docsting
-        docstring = self.__doc__
-        doc_info = yaml.safe_load(docstring) if docstring else {} 
-        if not type(doc_info)==dict: doc_info={}
-        self._title_info = kwargs.get('_title_info', 
-                                    dict(title=doc_info.pop('title', ''),
-                                        author=doc_info.pop('author', ''),
-                                        abstract=doc_info.pop('abstract', ''),
-                                        )
-                              )
-        self._section_names=kwargs.get('_section_names',
-                                      doc_info.pop('sections','title_page')
-                                     ).split()   
-        self._section_index = {} # perhaps a TOC? 
-        self.info = doc_info # any other stuff available to user
-        self._section_functions = []
-        for name in self._section_names:
-            try:
-                self._section_functions.append(eval(f'self.{name}'))
-            except Exception as err:
-                raise Exception(f'{err}: Section name {name} not defined?')
+        def parse_docstring(doc_info):
+            # document information from  dict dervied from  docsting
+
+            self._title_info =  dict(title=doc_info.pop('title', ''),
+                                     author=doc_info.pop('author', ''),
+                                     abstract=doc_info.pop('abstract', ''),
+                                    )
+                                
+            # sections
+            self._section_names= doc_info.pop('sections','title_page').split()   
+            self._section_index = {} # perhaps a TOC? 
+            self.info = doc_info # any other stuff available to user
+            self._section_functions = []
+            for name in self._section_names:
+                try:
+                    self._section_functions.append(eval(f'self.{name}'))
+                except Exception as err:
+                    raise Exception(f'{err}: Section name {name} not defined?')
+            
+            # subsections if any
+            subs = self.info.pop('subsections', {})
+            self._subsection_functions = {}
+            self._subsection_names = {}
+            if not subs: return
+
+            # evaluate any subection functions, put function object indo dict section function keys
+            for sname, stuff in subs.items():
+                self._subsection_names[sname]= subnames = stuff.split()
+                if len(subnames)==0:
+                    print('Did not find subsections declared for section {sname}')
+                if not sname in self._section_names:
+                    raise Exception(f'"{sname}" is not the name of a section:'\
+                            f' expect one of {self._section_names})')
+                sindex = self._section_names.index(sname)
+                sfun = self._section_functions[sindex]
+                subfuns =[]
+                for subname in subnames:
+                    try:
+                        subfuns.append( eval( f'self.{subname}' ) )
+                    except Exception as err:
+                        raise Exception(f'{err}: Subsection name {subname} not defined?')
+                self._subsection_functions[sfun] = subfuns
+
+        docstring = self.__doc__ 
+        try:
+            doc_info = yaml.safe_load(docstring) 
+        except Exception as e:
+            print(f'yaml error? {e.__repr__}')
+            return
+
+        
+        parse_docstring( doc_info)
 
         # output, display stuff
         self.docpath = docpath
@@ -67,6 +97,7 @@ class Publisher(object):
                 endp='</p>',
                 linkto_top = '<a href="top">top</a>'
             )
+        # add anchor links to section
         for i,name in enumerate(self._section_names):
             self.predefined[f'linkto_{name}'] = '<a href="#{name}">Section {i}</a>'
 
@@ -124,6 +155,7 @@ class Publisher(object):
         date_line=f'<p style="text-align: right;">{self.date}</p>'
         self.publishme()
         self.section_number=0
+        self._current_index=[0,0] # so next one will be #1 
             
     def markdown(self, text:"markdown text to add to document",
                  indent:'left margin in percent'=None,
@@ -136,16 +168,12 @@ class Publisher(object):
             text= inspect.cleandoc(text)
         self._publish(text)
 
-    def publishme(self, 
-                  section_title:'Optional title for the section'=None, 
-                  **kwargs:'additional variable definitions',
+    def publishme(self,  **kwargs:'additional variable definitions',
                  )->None:
         """
         """
         import inspect
         
-        self.section_title = section_title
-         
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
         name= self.name = inspect.getframeinfo(back).function
@@ -153,40 +181,34 @@ class Publisher(object):
         doc = inspect.getdoc(eval(f'self.{name}'))
         
         # check for first non-blank line follwed by a blank line to define title
-        if section_title is None:
-            doc_lines = doc.split('\n')
-            first = 0 if  doc_lines[0] else 1
-            if doc_lines[first+1]=='':
-                section_title = doc_lines[0]
-                doc = '\n'.join(doc_lines[first+2:])
 
-        # see if this is a subsection by checking the name of the calling function
-        back2 = back.f_back
-        self.prev_name = inspect.getframeinfo(back2).function
-        
+        doc_lines = doc.split('\n')
+        if len(doc_lines)==0: 
+            print(f'Warning: section {name} has no docstring')
+            return
+        first = 0 if  doc_lines[0] else 1
+        section_title = doc_lines[0]
+        if len(doc_lines)>1:            
+            doc = '\n'.join(doc_lines[first+2:])
+
         # is this a section?
-        if self.prev_name!=self.section_name:
+        self.section_number, self.subsection_number = self._current_index
+        if  self.subsection_number==0:
             # no: initiize for a new section
-            self.section_name=name  
-            self.section_number +=1
-            self.subsection_number=0
             hchars ='##'
             hnumber=f'{self.section_number:}'
-            footer =   '<p style="text-align: right;"><a href="#title_page">top</a></p>' 
-            
+               
             # create variable dictionary: predefined, symbol table from calling function, kwargs
             vars = self.predefined.copy()
             vars.update(locs)
             vars.update(kwargs)
             self._saved_symbols = vars
         else: 
-            # yes: this name is the saved section name
-            self.subsection_number +=1
+            # a subsection
             hchars = '###'
             # maybe make numbering optional?
             hnumber=f'{self.section_number:}.{self.subsection_number}'
-            footer = ''
-            
+ 
             # add the locals and kwargs to section symbol list
             vars = self._saved_symbols.copy()
             vars.update(locs)
@@ -200,17 +222,23 @@ class Publisher(object):
         
         # prepend section or subsection header if requested
         if section_title:
-            # save to index dict
-            self._section_index[name] = [hnumber, section_title]
+            # save to index dict, put in section title, anchor for thise section
+            self._section_index[hnumber] = [name, section_title]
             # add header id, the name of this section
-            header = f'\n\n{hchars} {hnumber}. {section_title} <a id="{self.section_name}"></a>\n\n'    
+            header = f'\n\n{hchars} {hnumber} {section_title} <a id="{name}"></a>\n\n'    
                       
-            md_data = header + md_data + footer
+            md_data = header + md_data 
 
             
         # send it off
         self._publish(md_data)
-       
+    
+    def _section_footer(self):
+        # end of section, including subsections. Add link to top here
+        self._publish('<p style="text-align: right;"><a href="#top">top</a></p>' )
+    
+
+
     def clear(self):
         self.data=jupydoc_css + '<a id="top"></a>'
         self._fignum=self.section_number=self.subsection_number=0
@@ -237,11 +265,22 @@ class Publisher(object):
             # close, and save it if self.docpath is set
             self.clear()
             self.display_on=False
-
-            for i,function in enumerate(self._section_functions):
+            self._current_index = [0,0]
+            for function in self._section_functions:
+                i=self._current_index[0] 
+                self._current_index[0] += 1
                 if i==start:
                     self.display_on=True
                 function()
+
+                subfuns = self._subsection_functions.get(function, [])
+                for subfun in subfuns:
+                    self._current_index[1] = self._current_index[1]+1
+                    subfun()
+                
+                self._section_footer()
+                self._current_index[1]=0
+
                 if i==stop: self.display_on=False
 
         if type(start)==str:

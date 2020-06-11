@@ -7,9 +7,14 @@ markdown, usually HTML.
 Implemented here: Figure, Dataframe, dict
 """
 import os, shutil
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt=None
+try: 
+    import pandas as pd
+except:
+    pd=None
 
 document_folders = ['.']
                      
@@ -21,46 +26,46 @@ class Wrapper(object):
     def __repr__(self): return str(self)
     def _repr_html_(self): return str(self)
 
+if plt:        
+    class FigureWrapper(Wrapper,plt.Figure):
         
-class FigureWrapper(Wrapper,plt.Figure):
-    
-    def __init__(self, fig, vars, folder_name='figs', fig_folders=[], fig_numberer=None,
-                fig_class='jupydoc_fig'):
-        super().__init__(vars)
-        self.__dict__.update(fig.__dict__)
-        self.fig = fig
-        self.folder_name=folder_name
-        self.fig_folders=fig_folders
-        self.numberer=fig_numberer
-        self.number = fig.number = fig_numberer()
-        self.fig_class=fig_class 
+        def __init__(self, fig, vars, folder_name='figs', fig_folders=[], fig_numberer=None,
+                    fig_class='jupydoc_fig'):
+            super().__init__(vars)
+            self.__dict__.update(fig.__dict__)
+            self.fig = fig
+            self.folder_name=folder_name
+            self.fig_folders=fig_folders
+            self.numberer=fig_numberer
+            self.number = fig.number = fig_numberer()
+            self.fig_class=fig_class 
 
-        for folder in fig_folders:
-            os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
+            for folder in fig_folders:
+                os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
 
-    def __str__(self):
-        
-        if not hasattr(self, '_html') :
-        
-            # only has to do this once:
-            fig=self.fig
-            caption=getattr(fig,'caption', '').format(**self.vars)
-            # save the figure to a file, then close it
-            fig.tight_layout(pad=1.05)
-            n =self.number
-            fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
-            browser_fn =fn
-            # actually save it for the document, perhaps both in the local, and document folders
-            for folder in self.fig_folders:
-                fig.savefig(os.path.join(folder,fn))#, **fig_kwargs)
-            plt.close(fig) 
+        def __str__(self):
+            
+            if not hasattr(self, '_html') :
+            
+                # only has to do this once:
+                fig=self.fig
+                caption=getattr(fig,'caption', '').format(**self.vars)
+                # save the figure to a file, then close it
+                fig.tight_layout(pad=1.05)
+                n =self.number
+                fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
+                browser_fn =fn
+                # actually save it for the document, perhaps both in the local, and document folders
+                for folder in self.fig_folders:
+                    fig.savefig(os.path.join(folder,fn))#, **fig_kwargs)
+                plt.close(fig) 
 
-            # add the HTML as an attribute, to insert the image, including optional caption
+                # add the HTML as an attribute, to insert the image, including optional caption
 
-            self._html =  f'<div class="{self.fig_class}"><figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
-                    f' <figcaption>{caption}</figcaption>'\
-                    '</figure></div>\n'
-        return self._html
+                self._html =  f'<div class="{self.fig_class}"><figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
+                        f' <figcaption>{caption}</figcaption>'\
+                        '</figure></div>\n'
+            return self._html
        
 
 class JupydocImageWrapper(Wrapper):
@@ -74,18 +79,18 @@ class JupydocImageWrapper(Wrapper):
 
     def __str__(self):
         return str(self.img)
+if pd:
+    class DataFrameWrapper(Wrapper): 
+        def __init__(self, df, vars, **kwargs):
 
-class DataFrameWrapper(Wrapper): 
-    def __init__(self, df, vars, **kwargs):
+            super().__init__(vars)
+            self._df = df
+            self.kw = kwargs
 
-        super().__init__(vars)
-        self._df = df
-        self.kw = kwargs
-
-    def __str__(self):
-        if not hasattr(self, '_html'):
-            self._html = self._df.to_html(**self.kw) #**dfkw) # self._df._repr_html_()                
-        return self._html
+        def __str__(self):
+            if not hasattr(self, '_html'):
+                self._html = self._df.to_html(**self.kw) #**dfkw) # self._df._repr_html_()                
+            return self._html
 
 class DictWrapper(Wrapper):
     def __init__(self, d, vars, **kwargs):
@@ -137,15 +142,22 @@ class ObjectReplacer(dict):
                          justify='right',
                          float_format=lambda x: f'{x:.3f}',
                        )
-        self.update(dict(
-                Figure=    (FigureWrapper, dict(fig_folders=folders,
-                                                fig_numberer=FigNumberer() )
-                           ),
-                DataFrame= (DataFrameWrapper, df_kwargs)),
-                dict=      (DictWrapper, {} ),
-                #disable for now str=       (StringWrapper, dict(img_folders=folders,) ),
-                JupydocImage =(JupydocImageWrapper, {}),
+        self.update(dict( 
+                JupydocImage =( JupydocImageWrapper, {}),                
                 )
+        )
+        if pd:
+            self.update(dict(  
+                DataFrame= (DataFrameWrapper, df_kwargs),
+                )
+            )
+        if plt:
+            self.update(dict(  
+                Figure=    (FigureWrapper, dict(fig_folders=folders,
+                                                fig_numberer=FigNumberer() ),),
+                ),
+            )
+
     @property
     def folders(self):
         return document_folders
