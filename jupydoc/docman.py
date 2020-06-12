@@ -38,7 +38,7 @@ class Modules(dict):
             return True
         
     def __str__(self):
-        r = f'{"Modules":30}{"Classes"}\n'
+        r = f'{"Modules":25}{"Classes"}\n'
         tab=' '*2
         current = ['']*5
         for name, docs in dict(self).items():
@@ -121,7 +121,7 @@ def import_module(name, package=None):
         #importlib.reload(sys.modules[package]) # since already exists, reload
         return importlib.import_module('.'+name, package=package)
     except Exception as e:
-        print(f'Failed trying to create new module adding .{name}'\
+        print(f'Failed trying to create new module adding .{name} '\
               f'to existing module {package}:\n {e}')
         # compilation error, maybe
         traceback_message(e)
@@ -156,19 +156,21 @@ class DocMan(object):
         
         verbose =set_verbose
         
-        if docspath:
-            self.docspath = docspath if docspath[0]=='/' else \
-                os.path.join(packagepath, docspath) 
+        self.docspath = docspath
         
         # import the root package, check it
         rootpackage= import_module(rootname)
+        if not rootpackage:
+            print(f'A package {rootname} was not found.')
+            return
         
         # is it a file?
         if not hasattr(rootpackage, '__path__'):
+            # yes: very simple
             rootpath, _ = os.path.split(rootpackage.__file__)
-            docspath = docspath or rootpath
-            self.docspath = docspath if docspath[0]=='/' \
-                    else os.path.join(rootpath, docspath)
+            # docspath = docspath or rootpath
+            # self.docspath = docspath if docspath[0]=='/' \
+                    # else os.path.join(rootpath, docspath)
             self.setup_file(rootpackage)
             return
         
@@ -200,6 +202,7 @@ class DocMan(object):
         for doc in docs:
             self.lookup_module[doc] = module.__name__
         modules[module.__name__] = docs
+
     def user_modules(self):
         return modules.user_modules()
                     
@@ -211,7 +214,7 @@ class DocMan(object):
         return dict(packages)
 
     def __str__(self):
-        return str(modules)
+        return str(modules) + f'\ndocspath: {self.docspath}'
     def __repr__(self): return str(self)
    
 
@@ -231,8 +234,10 @@ class DocMan(object):
         docspath = packages.get(package_name, self.docspath )
 
         try:
-            # call the class constructor, setting the docspath for it
-            obj = eval(f'module.{classname}')(docspath=docspath, **kwargs)
+            # call the class constructor, setting a default, parhaps
+            #  docspath for it
+
+            obj = eval(f'module.{classname}')(docman_docspath=docspath, **kwargs)
         except Exception as e:
             print(f'{e.__class__.__name__}: {e.args}')
             return e

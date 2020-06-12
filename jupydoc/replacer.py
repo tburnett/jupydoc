@@ -4,9 +4,11 @@ THis defines a jupydoc helper which manages creation of HTML for objects of sele
 For such classes, replace the object in the variable dictionary with a new one that implements a __str__ function, which returns
 markdown, usually HTML.
 
-Implemented here: Figure, Dataframe, dict
+Implemented here: dict, and if can be importer plt.Figure, pd.Dataframe
 """
 import os, shutil
+import pprint 
+
 try:
     import matplotlib.pyplot as plt
 except:
@@ -92,12 +94,19 @@ if pd:
                 self._html = self._df.to_html(**self.kw) #**dfkw) # self._df._repr_html_()                
             return self._html
 
-class DictWrapper(Wrapper):
-    def __init__(self, d, vars, **kwargs):
-        self.df=pd.DataFrame([d.keys(), d.values()], 
-                             index='key value'.split()).T
+class PPWrapper(Wrapper):
+    """Use PrettyPrint
+    """
+
+
+    def __init__(self, obj, vars, **kwargs):
+        self.obj =obj
+        self.indent = kwargs.pop('indent', '5%')
+
     def __str__(self):
-        return self.df.to_html(index=False)
+        pp = pprint.PrettyPrinter(indent=2)
+        text = pp.pformat(self.obj).replace('\n', '<br>\n')
+        return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
 
 def check_image_file(filename):
     if not os.path.isfile(filename): return False
@@ -130,48 +139,55 @@ class ObjectReplacer(dict):
                   folders:'one or more document folders to save images'=['.'], 
                 ):
         self.set_folders(folders)
+
+        self.add_rep('dict', PPWrapper)  
+        self.add_rep('list', PPWrapper)
         
+        
+    def add_rep(self, class_name:'name of class to replace', 
+                    out_class:'replacement class', 
+                    kwargs:'Any parameters to pass to output class'={}):
+        """
+        add a replacement entry
+        """
+        self[class_name] = (out_class, kwargs)
+    
     def set_folders(self, folders):
+        # folder management for these guys
         global document_folders
         document_folders = folders
         # set up 
-        df_kwargs= dict( notebook=True, 
-                         max_rows=10, 
-                         index=False,
-                         show_dimensions=False, 
-                         justify='right',
-                         float_format=lambda x: f'{x:.3f}',
-                       )
-        self.update(dict( 
-                JupydocImage =( JupydocImageWrapper, {}),                
-                )
-        )
+
         if pd:
-            self.update(dict(  
-                DataFrame= (DataFrameWrapper, df_kwargs),
-                )
-            )
+            df_kwargs= dict( notebook=True, 
+                    max_rows=10, 
+                    index=False,
+                    show_dimensions=False, 
+                    justify='right',
+                    float_format=lambda x: f'{x:.3f}',
+                    )
+            self.add_rep('DataFrame', DataFrameWrapper, df_kwargs)
+            
         if plt:
-            self.update(dict(  
-                Figure=    (FigureWrapper, dict(fig_folders=folders,
-                                                fig_numberer=FigNumberer() ),),
-                ),
-            )
+            self.add_rep('Figure', FigureWrapper, 
+                    dict(fig_folders=folders,
+                        fig_numberer=FigNumberer(), 
+                    )
+                )
+            
 
     @property
     def folders(self):
         return document_folders
 
   
-    def __repr__(self):
-        r= pd.DataFrame.from_dict(self,orient='index', columns=['wrapper class','keyword dict'])
-        r.index.name='key'
-        return r._repr_html_()
-        
+    # def __repr__(self):
+    #     return self)
+         
     def __call__(self, vars):
         """for each value in the vars dict, replace it with a new object that
         implements return of appropriate HTML for the original object
-        (Note uses the *class name* as a key)
+        (Note uses the *class name*, which may not be unique, as a key)
         """
         for key,value in vars.items():
 
@@ -181,6 +197,24 @@ class ObjectReplacer(dict):
                 newvalue = new_class(value, vars, **kwargs)
                 vars[key] = newvalue
                 
+    def test(self, var:'any object'):
+        """Test replacement for a given value. print str(var) before and after replacement
+        """
+        _class = var.__class__
+        _name = _class.__name__
+        if _name not in self:
+            print(f'no subsitution for class {_name}: "{var}"')
+            return
+
+        print(f'replacement: {self[_name]}')
+        print(f'before: "{var}"')
+        # make a simple vars dict: key is the variable name, value its object
+        vars = {'x': var}
+        self(vars)
+        x = vars['x']
+        print(f'after : "{x}"')
+        return 
+
 def test(previous=20):
     # define a few figures, assign differned fignumbers
     fig1, ax1 = plt.subplots(num=1) 

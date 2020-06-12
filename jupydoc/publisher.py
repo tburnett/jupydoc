@@ -52,7 +52,7 @@ class Publisher(object):
                     raise Exception(f'{err}: Section name {name} not defined?')
             
             # subsections if any
-            subs = self.info.pop('subsections', {})
+            subs = self.subsection_dict =self.info.pop('subsections', {})
             self._subsection_functions = {}
             self._subsection_names = {}
             if not subs: return
@@ -180,7 +180,7 @@ class Publisher(object):
         locs = inspect.getargvalues(back).locals
         doc = inspect.getdoc(eval(f'self.{name}'))
         
-        # check for first non-blank line follwed by a blank line to define title
+        # check for first non-blank line follwoed by a blank line to define title
 
         doc_lines = doc.split('\n')
         if len(doc_lines)==0: 
