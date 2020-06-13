@@ -76,6 +76,7 @@ class JupydocImageWrapper(Wrapper):
         self.img=img
         
         for df in document_folders:
+            print(f'*** Saving to {df}/{folder_name}')
             os.makedirs(os.path.join(df, folder_name),exist_ok=True)
             img.saveto(df)
 
@@ -98,7 +99,6 @@ class PPWrapper(Wrapper):
     """Use PrettyPrint
     """
 
-
     def __init__(self, obj, vars, **kwargs):
         self.obj =obj
         self.indent = kwargs.pop('indent', '5%')
@@ -112,7 +112,6 @@ def check_image_file(filename):
     if not os.path.isfile(filename): return False
     ext = os.path.splitext(filename)[-1]
     return ext  in ['.png', '.jpg']
-
 
 
 class FigNumberer(object):

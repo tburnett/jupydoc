@@ -4,8 +4,8 @@ Producing documents using Jupyterlab with Jupydoc
 """
 import os
 import numpy as np
-import pylab as plt
-import pandas as pd
+# import pylab as plt
+# import pandas as pd
 
 from jupydoc import DocPublisher
 __docs__ = ['JupyDoc', ]

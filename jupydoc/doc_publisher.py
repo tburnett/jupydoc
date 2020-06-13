@@ -25,20 +25,22 @@ class DocPublisher(jupydoc.Publisher):
         name = module_name +'.'+ self.__class__.__name__  
         self.info.update(docname=name, filename=filename)
         
-        docspath = kwargs.pop('docspath', '')
-        if docspath: self.set_docpath(docspath)
+        docspath = kwargs.pop('docman_docspath', '') # set in DocMan
+        if docspath: self.set_doc_folders(docspath)
         
-    def set_docpath(self,
+    def set_doc_folders(self,
                     docspath:'Abs path to the folder where this doc will be saved'):
         # where documents  will be stored, from spec in our module
         
-        self.docpath = os.path.join(docspath, self.info['docname'])
+        self.docpath = os.path.abspath(os.path.join(docspath, self.info['docname']))
         os.makedirs(self.docpath, exist_ok=True)
+
         # reset the replacer instantiated by base 'class'
         folders = [self.docpath]
         if not self._no_display:
             # so figures or images will go into local foder
             folders.append('.')
+        self.doc_folders = folders
         self.object_replacer.set_folders(folders)
         
     def setup_save(self):        

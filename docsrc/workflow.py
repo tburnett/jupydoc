@@ -2,18 +2,22 @@
 """
 import os
 import numpy as np
-import pylab as plt
-import pandas as pd
+# import pylab as plt
+# import pandas as pd
 
 from jupydoc import DocPublisher
 __docs__ = ['MultipleDocs', 'Workflow']
 
 class MultipleDocs(DocPublisher):
     """
-    title: Jupydoc Support for  Multiple Documents 
-    author: Toby Burnett
+    title: |
+        Jupydoc Support for  Multiple Documents 
+    author: |
+        Toby Burnett
+        University of Washington
+        tburnett@uw.edu
     sections: 
-        title_page setup usage code_development 
+        setup usage code_development 
         
     abstract: I Discuss the design that extends the basic 
         jupydoc, and how it manages multiple documents.
@@ -79,7 +83,7 @@ class MultipleDocs(DocPublisher):
         To support the document structure, the class docstring, which is in 
         [yaml](https://en.wikipedia.org/wiki/YAML),
         is used to define document properties.
-        {linkto_top}
+  
         """
         
 
@@ -139,7 +143,7 @@ class MultipleDocs(DocPublisher):
         Here is what the index looks like:
         
         {index_image}
-         {linkto_top}
+  
         """
         screen_image= self.image("$HOME/images/jupydoc-screen.png", caption='')
         index_image = self.image("$HOME/images/jupydoc-index.png", caption='')
@@ -154,7 +158,7 @@ class MultipleDocs(DocPublisher):
         and invoked from here.
         Detailed figure-generating code could be external, where it could be shared by
         different section functions.
-        {linkto_top}
+      
         """
         self.publishme()
         
@@ -167,7 +171,7 @@ class MultipleDocs(DocPublisher):
         * Perhaps make the package nesting flexible, beyond the two present levels.
         * (new items as they occur to me as the first user)
         
-        {linkto_top}
+  
         """
         self.publishme()
         

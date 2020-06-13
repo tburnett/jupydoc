@@ -33,7 +33,7 @@ class Publisher(object):
         """
         
         def parse_docstring(doc_info):
-            # document information from  dict dervied from  docsting
+            # document information from  dict derivied from  docsting
 
             self._title_info =  dict(title=doc_info.pop('title', ''),
                                      author=doc_info.pop('author', ''),
@@ -41,7 +41,7 @@ class Publisher(object):
                                     )
                                 
             # sections
-            self._section_names= doc_info.pop('sections','title_page').split()   
+            self._section_names= ['title_page'] + doc_info.pop('sections','title_page').split()   
             self._section_index = {} # perhaps a TOC? 
             self.info = doc_info # any other stuff available to user
             self._section_functions = []
@@ -79,16 +79,19 @@ class Publisher(object):
         try:
             doc_info = yaml.safe_load(docstring) 
         except Exception as e:
-            print(f'yaml error? {e.__repr__}')
+            print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
             return
-
         
         parse_docstring( doc_info)
 
         # output, display stuff
         self.docpath = docpath
+        self.doc_folders = [docpath] if docpath else []
+
         self._no_display = no_display
         self.display_on = not no_display # user can set
+        
+        self.object_replacer = ObjectReplacer()
         
         # predefind symbols for convenience
         self.predefined= dict(
@@ -103,15 +106,8 @@ class Publisher(object):
 
         self.date=str(datetime.datetime.now())[:16]
         self.clear()
-        
-        #  always saving figures and images locally, also to document destination if set
-        fig_folders = ['.']
-        if self.docpath:   
-            fig_folders.append(self.docpath)
-             
-        # instantiate the object replacer: set "fig_folder" for the Figure processing, and set the first figure number
-        rp =self.object_replacer = ObjectReplacer(folders=fig_folders)
 
+       
     
     def __repr__(self):
         return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self._title_info["title"]}"'
@@ -135,6 +131,7 @@ class Publisher(object):
         {abstract_text}
         </header>
         """
+
         if self._title_info:
             ti = self._title_info
             ts=self._title_info['title'].split('\n')
@@ -142,7 +139,7 @@ class Publisher(object):
             subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
             author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
             abstract=ti.get('abstract', '')
-            abstract_text=f'<p style="margint: 0% 10%" >ABSTRACT: {abstract}</p>' if abstract else ''
+            abstract_text=f'<p style="margint: 0% 10%" >{abstract}</p>' if abstract else ''
             author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
             title_line=f'<h1 text-align:center;>{title}</h1>' if title else '*no title*' 
             subtitle_line=f'<H2> {subtitle}</H2>' if subtitle else '' 
@@ -154,73 +151,67 @@ class Publisher(object):
             
         date_line=f'<p style="text-align: right;">{self.date}</p>'
         self.publishme()
-        self.section_number=0
-        self._current_index=[0,0] # so next one will be #1 
-            
-    def markdown(self, text:"markdown text to add to document",
-                 indent:'left margin in percent'=None,
-                 clean:"if set, run inspect.cleandoc" =True,
-                )->'markdown':
-        """Add md text to the display"""
-        if indent:
-            text = f'<p style="margin-left: [indent]%" {text}</p>'
-        if clean:
-            text= inspect.cleandoc(text)
-        self._publish(text)
+
 
     def publishme(self,  **kwargs:'additional variable definitions',
                  )->None:
         """
         """
         import inspect
-        
+        self.section_number, self.subsection_number = self._current_index
+
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
         name= self.name = inspect.getframeinfo(back).function
         locs = inspect.getargvalues(back).locals
         doc = inspect.getdoc(eval(f'self.{name}'))
         
-        # check for first non-blank line follwoed by a blank line to define title
+        # For sections, check for first non-blank line follwoed by a blank line to define title
+        if self.section_number>0:
+            doc_lines = doc.split('\n')
+            if len(doc_lines)==0: 
+                print(f'Warning: section {name} has no docstring')
+                return
+            first = 0 if  doc_lines[0] else 1
+            section_title = doc_lines[0]
+            if len(doc_lines)>1:            
+                doc = '\n'.join(doc_lines[first+2:])
+        else: self.section_title = ''
 
-        doc_lines = doc.split('\n')
-        if len(doc_lines)==0: 
-            print(f'Warning: section {name} has no docstring')
-            return
-        first = 0 if  doc_lines[0] else 1
-        section_title = doc_lines[0]
-        if len(doc_lines)>1:            
-            doc = '\n'.join(doc_lines[first+2:])
+        
+        # symbol table starts with these
+        vars = self.predefined.copy()
 
-        # is this a section?
-        self.section_number, self.subsection_number = self._current_index
-        if  self.subsection_number==0:
-            # no: initiize for a new section
+        if self.section_number==0:
+            # flag for title page
+            section_title = ''
+        
+        elif  self.subsection_number==0:
+            # a new non-title section
             hchars ='##'
             hnumber=f'{self.section_number:}'
                
-            # create variable dictionary: predefined, symbol table from calling function, kwargs
-            vars = self.predefined.copy()
-            vars.update(locs)
-            vars.update(kwargs)
+            # for subsections, if any
             self._saved_symbols = vars
         else: 
             # a subsection
             hchars = '###'
             # maybe make numbering optional?
             hnumber=f'{self.section_number:}.{self.subsection_number}'
- 
-            # add the locals and kwargs to section symbol list
-            vars = self._saved_symbols.copy()
-            vars.update(locs)
-            vars.update(kwargs)
+             # add the locals and kwargs to section symbol list
+            vars.update(self._saved_symbols)
+
+        # finally add local symbols and kwargs    
+        vars.update(locs)
+        vars.update(kwargs)
 
         # run the object replacer
         self.object_replacer(vars)
-  
+
         # Now use the helper function to the formatting, replace {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
         
-        # prepend section or subsection header if requested
+        # prepend section or subsection header if requested and not tile
         if section_title:
             # save to index dict, put in section title, anchor for thise section
             self._section_index[hnumber] = [name, section_title]
@@ -228,7 +219,6 @@ class Publisher(object):
             header = f'\n\n{hchars} {hnumber} {section_title} <a id="{name}"></a>\n\n'    
                       
             md_data = header + md_data 
-
             
         # send it off
         self._publish(md_data)
@@ -247,13 +237,12 @@ class Publisher(object):
 
 
     def __call__(self, start=None, stop=None, 
-                 display_only:'set to only use the display'=False):
+                 display_only:'set to only use the display'=False,
+                 ):
         """assemble and save the document if docpath is set
         Choose a range of sections to display in the notebook
         """
-        assert hasattr(self, '_section_names') and len(self._section_names)>0,\
-            'Must be a least one section in _section_names'
-        
+
         def run(start, stop=None):
 
             if start and start<0: start+=len(self._section_names)
@@ -266,11 +255,12 @@ class Publisher(object):
             self.clear()
             self.display_on=False
             self._current_index = [0,0]
+
+            # loop over sections, starting with title
             for function in self._section_functions:
-                i=self._current_index[0] 
-                self._current_index[0] += 1
-                if i==start:
-                    self.display_on=True
+                i = self._current_index[0] 
+                if i==start:  self.display_on=True
+
                 function()
 
                 subfuns = self._subsection_functions.get(function, [])
@@ -278,10 +268,13 @@ class Publisher(object):
                     self._current_index[1] = self._current_index[1]+1
                     subfun()
                 
-                self._section_footer()
-                self._current_index[1]=0
-
-                if i==stop: self.display_on=False
+                # done with section:
+                if self._current_index[0]>0:
+                    self._section_footer()
+                self._current_index = [i+1,0]
+ 
+                if i==stop:     self.display_on=False
+   
 
         if type(start)==str:
             start=start.strip()
@@ -320,7 +313,17 @@ class Publisher(object):
         md_to_html(self.data, os.path.join(self.docpath,'index.html'), title) 
          
         print(f'\n------\nsaved to  "{self.docpath}"')
-        
+             
+    def markdown(self, text:"markdown text to add to document",
+                 indent:'left margin in percent'=None,
+                 clean:"if set, run inspect.cleandoc" =True,
+                )->'markdown':
+        """Add md text to the display"""
+        if indent:
+            text = f'<p style="margin-left: [indent]%" {text}</p>'
+        if clean:
+            text= inspect.cleandoc(text)
+        self._publish(text)        
      
     def image(self, filename, 
               caption='', 
@@ -337,19 +340,24 @@ class Publisher(object):
             _, ext = os.path.splitext(filename)
             if not ext in image_extensions:
                 error = f'File {filename} not an image? "{ext}" not in {image_extensions}' 
+            self.docpath
 
         class JupydocImage(object):
-            def __init__(self):
+            def __init__(self, folders):
                 self.error = error
                 if self.error: 
                     return
                 _, self.name=os.path.split(filename) 
-                self.browser_subfolder = browser_subfolder
-
+                self.set_browser_folder(browser_subfolder)
+                for folder in folders:
+                    self.saveto(folder)
+                
             def set_browser_folder(self, folder):
                 self.browser_subfolder = folder
+
             def saveto(self, whereto):
                 import shutil
+                print(f'**** saving to {whereto}?')
                 if self.error: return
                 full_path = os.path.join(whereto, self.browser_subfolder)
                 os.makedirs(full_path, exist_ok=True)
@@ -365,7 +373,8 @@ class Publisher(object):
                     f'  alt="Image {self.name} at {browser_fn}">'\
                     f' \n  <figcaption>{caption}</figcaption>'\
                     '\n</figure></div>\n'
-        return JupydocImage()        
+        r = JupydocImage(folders = self.doc_folders) 
+        return r       
     #-----------------------------------------------------------
     # User convenience functions
 
