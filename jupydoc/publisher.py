@@ -39,9 +39,11 @@ class Publisher(object):
                                      author=doc_info.pop('author', ''),
                                      abstract=doc_info.pop('abstract', ''),
                                     )
-                                
+            self.info = doc_info # any other stuff available to user    
+
             # sections
             self._section_names= ['title_page'] + doc_info.pop('sections','title_page').split()   
+            self.info['function_names'] = self._section_names
             self._section_index = {} # perhaps a TOC? 
             self.info = doc_info # any other stuff available to user
             self._section_functions = []
@@ -60,6 +62,7 @@ class Publisher(object):
             # evaluate any subection functions, put function object indo dict section function keys
             for sname, stuff in subs.items():
                 self._subsection_names[sname]= subnames = stuff.split()
+                self.info['function_names'] += subnames
                 if len(subnames)==0:
                     print('Did not find subsections declared for section {sname}')
                 if not sname in self._section_names:
@@ -236,58 +239,53 @@ class Publisher(object):
         self.class_name=self.__class__.__name__
 
 
-    def __call__(self, start=None, stop=None, 
+    def __call__(self, examine=None, 
                  display_only:'set to only use the display'=False,
                  ):
         """assemble and save the document if docpath is set
         Choose a range of sections to display in the notebook
         """
 
-        def run(start, stop=None):
+        extype = type(examine)
+        if extype==float:
+            selected = [int(examine) , int(examine*10%10)]
 
-            if start and start<0: start+=len(self._section_names)
-            if stop is None:
-                stop=start
-            elif stop<0: stop+=len(self._section_names)
-
-            # assemble the document by calling all the section functions, displaying the selected subset
-            # close, and save it if self.docpath is set
-            self.clear()
-            self.display_on=False
-            self._current_index = [0,0]
-
-            # loop over sections, starting with title
-            for function in self._section_functions:
-                i = self._current_index[0] 
-                if i==start:  self.display_on=True
-
-                function()
-
-                subfuns = self._subsection_functions.get(function, [])
-                for subfun in subfuns:
-                    self._current_index[1] = self._current_index[1]+1
-                    subfun()
-                
-                # done with section:
-                if self._current_index[0]>0:
-                    self._section_footer()
-                self._current_index = [i+1,0]
- 
-                if i==stop:     self.display_on=False
-   
-
-        if type(start)==str:
-            start=start.strip()
-            if start=='all':
-                run(start=0,stop=-1) # display all
-            else:
-                names = self._section_names
-                assert start in names, f'Name {start} not in lins of section names, {names}'
-                run(names.index(start))
+        elif extype==int:
+            selected = [examine, 0]
         else:
-            if start is None:start=stop=len(self._section_names) #display none
-            run(start,stop=stop)
+            # must be name of a section 
+            if examine in self._subsection_names:
+                selected = self._subsection_names.index(examine)
+            else: selected=None
 
+        # assemble the document by calling all the section functions, displaying the selected subset
+        # close, and save it if self.docpath is set
+        self.clear()
+        self.display_on=False
+        self._current_index = [0,0]
+
+        # loop over sections, starting with title
+        for function in self._section_functions:
+            i = self._current_index[0] 
+            self.display_on = [i,0]==selected
+
+            function()
+
+            subfuns = self._subsection_functions.get(function, [])
+            for subfun in subfuns:
+                self._current_index[1] = self._current_index[1]+1
+                if not self.display_on:
+                    self.display_on = self._current_index==selected
+                subfun()
+            
+            # done with section:
+            if self._current_index[0]>0:
+                self._section_footer()
+            self._current_index = [i+1,0]
+
+            self.display_on=False
+
+ 
         if not display_only:
             self.save()
     
@@ -335,7 +333,7 @@ class Publisher(object):
         error=''
         filename = os.path.expandvars(filename)
         if not os.path.isfile(filename):
-            error = f'File {filename} not found'
+            error = f'Image file {filename} not found.'
         else:
             _, ext = os.path.splitext(filename)
             if not ext in image_extensions:
@@ -357,7 +355,6 @@ class Publisher(object):
 
             def saveto(self, whereto):
                 import shutil
-                print(f'**** saving to {whereto}?')
                 if self.error: return
                 full_path = os.path.join(whereto, self.browser_subfolder)
                 os.makedirs(full_path, exist_ok=True)
@@ -365,7 +362,7 @@ class Publisher(object):
 
             def __str__(self):
                 if self.error:
-                    return f'<p class="errorText"> {self.error}</p'
+                    return f'<p class="errorText"> <b>{self.error}</b></p>'
                 h = '' if not height else f'height={height}'
                 w  = '' if not width  else f'width={width}'
                 browser_fn = self.browser_subfolder+'/'+self.name

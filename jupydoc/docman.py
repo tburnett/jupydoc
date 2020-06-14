@@ -77,7 +77,7 @@ class Packages(dict):
         docspath = getattr(package, 'docspath', '')
         if not docspath: return
         if docspath[0]!='/':
-            docspath = os.path.join(packagepath, docspath)
+            docspath = os.path.abspath(os.path.join(packagepath, docspath))
         if verbose: print(f'Added docspath {docspath}')
         self[package.__name__] = docspath
         return True 
@@ -92,7 +92,7 @@ class Packages(dict):
 def traceback_message(e):
     import traceback
     tb = e.__traceback__
-
+    self.exception = e # save for possible detailed exam
     traceback.print_tb(tb, -1)
     
 def import_module(name, package=None):
@@ -104,14 +104,14 @@ def import_module(name, package=None):
         try:
             module  = importlib.import_module(name)
         except Exception as e:
-            print(f'Failed to import existing module {name}')
+            print(f'Failed to import existing module "{name}"')
             return
         try:
             importlib.reload(module)
             return module
         except Exception as e:
             # compilation error, maybe
-            print(f'Failed to import module {name}: ')
+            print(f'Failed to reload module "{name}": ')
             traceback_message(e)
             return None
     # create new module
@@ -236,10 +236,11 @@ class DocMan(object):
         try:
             # call the class constructor, setting a default, parhaps
             #  docspath for it
-
-            obj = eval(f'module.{classname}')(docman_docspath=docspath, **kwargs)
+            toeval = f'module.{classname}'
+            obj = eval(toeval)(docman_docspath=docspath, **kwargs)
         except Exception as e:
-            print(f'{e.__class__.__name__}: {e.args}')
-            return e
+            print(f'Error evaluating "{toeval}": {e.__class__.__name__}')
+            traceback_message(e)
+            return None
         return obj
    

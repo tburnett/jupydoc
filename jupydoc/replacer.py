@@ -22,28 +22,52 @@ document_folders = ['.']
                      
 class Wrapper(object):
     """Base class for the replacement classes
+    Itself uses the str for the object in question
     """
-    def __init__(self, vars):
-        self.vars=vars
+    def __init__(self, *pars, **kwargs):
+        self.obj = pars[0]
+        self.vars=pars[1]
+        self.indent = kwargs.pop('indent', '5%')
+    def set_folders(self, folders):
+        pass
     def __repr__(self): return str(self)
     def _repr_html_(self): return str(self)
+    def __str__(self):
+        text = str(self.obj).replace('\n', '\n<br>')
+        return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
 
-if plt:        
+
+
+if plt: 
+    class FigNumberer(object):
+        """ used"""
+        def __init__(self, previous_number=0):
+            self.number = previous_number
+        
+        def __call__(self):
+            self.number+=1
+            return self.number  
+    fig_numberer = FigNumberer()
+
     class FigureWrapper(Wrapper,plt.Figure):
         
-        def __init__(self, fig, vars, folder_name='figs', fig_folders=[], fig_numberer=None,
-                    fig_class='jupydoc_fig'):
-            super().__init__(vars)
+        def __init__(self, *pars, **kwargs): 
+                    #fig, vars, folder_name='figs', fig_folders=[], fig_numberer=FigNumberer(),   fig_class='jupydoc_fig'):
+            
+            super().__init__(*pars, **kwargs)
+
+            fig = self.obj
             self.__dict__.update(fig.__dict__)
             self.fig = fig
-            self.folder_name=folder_name
-            self.fig_folders=fig_folders
-            self.numberer=fig_numberer
-            self.number = fig.number = fig_numberer()
-            self.fig_class=fig_class 
+            # from kwargs
+            self.folder_name=kwargs.pop('folder_name', 'figs')
+            self.fig_folders=kwargs.pop('fig_folders', [])
+            
+            self.number = fig.number = fig_numberer() # get a new number
+            self.fig_class=kwargs.pop('fig_class', 'jupydoc_fig') 
 
-            for folder in fig_folders:
-                os.makedirs(os.path.join(folder,  folder_name),exist_ok=True)
+            for folder in self.fig_folders:
+                os.makedirs(os.path.join(folder,  self.folder_name),exist_ok=True)
 
         def __str__(self):
             
@@ -68,60 +92,36 @@ if plt:
                         f' <figcaption>{caption}</figcaption>'\
                         '</figure></div>\n'
             return self._html
-       
-
-class JupydocImageWrapper(Wrapper):
-    def __init__(self, img, vars, folder_name='images', **kwargs):
-        super().__init__(vars)
-        self.img=img
-        
-        for df in document_folders:
-            print(f'*** Saving to {df}/{folder_name}')
-            os.makedirs(os.path.join(df, folder_name),exist_ok=True)
-            img.saveto(df)
+ 
 
     def __str__(self):
         return str(self.img)
 if pd:
     class DataFrameWrapper(Wrapper): 
-        def __init__(self, df, vars, **kwargs):
+        def __init__(self, *pars, **kwargs):
 
-            super().__init__(vars)
-            self._df = df
+            super().__init__(*pars, **kwargs)
+            self._df = self.obj
             self.kw = kwargs
 
         def __str__(self):
             if not hasattr(self, '_html'):
-                self._html = self._df.to_html(**self.kw) #**dfkw) # self._df._repr_html_()                
+                self._html = self._df.to_html(**self.kw)                
             return self._html
 
 class PPWrapper(Wrapper):
     """Use PrettyPrint
     """
-
-    def __init__(self, obj, vars, **kwargs):
-        self.obj =obj
-        self.indent = kwargs.pop('indent', '5%')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         pp = pprint.PrettyPrinter(indent=2)
         text = pp.pformat(self.obj).replace('\n', '<br>\n')
         return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
 
-def check_image_file(filename):
-    if not os.path.isfile(filename): return False
-    ext = os.path.splitext(filename)[-1]
-    return ext  in ['.png', '.jpg']
 
 
-class FigNumberer(object):
-    """ used"""
-    def __init__(self, previous_number=0):
-        self.number = previous_number
-    
-    def __call__(self):
-        self.number+=1
-        return self.number
     
 # Maps classes, and associated keywords to replacements for display purposes
 
@@ -168,12 +168,8 @@ class ObjectReplacer(dict):
             self.add_rep('DataFrame', DataFrameWrapper, df_kwargs)
             
         if plt:
-            self.add_rep('Figure', FigureWrapper, 
-                    dict(fig_folders=folders,
-                        fig_numberer=FigNumberer(), 
-                    )
-                )
-            
+            self.add_rep('Figure', FigureWrapper, dict(fig_folders=folders) )
+                            
 
     @property
     def folders(self):

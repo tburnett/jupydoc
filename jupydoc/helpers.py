@@ -5,6 +5,31 @@ jupydoc helper functions doc_formatter and md_to_html
 import string 
 from nbconvert.exporters import  HTMLExporter
 
+class DocInfo(object):
+    def __init__(self, info):
+        infostring = info.get('document', '')
+        if infostring: 
+            self.setup_document(infostring)
+            
+    def setup_document(self, infostring):
+        t = infostring.replace(',', ' ').replace('[', ' [ ').replace(']', ' ] ')
+        tokens = t.split()
+        self.info = {}
+        subs=False
+        for token in tokens:
+            if token=='[':
+                subs = True
+                continue
+            elif token ==']':
+                subs=False
+                continue
+            if not subs : 
+                current_section = self.info[token] = []
+            else: 
+                current_section.append(token)
+    def __str__(self):
+        return pp.pformat(self.info)
+
 def doc_formatter(
         text:'text string to process',
         vars:'variable dict', 

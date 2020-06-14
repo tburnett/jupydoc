@@ -48,16 +48,20 @@ class MultipleDocs(DocPublisher):
         and available document classes: 
         ```
         
-            Modules                         Classes
-             docsrc.jupydoc_doc             ['JupyDoc']
-             docsrc.workflow                ['DocsDesign', 'Workflow']
+            Modules                  Classes
+              docsrc.
+                intro                   ['JupyDoc']
+                workflow                ['MultipleDocs', 'Workflow']
+
+            docspath: /nfs/farm/g/glast/u/burnett/git/tburnett.github.io
         ```
         This is a list of the python module names that have been imported to discover
         their declared class names.
         The package containing these files has of necessity an `__init__.py`. It must declare
         a variable "docspath" to associate another folder with the output. In this case it is
         ```
-        docspath = '../docs'
+         docspath = '../../tburnett.github.io'
+
         ```
         So the generated documents are in the same folder as this package.
 
