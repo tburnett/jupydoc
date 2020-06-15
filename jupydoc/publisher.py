@@ -4,7 +4,7 @@
 import os, inspect, datetime
 import yaml
 
-from .helpers import doc_formatter, md_to_html
+from .helpers import doc_formatter, md_to_html, DocInfo
 from .replacer import ObjectReplacer
 
 ## special style stuff or start of document
@@ -31,61 +31,18 @@ class Publisher(object):
             ):
         """
         """
-        
-        def parse_docstring(doc_info):
-            # document information from  dict derivied from  docsting
-
-            self._title_info =  dict(title=doc_info.pop('title', ''),
-                                     author=doc_info.pop('author', ''),
-                                     abstract=doc_info.pop('abstract', ''),
-                                    )
-            self.info = doc_info # any other stuff available to user    
-
-            # sections
-            self._section_names= ['title_page'] + doc_info.pop('sections','title_page').split()   
-            self.info['function_names'] = self._section_names
-            self._section_index = {} # perhaps a TOC? 
-            self.info = doc_info # any other stuff available to user
-            self._section_functions = []
-            for name in self._section_names:
-                try:
-                    self._section_functions.append(eval(f'self.{name}'))
-                except Exception as err:
-                    raise Exception(f'{err}: Section name {name} not defined?')
-            
-            # subsections if any
-            subs = self.subsection_dict =self.info.pop('subsections', {})
-            self._subsection_functions = {}
-            self._subsection_names = {}
-            if not subs: return
-
-            # evaluate any subection functions, put function object indo dict section function keys
-            for sname, stuff in subs.items():
-                self._subsection_names[sname]= subnames = stuff.split()
-                self.info['function_names'] += subnames
-                if len(subnames)==0:
-                    print('Did not find subsections declared for section {sname}')
-                if not sname in self._section_names:
-                    raise Exception(f'"{sname}" is not the name of a section:'\
-                            f' expect one of {self._section_names})')
-                sindex = self._section_names.index(sname)
-                sfun = self._section_functions[sindex]
-                subfuns =[]
-                for subname in subnames:
-                    try:
-                        subfuns.append( eval( f'self.{subname}' ) )
-                    except Exception as err:
-                        raise Exception(f'{err}: Subsection name {subname} not defined?')
-                self._subsection_functions[sfun] = subfuns
-
+    
         docstring = self.__doc__ 
         try:
-            doc_info = yaml.safe_load(docstring) 
+            doc_dict = yaml.safe_load(docstring) 
         except Exception as e:
             print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
             return
         
-        parse_docstring( doc_info)
+        self.doc_info = DocInfo(doc_dict)
+        # parse_docstring( doc_dict)
+
+
 
         # output, display stuff
         self.docpath = docpath
@@ -104,13 +61,11 @@ class Publisher(object):
                 linkto_top = '<a href="top">top</a>'
             )
         # add anchor links to section
-        for i,name in enumerate(self._section_names):
-            self.predefined[f'linkto_{name}'] = '<a href="#{name}">Section {i}</a>'
+        # for i,name in enumerate(self._section_names):
+        #     self.predefined[f'linkto_{name}'] = '<a href="#{name}">Section {i}</a>'
 
         self.date=str(datetime.datetime.now())[:16]
         self.clear()
-
-       
     
     def __repr__(self):
         return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self._title_info["title"]}"'
@@ -135,26 +90,20 @@ class Publisher(object):
         </header>
         """
 
-        if self._title_info:
-            ti = self._title_info
-            ts=self._title_info['title'].split('\n')
-            title=ts[0]
-            subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
-            author=ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
-            abstract=ti.get('abstract', '')
-            abstract_text=f'<p style="margint: 0% 10%" >{abstract}</p>' if abstract else ''
-            author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
-            title_line=f'<h1 text-align:center;>{title}</h1>' if title else '*no title*' 
-            subtitle_line=f'<H2> {subtitle}</H2>' if subtitle else '' 
+        #ti = self._title_info
+        ti = self.doc_info # has title, etc.
+        ts=self.doc_info['title'].split('\n')
+        title=ts[0]
+        subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
+        author=  ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
+        abstract=ti.get('abstract', '')
+        abstract_text=f'<p style="margint: 0% 10%" >{abstract}</p>' if abstract else ''
+        author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
+        title_line=f'<h1 text-align:center;>{title}</h1>' if title else '*no title*' 
+        subtitle_line=f'<H2> {subtitle}</H2>' if subtitle else '' 
 
-            self._section_index['title_page'] = ['0', title]
-        else:
-            # No info: only date
-            title=subtitle=date_line=author_line=abstract_text=''
-            
         date_line=f'<p style="text-align: right;">{self.date}</p>'
         self.publishme()
-
 
     def publishme(self,  **kwargs:'additional variable definitions',
                  )->None:
@@ -162,7 +111,7 @@ class Publisher(object):
         """
         import inspect
         self.section_number, self.subsection_number = self._current_index
-
+    
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
         name= self.name = inspect.getframeinfo(back).function
@@ -217,7 +166,6 @@ class Publisher(object):
         # prepend section or subsection header if requested and not tile
         if section_title:
             # save to index dict, put in section title, anchor for thise section
-            self._section_index[hnumber] = [name, section_title]
             # add header id, the name of this section
             header = f'\n\n{hchars} {hnumber} {section_title} <a id="{name}"></a>\n\n'    
                       
@@ -229,8 +177,6 @@ class Publisher(object):
     def _section_footer(self):
         # end of section, including subsections. Add link to top here
         self._publish('<p style="text-align: right;"><a href="#top">top</a></p>' )
-    
-
 
     def clear(self):
         self.data=jupydoc_css + '<a id="top"></a>'
@@ -238,52 +184,25 @@ class Publisher(object):
         self.section_name='' 
         self.class_name=self.__class__.__name__
 
-
     def __call__(self, examine=None, 
                  display_only:'set to only use the display'=False,
                  ):
         """assemble and save the document if docpath is set
         Choose a range of sections to display in the notebook
         """
-
-        extype = type(examine)
-        if extype==float:
-            selected = [int(examine) , int(examine*10%10)]
-
-        elif extype==int:
-            selected = [examine, 0]
-        else:
-            # must be name of a section 
-            if examine in self._subsection_names:
-                selected = self._subsection_names.index(examine)
-            else: selected=None
-
-        # assemble the document by calling all the section functions, displaying the selected subset
-        # close, and save it if self.docpath is set
+        self.doc_info.set_selection(examine)
         self.clear()
-        self.display_on=False
-        self._current_index = [0,0]
-
-        # loop over sections, starting with title
-        for function in self._section_functions:
-            i = self._current_index[0] 
-            self.display_on = [i,0]==selected
-
-            function()
-
-            subfuns = self._subsection_functions.get(function, [])
-            for subfun in subfuns:
-                self._current_index[1] = self._current_index[1]+1
-                if not self.display_on:
-                    self.display_on = self._current_index==selected
-                subfun()
+        for sid, function, selected in self.doc_info:
+            #print(f'{selected:5} {sid},{f}')
+            if not hasattr(self, function):
+                raise Exception(f'Function {function} not defined')
+            self._current_index = [int(sid), int(sid*10%10)]
+            self.display_on = selected
+            try:
+                eval(f'self.{function}()')
+            except Exception as e:
+                print(f'Function {function} Failed: {e}')
             
-            # done with section:
-            if self._current_index[0]>0:
-                self._section_footer()
-            self._current_index = [i+1,0]
-
-            self.display_on=False
 
  
         if not display_only:
@@ -297,7 +216,7 @@ class Publisher(object):
             ---
             Document not saved.""")
             return
-        title = self._title_info.get('title', '(untitled)')
+        title = self.doc_info.get('title', '(untitled)')
 
         source_text = self.info.get('filename', '')
 

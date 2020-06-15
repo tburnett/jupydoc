@@ -38,7 +38,7 @@ class Modules(dict):
             return True
         
     def __str__(self):
-        r = f'{"Modules":25}{"Classes"}\n'
+        r = f' {"Modules":26}{"Classes"}\n'
         tab=' '*2
         current = ['']*5
         for name, docs in dict(self).items():

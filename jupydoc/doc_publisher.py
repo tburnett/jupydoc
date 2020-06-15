@@ -52,12 +52,12 @@ class DocPublisher(jupydoc.Publisher):
         if None:
             print(f'No name for the document?: {self.info}')
             return
-        title = self._title_info['title'].split('\n')[0]
-
+        # title = self._title_info['title'].split('\n')[0]
+        title = self.doc_info['title'].split('\n')[0]
         t[docname] = dict(
                 title=title, 
                 date=self.date, 
-                author=self._title_info['author'],
+                author=self.doc_info['author'],
                 info=self.info,
             )
         # 

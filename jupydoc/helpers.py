@@ -1,34 +1,112 @@
 """
-jupydoc helper functions doc_formatter and md_to_html
+jupydoc helper class DocInfo, functions doc_formatter and md_to_html
 
 """
-import string 
+import string, pprint , collections
 from nbconvert.exporters import  HTMLExporter
 
-class DocInfo(object):
-    def __init__(self, info):
-        infostring = info.get('document', '')
-        if infostring: 
-            self.setup_document(infostring)
-            
-    def setup_document(self, infostring):
-        t = infostring.replace(',', ' ').replace('[', ' [ ').replace(']', ' ] ')
+class DocInfo(collections.OrderedDict):
+    """Manage the Jupydoc document structure
+
+        From the docstring info, have the following:
+        * title page: title, author, abstraact
+        * sections and subsections:  
+            dict keys: section names
+                values: list of subsection names
+
+        Provides a service as an iterator, returning the document sequence 
+                (section number, subsection number, function name)
+
+    """
+
+    def __init__(self,
+        doc_dict:'dict created by yaml from docstring',
+        title_page_name='title_page',
+        verify_list:'list of acceptable function names'=[]):
+ 
+        for key in 'title author abstract'.split():
+            self[key] = doc_dict.get(key, '')
+        self['sections']= {title_page_name: []}
+
+        if 'subsections' in doc_dict:
+            # convert older format
+            ss = doc_dict.get('sections','').split(); 
+            sbs = doc_dict.get('subsections')
+            d = self['sections']
+            for s in ss:
+                d[s] = sbs[s].split() if s in sbs else {} 
+        else:
+            # newer format: more readable, a bit more code
+            section_string = doc_dict.get('sections', '')
+            self.parse_section_string(section_string)
+       
+        self.__dict__.update(self)
+
+    def __iter__(self):
+        # set up iterator
+        self.current_index = [0,0]
+        self.section_names = list(self.sections.keys()) 
+        return self
+
+    def __next__(self):
+        # set up next index
+        # will return section id, function name, selection status
+        i,j =  self.current_index
+        if i==len(self.section_names): 
+            raise StopIteration
+        k = self.section_names[i] 
+        f =  k if j==0 else self.sections[k][j-1]
+        sid = i+j/10
+        ret = (sid, f, self.is_selected(sid, f)) 
+
+        # increment either index
+        m = len(self.sections[k])
+        i, j =  (i, j+1) if j<m else (i+1, 0 )
+        self.current_index=[i,j]
+
+        return ret            
+    
+    def parse_section_string(self, section_string):
+        t = section_string.replace(',', ' ').replace('[', ' [ ').replace(']', ' ] ')
         tokens = t.split()
-        self.info = {}
         subs=False
         for token in tokens:
-            if token=='[':
-                subs = True
-                continue
-            elif token ==']':
-                subs=False
-                continue
-            if not subs : 
-                current_section = self.info[token] = []
-            else: 
-                current_section.append(token)
+            if    token=='[': subs = True
+            elif token ==']': subs = False 
+            else:
+                if not subs : 
+                    current_section = self['sections'][token] = []
+                else: 
+                    current_section.append(token)
+    @property
+    def names(self):
+        nm = []
+        for sect, subs in self['sections'].items():
+            nm.append(sect)
+            nm += subs
+        return nm
+
+    def set_selection(self, select:'name of function | section | subsection'):
+        self._selection = select
+
+    def is_selected(self, sid:'section id', name:'function name'):
+        import numbers
+        
+        sel = getattr(self, '_selection', None)
+        if sel=='all': return True
+        if not sel:
+            return False
+        if isinstance(sel, numbers.Real):
+            select_section = round(sel*10) % 10 ==0
+            return  round(sid)==sel if select_section else sid==sel
+        else:
+            return name==sel
+
     def __str__(self):
-        return pp.pformat(self.info)
+        pp = pprint.PrettyPrinter(indent=2)
+        return pp.pformat(self)
+
+#-----------------------------------------------------------
 
 def doc_formatter(
         text:'text string to process',

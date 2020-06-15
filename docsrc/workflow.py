@@ -29,10 +29,10 @@ class MultipleDocs(DocPublisher):
     def setup(self):
         """Setup
         
-        The basic Jupydoc makes it easy to create documents in the JupyterLab environmant
-        perhaps combined with code development or analysis.
-        This describes additional support to manage and index multiple documents, both the source files
-        and the output documents.
+        Jupydoc, via the class `Publisher`, supports  creation of  documents in the JupyterLab environment perhaps combined with code development or analysis.
+        The focus is on an single document. This document describes additional support to manage and index multiple documents, both the source files
+        and the output documents. That, for the user document class means inheriting instead from `DocPublisher`,
+        a subclass. The coordination, to support multiple documents, is the role of the class `DocMan`.
                       
         The user iterface is very straightforward. Here is the contents
         of a JupyterLab notebook, a single cell:
