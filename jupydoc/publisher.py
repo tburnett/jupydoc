@@ -163,20 +163,16 @@ class Publisher(object):
         # Now use the helper function to the formatting, replace {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
         
-        # prepend section or subsection header if requested and not tile
+        # prepend section or subsection header if requested and not title
         if section_title:
             # save to index dict, put in section title, anchor for thise section
             # add header id, the name of this section
-            header = f'\n\n{hchars} {hnumber} {section_title} <a id="{name}"></a>\n\n'    
+            header = f'\n\n{hchars} {hnumber} {section_title}\n\n'    
                       
-            md_data = header + md_data 
+            md_data = self.doc_info.section_header + header + md_data 
             
         # send it off
         self._publish(md_data)
-    
-    def _section_footer(self):
-        # end of section, including subsections. Add link to top here
-        self._publish('<p style="text-align: right;"><a href="#top">top</a></p>' )
 
     def clear(self):
         self.data=jupydoc_css + '<a id="top"></a>'
