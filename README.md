@@ -11,62 +11,67 @@ There is also a discussion about **[multi-document support](https://tburnett.git
 
 </header>
 
-
-
-
-## 1. Introduction
-
 ### What it is **not**
-Jupydoc, despite the name, does not explicitly depend on Jupyterlab. It is not a nice way to turn 
+Jupydoc, despite the name, does not explicitly depend on Jupyterlab. 
+It is not a nice way to turn 
 detailed notebooks into documents: If you want that, see this 
 [system](http://blog.juliusschulz.de/blog/ultimate-ipython-notebook). 
 
 ### What is it, and how does it work?
 Jupydoc is not centered on a jupyterlab notebook. It is designed to make it easy to *develop* a
 document with a noteboook, but the *medium* is a Python class, not a  notebook. Since it is
-based on code, that implies developing the code at well&mdash;the document may represent the
-code development itself.
+based on code, that implies developing the code at well&mdash;the document 
+may represent the code development itself.
 
-It is lightweight, some ~600 lines of code in Python exclusive of this document, depending on
-IPython and nbconvert, and also with non-essential dependencies on pandas, matplotlib, and numpy.   
+While designed to be used to develop documents based on code in a JupyterLab enviornment,
+It does not actually require it, but depends on IPython and nbconvert.
+ 
 Some points to illustrate the design and operation are:
 
 * **Code and markdown cells in a Jupyterlab notebook**<br>
-The origin of this package was rooted in a desire to be able to combine the nice formatting capability of
-markdown cells, with the output from the computation in a code cell. By default, any matplotlib
-figures created in its computation will automatically appear below the cell. This behavior, it turns out,
-can be controlled  by code executed in the cell. The key here is that code can create markdown text,
-which will be interpreted just as the text in a markdown cell. This includes LaTex. The markdown so created
-is nicely rendered in the notebook. This is accomplishted by IPython. So a notebook is not actually required, 
+The origin of this package was rooted in a desire to be able to combine 
+the nice formatting capability of   markdown cells, with the output from 
+the computation in a code cell. By default, any matplotlib
+figures created in its computation will automatically appear below the cell. 
+This behavior, it turns out, can be controlled  by code executed in the cell.
+The key here is that code can create markdown text,
+which will be interpreted just as the text in a markdown cell. 
+This includes LaTex. The markdown so created
+is nicely rendered in the notebook. 
+This is accomplishted by IPython. So a notebook is not actually required, 
 see `nbconvert` below.
  
 * **Python [inspection](https://docs.python.org/3/library/inspect.html)**
-The inspection capability gives access to two important elements of a function:
-  * docstring&mdash; a text string immediately following the function declaration.
-  * symbol table&mdash;in python terms, a "dict" with variable names as keys, and where each value is a
-   reference to the object represented by the name
+<br>The inspection capability gives access to two important elements of a function:
+ * docstring&mdash; a text string immediately following the function declaration.
+ * symbol table&mdash;in python terms, a "dict" with variable names as keys, 
+ and where each value is a reference to the object represented by the name
 
 * **Python string format method**<br>
-Since python 2.6, text strings have had a "format" method, which interprets occurrences of "{...}", 
-replacing what it finds between the
-curly brackets with its evaluation as an expression. (With python 3, this is built into special format strings.)
+Since python 2.6, text strings have had a "format" method, which interprets 
+occurrences of "{{...}}",  replacing what it finds between the
+curly brackets with its evaluation as an expression. 
+(With python 3, this is built into special format strings.)
 
 * **[nbconvert](https://nbconvert.readthedocs.io/en/latest/)**
-This separate package supports creation of an HTML document from notebook-formatted data, specifically 
+<br>This separate package supports creation of an HTML document from notebook-formatted data, specifically 
 interpreting Jupyterlab's version of markdown. 
 It is necessary to produce an (almost) identical-looking  document to what is rendered in the notebook.
 
 ### What is it good for?
 
 * **A document like this**<br>
-This document is itself a demonstration, testing all the features it describes! It was generated using 
-member functions  of the class `jupydoc.Document`, which inherits from `jupydoc.Publisher`.
-Each such function represents a section of the document. The code that produced this document is in fact testing and 
+This document is itself a demonstration, testing all the features it describes! 
+It was generated using member functions  of the class `jupydoc.Document`, 
+which inherits from `jupydoc.Publisher`.
+Each such function represents a section of the document. 
+The code that produced this document is in fact testing and 
 describing the code that produces it.
        
 * **Simple Jupyterlab-based analyses**<br>
-Rather than spreading output among several cells, this encourages making a coherent description, 
-including  plots, formulae, tables, etc. in the area below a single cell.
+Rather than spreading output among several cells, this encourages 
+making a coherent description, including  plots, formulae, tables, etc. 
+in the area below a single cell.
 
 * **Personal notebook**<br>
 Rather than cutting and pasting single plots to a personal notebook, this allows the clipping 
@@ -92,8 +97,7 @@ from jupydoc import Publisher
 class Hello(Publisher):
     
     def sayhi(self, to):
-        """ 
-        
+        """         
         Hello there, {to}!        
         See you later.
         """
