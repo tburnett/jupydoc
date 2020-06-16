@@ -25,57 +25,33 @@ class DocPublisher(jupydoc.Publisher):
     """
     def __init__(self,  
                 no_display:'set True to disable IPython display output'=False, 
+                doc_dict:'Alternative to parsing docstring'={},
                 **kwargs):
         super().__init__(**kwargs)
 
         # get the required docstring            
         
-        docstring = self.__doc__ 
-        if not docstring:
-            raise Exception('a docstring is required')
-        try:
-            doc_dict = yaml.safe_load(docstring) 
-        except Exception as e:
-            print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
-            raise
+        if not doc_dict:
+            docstring = self.__doc__ 
+            if not docstring:
+                raise Exception('a docstring or doc_dict arg is required')
+            try:
+                doc_dict = yaml.safe_load(docstring) 
+            except Exception as e:
+                print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
+                raise
 
         self.doc_info = DocInfo(doc_dict)
         self._no_display = no_display
         self.display_on = not no_display # user can set
+
+        # make non-doc items available
+        info = doc_dict
+        for k in 'title author sections'.split(): info.pop(k, None)
+        if info: self.__dict__.update(info)
     
         self.clear()
-        # define the output folder name
-        if not hasattr(self, 'info'):
-            # add something here?
-            self.info = {}
-        import inspect
-        stack = inspect.stack()
-        filename = stack[1].filename
-        if filename.startswith('<ipython-input'):
-            module_name=''
-            filename='(interactive)'
-        else:
-            module_name = filename.split('/')[-2]
-        name = module_name +'.'+ self.__class__.__name__  
-        self.info.update(docname=name, filename=filename)
-        
-        docspath = kwargs.pop('docman_docspath', '') # set in DocMan
-        if docspath: self.set_doc_folders(docspath)
-        
-    def set_doc_folders(self,
-                    docspath:'Abs path to the folder where this doc will be saved'):
-        # where documents  will be stored, from spec in our module
-        
-        self.docpath = os.path.abspath(os.path.join(docspath, self.info['docname']))
-        os.makedirs(self.docpath, exist_ok=True)
 
-        # reset the replacer instantiated by base 'class'
-        folders = [self.docpath]
-        if not self._no_display:
-            # so figures or images will go into local foder
-            folders.append('.')
-        self.doc_folders = folders
-        self.object_replacer.set_folders(folders)
 
     def title_page(self):
         """
@@ -106,11 +82,11 @@ class DocPublisher(jupydoc.Publisher):
         """
         self.publishme()
 
-    def __call__(self, examine=None, 
+    def __call__(self, 
+            examine:'"all" | section number | subsection number'=None, 
             display_only:'set to only use the display'=False,
             ):
-        """assemble and save the document if docpath is set
-        Choose a range of sections to display in the notebook
+        """assemble and save the document if docpath is set        
         """
         self.clear()
         
@@ -179,20 +155,15 @@ class DocPublisher(jupydoc.Publisher):
 
     def setup_save(self):        
 
-        indexer = DocIndex(self.docpath)
+        indexer = DocIndex(os.path.join(self.docpath, self.docname))
         #  update the entry in the index
-        t = dict()
-        docname = self.info.get('docname', None)
-        if None:
-            print(f'No name for the document?: {self.info}')
-            return
-        # title = self._title_info['title'].split('\n')[0]
-        title = self.doc_info['title'].split('\n')[0]
-        t[docname] = dict(
-                title=title, 
-                date=self.date, 
-                author=self.doc_info['author'],
-                info=self.info,
+           
+        title = self.doc_info.get('title','(no title)'.split('\n')[0])
+        t ={}
+        t[self.docname] = dict(
+                    title=title, 
+                    date=self.date, 
+                    author=self.doc_info.get('author', '')
             )
         # 
         indexer.update(t)

@@ -106,7 +106,10 @@ class DocInfo(collections.OrderedDict):
             return False
         if isinstance(sel, numbers.Real):
             select_section = round(sel*10) % 10 ==0
-            return  int(sid)==sel if select_section else sid==sel
+            if select_section:
+                n =len(self.section_names)
+                return sel==int(sid) or sel>=n and int(sid)==n
+            return  sid==sel
         else:
             return name==sel
 

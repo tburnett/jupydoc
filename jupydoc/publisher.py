@@ -25,19 +25,31 @@ class Publisher(object):
     """
 
     def __init__(self, 
-             docpath:'if set, save() will write the accumulated output to an HTML document index.html in this folder'='', 
-            
+             docpath:'if set, save() will write the output folder to this folder'='',
+             docname:'if set, will be the name of the document folder; otherwise use its class name'='', 
              **kwargs
             ):
         """
         """
          
         # output, display stuff
+        if docpath:
+            if not os.path.isdir(docpath):
+                raise Exception('{docpath} is not an existing folder')
+        
         self.docpath = docpath
-        self.doc_folders = [docpath] if docpath else []
+        module = self.__module__
+        self.docname = docname or (module+'.' if module!='__main__' else '')+self.__class__.__name__
 
+        if docpath:
 
-        self.object_replacer = ObjectReplacer()
+            fp = os.path.abspath(os.path.join(docpath, self.docname))
+            os.makedirs(fp, exist_ok=True)
+        
+        # a list for saving figures and or images -- will include '.' if interactive
+        self.doc_folders = [fp, '.'] if docpath else ['.']
+        
+        self.object_replacer = ObjectReplacer(folders = self.doc_folders)
         
         # predefind symbols for convenience
         self.predefined= dict(
@@ -108,20 +120,17 @@ class Publisher(object):
             ---
             Document not saved.""")
             return
-        title = self.doc_info.get('title', '(untitled)')
-
-        source_text = self.info.get('filename', '')
+        fullpath = os.path.abspath(os.path.join(self.docpath, self.docname))
 
         self.markdown(
-            f'<hr class="thick">\nDocument "{title}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br>'\
-            f'\nCreated by class <samp>{self.__class__.__name__}</samp> {source_text}<br>'\
-            f'\nSaved to <samp>{self.docpath}</samp>'
+            f'<hr class="thick">\nDocument "{self.docname}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br>'\
+            #f'\nCreated by class <samp>{self.__class__.__name__}</samp> {source_text}<br>'\
+            f'\nSaved to <samp>{fullpath})</samp>'
             )
         
-        os.makedirs(os.path.join(self.docpath), exist_ok=True)
-        md_to_html(self.data, os.path.join(self.docpath,'index.html'), title) 
+        md_to_html(self.data, os.path.join(fullpath,'index.html'), title=self.docname) 
          
-        print(f'\n------\nsaved to  "{self.docpath}"')
+        print(f'\n------\nsaved to  "{fullpath}"')
              
     def markdown(self, text:"markdown text to add to document",
                  indent:'left margin in percent'=None,
@@ -132,7 +141,7 @@ class Publisher(object):
             text = f'<p style="margin-left: [indent]%" {text}</p>'
         if clean:
             text= inspect.cleandoc(text)
-        self._publish(text)        
+        self.data = self.data +'\n\n'+ text   
      
     def image(self, filename, 
               caption='', 

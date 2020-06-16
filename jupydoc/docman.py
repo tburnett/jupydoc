@@ -237,7 +237,7 @@ class DocMan(object):
             # call the class constructor, setting a default, parhaps
             #  docspath for it
             toeval = f'module.{classname}'
-            obj = eval(toeval)(docman_docspath=docspath, **kwargs)
+            obj = eval(toeval)(docpath=docspath, **kwargs)
         except Exception as e:
             print(f'Error evaluating "{toeval}": {e.__class__.__name__}')
             traceback_message(e)

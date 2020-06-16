@@ -18,13 +18,12 @@ class JupyDoc(DocPublisher):
             University of Washington
    
     sections: introduction
-              minimal
-              variable_formatting [scalars list_and_dict latex images figures dataframes]
-              making_a_document [ class_docstring document_generation]
+              basic
+              variable_formatting [scalars list_and_dict latex images 
+                                figures dataframes other_formatting_options]
+              making_a_document [ class_docstring document_generation output_specification]
               file_structure 
-              other_formatting_options
 
-    abstract: testing `formatting` ...
     """ 
     def __init__(self,  **kwargs):
         doc_folder = kwargs.get('doc_folder', None)
@@ -114,25 +113,32 @@ class JupyDoc(DocPublisher):
         """
         self.publishme()
         
-    def minimal(self):
-        '''Minimal framework
+    def basic(self):
+        '''Basic framework
 
-        The simplest use case was mentioned above: annotating plots from an analysis.
+        The simplest use case was mentioned above: Annotating plots from an analysis.
         It can be implemented as this, which can be used to test the options in the next section.
+        
+        #### Example
+        The following is in a Jupyter notebook cell:
         ```
         from jupydoc import Publisher
 
-        class Minimal(Publisher):
+        class Basic(publisher.Publisher):
+
             def doit(self):
-                """Output text ...
+                """This is the output from a minimal example
 
                 """
                 #-------- code ---------
                 #-----------------------
                 self.publishme()
                 
-        Minimal().doit()
+        doc = Basic(docpath='.')
+        doc.doit()
         ```
+
+        #### Requirements
         This shows the basic requirements for a function with this capability:
 
         1. Is a member of a class inheriting from  `jupydoc.Publisher` 
@@ -143,6 +149,37 @@ class JupyDoc(DocPublisher):
         3. Last line of the code is `self.publishme()`.
 
         Unlike a formatted string, entries in curly brackets cannot be expressions.
+
+        #### Output
+        The above generates a display in the notebook. Note that the `docpath='.' specifies that output should go
+        into the current folder, where the notebook is. To write it to a web doc as well, add the line
+        ```
+        doc.save()
+        ```
+        which will result in something like
+        ```
+        saved to  "/home/burnett/work/notebooks/Basic"
+        ```
+
+        The document was written into a "saved to" folder, as a file `index.html` and also folders `figures` or `images` 
+        if needed. The name of that folder, in this case `Basic`, is by default constructed by appending the class name to the
+        the Python *module* name, itself related to the *file* name by
+        replacing dots with slashes and adding a ".py".  In this case there was no module. 
+        
+        In summary, the structure looks like this:
+        ```
+            docpath ("/home/burnett/work/notebooks")
+              | docname ("Basic")
+                 | index.html
+                 | figures
+                    | fig01.png
+                    | ...
+                 | images
+                    | ...
+
+        ```
+        The folder pointed by `docpath` could contain other documents, a feature used in the multiple-document section of this 
+        description.
 
         '''
 
@@ -325,7 +362,8 @@ class JupyDoc(DocPublisher):
     def making_a_document(self):
         """Making a document
         
-        This section introduces an enhancement to the minimal framework to create a structured  *document*, with a title page, sections, and subsections.
+        This section introduces an enhancement to the basic framework to create a structured
+          *document*, with a title page, sections, and subsections.
         To accomplish this there are two basic requirement:
         1. the class needs to inherit from `DocPublisher`, 
         2. the layout of the document must be defined in the *class* docstring. 
@@ -340,7 +378,26 @@ class JupyDoc(DocPublisher):
     def class_docstring(self):
         """Class Docstring
         
+        The docstring is in [`yaml`](http://zetcode.com/python/yaml/), a human-readable data-serialization language
+        often used for configuration files. The following items, all optional, are used to define the document:
+
+        * **title** If more than one line, the second is a subtitle
+        * **author** Will be centered.
+        * **sections** A single string with names of functions corresponding to sections and possible subsections that will be parsed
+        * **abstract** Can be any length.
         
+        About the sections specification, this is the specification for the present document:
+        ```
+   
+        sections: introduction
+                basic
+                variable_formatting [scalars list_and_dict latex images 
+                                    figures dataframes other_formatting_options]
+                making_a_document [ class_docstring document_generation output_specification]
+                file_structure 
+
+        ```
+        Commas and line breaks are ignored, and subsection names enclosed in square brakets following the section name.
         """
        
         self.publishme()
@@ -348,8 +405,30 @@ class JupyDoc(DocPublisher):
     def document_generation(self):
         """Document Generation
         
-   
+        Creation of the document is performed by invoking the instantiated call. `DodPublisher` itself allows for a demonstration:
+        ```
+        from jupydoc import DocPublisher
+        doc = DocPublisher()
+        doc('all')
+        ```
+        The "job" of the class is to produce the document that it is designed to do, which is performed by invoking it as a function.
+        The interactive display is intended to select a single section, or subsection to examine while developing the 
+        code. If an output has been set, it will always generate the full HTML version. The argument possibilites are: 'all'
+        as above, the name of the function whose output to examine, or the section or subsection number.
+
         """    
+        self.publishme()
+
+    def output_specification(self):
+        """Output Specification
+
+        The call described here runs the `save()` function described in the <a href=#basic>Basic Framework sect</a>
+        The HTML document is a folder, containing the the document in a file `index.html` and folders `figures` or `images` 
+        if needed. The name of that folder, called `docname` is by default constructed by appending the class name to the
+        the Python *module* name, itself related to the *file* name by
+        replacing dots with slashes and adding a ".py".  The folder that it goes into is set by "docpath". 
+
+        """
         self.publishme()
         
     def subsections(self):
