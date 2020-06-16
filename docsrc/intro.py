@@ -20,12 +20,12 @@ class JupyDoc(DocPublisher):
     sections: introduction
               minimal
               variable_formatting [scalars list_and_dict latex images figures dataframes]
-              document_structure [title sections subsections other_text]
+              making_a_document [ class_docstring document_generation]
               file_structure 
               other_formatting_options
 
+    abstract: testing `formatting` ...
     """ 
-    
     def __init__(self,  **kwargs):
         doc_folder = kwargs.get('doc_folder', None)
         if doc_folder and doc_folder[0]!='/':
@@ -145,7 +145,6 @@ class JupyDoc(DocPublisher):
         Unlike a formatted string, entries in curly brackets cannot be expressions.
 
         '''
-        r = np.random.random()
 
         self.publishme()
 
@@ -200,7 +199,7 @@ class JupyDoc(DocPublisher):
         """Images
 
         Images be inserted into the docucument, as follows: 
-        The jupydoc function <samp>image</samp> is provided for this purpose. In the code, set an accessible variable with
+        Using the jupydoc function <samp>image</samp>, set a variable with
         a call `self.image(filename)':
         ```
         launch_image = self.image("$HOME/images/fermi-launch.jpg",
@@ -283,7 +282,7 @@ class JupyDoc(DocPublisher):
         
         ```
         
-        <br>Results in "{{df}}" being replaced with
+        <br>Results in "{{df}}" being appearing as
         {df}
     
 
@@ -305,8 +304,8 @@ class JupyDoc(DocPublisher):
     def latex(self):
         r"""LaTex
 
-        Jupyter-style markdown can contain LaTex expressions. For this, it is 
-        necessary that the docstring be preceded by an "r". So,
+        Jupyter-style markdown can contain LaTex expressions. For the following, unlike the simple "`$E=mc^2$`" 
+        &rarr; $E=mc^2$ , it is  necessary that the docstring be preceded by an "r". So,
         ```
         \begin{{align*}}
         \sin^2\theta + \cos^2\theta =1
@@ -316,34 +315,40 @@ class JupyDoc(DocPublisher):
         <br>Results in:   
             \begin{align*}
             \sin^2\theta + \cos^2\theta =1
-            \end{align*}    
+            \end{align*}  
+
+        Evaluation of variables can occur within the expression as well.  
         """
 
         self.publishme()
 
-    def title(self):
-        """Title page
+    def making_a_document(self):
+        """Making a document
         
-        The document has a title page containing by default the title, a date, 
-        and perhaps an abstract. These are defined by fields in the yaml-format class docsstring
-        keys "title", "author", and "abstract".
+        This section introduces an enhancement to the minimal framework to create a structured  *document*, with a title page, sections, and subsections.
+        To accomplish this there are two basic requirement:
+        1. the class needs to inherit from `DocPublisher`, 
+        2. the layout of the document must be defined in the *class* docstring. 
         
-        The page will appear by default before the sections. It is implemented by the predefined 
-        function `title_page`. A subclass can, however, override it and produce an alternative.
+       
+
+        """
+        #------------------------
+        r = np.random.random(1)[0] # will be available for subsection documents
+        self.publishme()
+
+    def class_docstring(self):
+        """Class Docstring
+        
+        
         """
        
         self.publishme()
         
-    def sections(self):
-        """Sections
+    def document_generation(self):
+        """Document Generation
         
-        Each member function, with a docstring and call to `self.publishme` will 
-        generate a numbered section. 
-        The optional section heading is specified by the
-        first line of the function docstring, if followed by a blank line.
-        The section numbers are sequential in the order defined. 
-        by setting `self.section_number` in the code.
-    
+   
         """    
         self.publishme()
         
@@ -351,7 +356,7 @@ class JupyDoc(DocPublisher):
         """Subsections
         
         Subsection functions have the **same** function structure as for sections. To be a subsection,
-        it must be declared in the "subssections" par
+        it must be declared in the "subsections" par
 
 
         ```
@@ -399,24 +404,6 @@ class JupyDoc(DocPublisher):
         file_structure other_formatting_options object_replacement workflow""")
         #----------------------------------------------------------------
         
-        self.publishme()
-        
-    def document_structure(self):
-        """Document Structure
-        
-        The output document may be a single page without any title or section organization. 
-        This section discusses the more complete use case, with a title page, sections,
-        and perhaps subsections as for the current document.
-        
-        There is of course a close correlation with the structure of the Python class
-        that defines the document.
-                
-        The code of this section sets a random number $r$ to {r:.3f} &mdash; the symbol "r" will be available
-        in any of its subsection document functions. 
-        
-         """
-        #------------------------
-        r = np.random.random(1)[0] # will be available for subsection documents
         self.publishme()
 
     def file_structure(self):
@@ -564,5 +551,4 @@ class JupyDoc(DocPublisher):
         """
         #---------------------------------------------------------------------------------
         self.publishme()
-        
         

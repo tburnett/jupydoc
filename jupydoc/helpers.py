@@ -46,7 +46,6 @@ class DocInfo(collections.OrderedDict):
         # set up iterator
         self.current_index = [0,0]
         self.section_names = list(self.sections.keys()) 
-        self.section_header = ''
         return self
 
     def __next__(self):
@@ -55,21 +54,19 @@ class DocInfo(collections.OrderedDict):
         i,j =  self.current_index
         if i==len(self.section_names): 
             raise StopIteration
-
         k = self.section_names[i] 
         f =  k if j==0 else self.sections[k][j-1]
         sid = i+j/10
         ret = (sid, f, self.is_selected(sid, f)) 
-        
+
         # set section header containing anchor, perhaps link to top
         hdr=''
         if j==0:
             # New section: link to top unless at the top, set anchor with function name
-            top = self.section_names[0]
-            hdr = '' if i<2 else f'<p style="text-align: right;"><a href="#{top}">top</a></p>\n\n'
+            hdr = '' if i<2 else f'<p style="text-align: right;"></p>\n\n'
             hdr += f'<a id="{f}"></a>'
         self.section_header = hdr
-            
+        
         # increment either index
         m = len(self.sections[k])
         i, j =  (i, j+1) if j<m else (i+1, 0 )
@@ -108,11 +105,9 @@ class DocInfo(collections.OrderedDict):
         if not sel:
             return False
         if isinstance(sel, numbers.Real):
-            if sel==0 and sid==0: return True
             select_section = round(sel*10) % 10 ==0
-            return  round(sid)==sel if select_section else sid==sel
+            return  int(sid)==sel if select_section else sid==sel
         else:
-            if sel=='top' and sid==0: return True
             return name==sel
 
     def __str__(self):

@@ -2,9 +2,9 @@
 """
 
 import os, inspect, datetime
-import yaml
 
-from .helpers import doc_formatter, md_to_html, DocInfo
+
+from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
 
 ## special style stuff or start of document
@@ -26,7 +26,7 @@ class Publisher(object):
 
     def __init__(self, 
              docpath:'if set, save() will write the accumulated output to an HTML document index.html in this folder'='', 
-             no_display:'set True to disable IPython display output'=False,
+            
              **kwargs
             ):
         """
@@ -49,164 +49,57 @@ class Publisher(object):
         self.date=str(datetime.datetime.now())[:16]
         self.display_on=True
         self.clear()
-    
-        # now add document stuff if the docstring is appropriate
-        self.doc_info = {}
-        docstring = self.__doc__ 
-        if docstring:
-            try:
-                doc_dict = yaml.safe_load(docstring) 
-            except Exception as e:
-                print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
-                return
 
-            self.doc_info = DocInfo(doc_dict)
-            self._no_display = no_display
-            self.display_on = not no_display # user can set
-        
-            self.clear()
 
     def __repr__(self):
         title = self.doc_info.get('title', '(no title)')
         return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title {title}'
-
-    def _publish(self, text):
-        """ add text to the document, display with IPython if set"""        
-        import IPython.display as display #only dependence on IPython
-        self.data = self.data + '\n\n' + text
-         
-        if self.display_on: 
-            # perhaps not generating display for this section
-            display.display(display.Markdown(text)) 
         
-    def title_page(self):
-        """
-        <header>
-        <a id="title_page"> <h1>{title}</h1> </a>
-        <h2>{subtitle}</h2>
-        {date_line} 
-        {author_line}
-        {abstract_text}
-        </header>
-        """
-
-        #ti = self._title_info
-        ti = self.doc_info # has title, etc.
-        ts=self.doc_info['title'].split('\n')
-        title=ts[0]
-        subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
-        author=  ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
-        abstract=ti.get('abstract', '')
-        abstract_text=f'<p style="margint: 0% 10%" >{abstract}</p>' if abstract else ''
-        author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
-        title_line=f'<h1 text-align:center;>{title}</h1>' if title else '*no title*' 
-        subtitle_line=f'<H2> {subtitle}</H2>' if subtitle else '' 
-
-        date_line=f'<p style="text-align: right;">{self.date}</p>'
-        self.publishme()
-
     def publishme(self,  **kwargs:'additional variable definitions',
                  )->None:
         """
         """
         import inspect
-        if self.doc_info:
-            self.section_number, self.subsection_number = self._current_index
-        else:
-            self.section_number = self.subsection_number = 0
-    
+
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
         name= self.name = inspect.getframeinfo(back).function
         locs = inspect.getargvalues(back).locals
         doc = inspect.getdoc(eval(f'self.{name}'))
-        
-        # For sections, check for first non-blank line follwoed by a blank line to define title
-        if self.section_number>0:
-            doc_lines = doc.split('\n')
-            if len(doc_lines)==0: 
-                print(f'Warning: section {name} has no docstring')
-                return
-            first = 0 if  doc_lines[0] else 1
-            section_title = doc_lines[0]
-            if len(doc_lines)>1:            
-                doc = '\n'.join(doc_lines[first+2:])
-        else: self.section_title = ''
-
-        
-        # symbol table starts with these
+ 
+        # symbol table: predefinded + locals + kwargs
         vars = self.predefined.copy()
 
-        if self.section_number==0:
-            # flag for title page
-            section_title = ''
-        
-        elif  self.subsection_number==0:
-            # a new non-title section
-            hchars ='##'
-            hnumber=f'{self.section_number:}'
-               
-            # for subsections, if any
-            self._saved_symbols = vars
-        else: 
-            # a subsection
-            hchars = '###'
-            # maybe make numbering optional?
-            hnumber=f'{self.section_number:}.{self.subsection_number}'
-             # add the locals and kwargs to section symbol list
-            vars.update(self._saved_symbols)
+        # hook to modify either, perhaps prepend to doc, more vars
+        doc  = self.process_doc(doc, vars)
 
-        # finally add local symbols and kwargs    
+
+        # add locals and kwargs, run the object replacer
         vars.update(locs)
         vars.update(kwargs)
-
-        # run the object replacer
         self.object_replacer(vars)
 
         # Now use the helper function to the formatting, replace {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
-        
-        # prepend section or subsection header if requested and not title
-        if section_title:
-            # save to index dict, put in section title, anchor for thise section
-            # add header id, the name of this section
-            header = f'\n\n{hchars} {hnumber} {section_title}\n\n'    
-                      
-            md_data = self.doc_info.section_header + header + md_data 
-            
-        # send it off
-        self._publish(md_data)
+        self.data = self.data + '\n\n' + md_data
+
+        # perhaps display
+        self._display(md_data)
+         
+    def _display(self, md_data):
+        import IPython.display as display #only dependence on IPython
+
+        if self.display_on:
+            display.display(display.Markdown(md_data)) 
 
     def clear(self):
         self.data=jupydoc_css + '<a id="top"></a>'
-        self._fignum=self.section_number=self.subsection_number=0
-        self.section_name='' 
-        self.class_name=self.__class__.__name__
+        self._fignum = 0
 
-    def __call__(self, examine=None, 
-                 display_only:'set to only use the display'=False,
-                 ):
-        """assemble and save the document if docpath is set
-        Choose a range of sections to display in the notebook
-        """
-        self.doc_info.set_selection(examine)
-        self.clear()
-        for sid, function, selected in self.doc_info:
-            #print(f'{selected:5} {sid},{f}')
-            if not hasattr(self, function):
-                raise Exception(f'Function {function} not defined')
-            self._current_index = [int(sid), int(sid*10%10)]
-            self.display_on = selected
-            try:
-                eval(f'self.{function}()')
-            except Exception as e:
-                print(f'Function {function} Failed: {e}')
-            
+    def process_doc(self, doc, vars):
+        # do nothing in this class
+        return doc
 
- 
-        if not display_only:
-            self.save()
-    
     def save(self):
         """ Create Web document
         """
