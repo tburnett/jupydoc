@@ -21,7 +21,11 @@ class DocPublisher(jupydoc.Publisher):
         import inspect
         stack = inspect.stack()
         filename = stack[1].filename
-        module_name = filename.split('/')[-2]
+        if filename.startswith('<ipython-input'):
+            module_name=''
+            filename='(interactive)'
+        else:
+            module_name = filename.split('/')[-2]
         name = module_name +'.'+ self.__class__.__name__  
         self.info.update(docname=name, filename=filename)
         

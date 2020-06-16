@@ -17,12 +17,13 @@ class JupyDoc(DocPublisher):
             Toby Burnett <tburnett@uw.edu>
             University of Washington
    
-    sections: introduction variable_formatting document_structure
-        file_structure other_formatting_options
+    sections: introduction
+              minimal
+              variable_formatting [scalars list_and_dict latex images figures dataframes]
+              document_structure [title sections subsections other_text]
+              file_structure 
+              other_formatting_options
 
-    subsections:
-        variable_formatting: scalars list_and_dict latex images figures dataframes
-        document_structure: title sections subsections other_text
     """ 
     
     def __init__(self,  **kwargs):
@@ -113,17 +114,45 @@ class JupyDoc(DocPublisher):
         """
         self.publishme()
         
+    def minimal(self):
+        '''Minimal framework
+
+        The simplest use case was mentioned above: annotating plots from an analysis.
+        It can be implemented as this, which can be used to test the options in the next section.
+        ```
+        from jupydoc import Publisher
+
+        class Minimal(Publisher):
+            def doit(self):
+                """Output text ...
+
+                """
+                #-------- code ---------
+                #-----------------------
+                self.publishme()
+                
+        Minimal().doit()
+        ```
+        This shows the basic requirements for a function with this capability:
+
+        1. Is a member of a class inheriting from  `jupydoc.Publisher` 
+        1. Has a *docstring*, comment text which will be interpreted as JUpyter-style markdown, and which
+         may contain  variable  names in curly-brackets, 
+        2. Has executable code, presumably creating variables, the values of which will shown in the
+        output.
+        3. Last line of the code is `self.publishme()`.
+
+        Unlike a formatted string, entries in curly brackets cannot be expressions.
+
+        '''
+        r = np.random.random()
+
+        self.publishme()
+
     def variable_formatting(self):
         r"""Variable Formatting 
         
-        A function defining a section or subsection, a member of a class inheriting from 
-        `jupydoc.Publisher` has three elements:
-        1. a *docstring*, comment text that will be interpreted as markdown, which may contain  variable
-        names in curly-brackets, 
-        2. Python executable code, presumably creating objects to be discussed, 
-        3. a line `self.publishme()`.
 
-        Unlike a formatted string, entries in curly brackets cannot be expressions.
 
         The list of possible variable names comes from three sources, each one updating the previous
         set. 
@@ -197,7 +226,7 @@ class JupyDoc(DocPublisher):
     def figures(self):
         """Figures
 
-        *This feataure requires that `matplotlib` has been installed.* 
+        *This feature requires that `matplotlib` has been installed.* 
 
         Any number of Matplotlib Figure objects can be included.
         An entry "{{fig1}}", along with code that defines `fig1` like this:
@@ -221,18 +250,20 @@ class JupyDoc(DocPublisher):
         """
         try:
             import matplotlib.pyplot as plt
+        except Exception as e:
+            fig1 = f'**{e}**'
+            self.publishme()
+            return
 
-            plt.rc('font', size=14) # worry about setting this!
-            xlim = (0,10,21)
-            x = np.linspace(*xlim)
-            fig1,ax=plt.subplots(num=self.newfignum(), figsize=(4,3))
-            ax.plot(x, x**2)
-            ax.set(xlabel='$x$', ylabel='$x^2$', title=f'figure {fig1.number}')
-            fig1.caption="""Caption for Fig. {fig1.number}, which
-                    shows $x^2$ vs. $x$.    
-                ."""
-        except:
-            fig1='matplotlib not installed'
+        plt.rc('font', size=14) # worry about setting this!
+        xlim = (0,10,21)
+        x = np.linspace(*xlim)
+        fig1,ax=plt.subplots(num=self.newfignum(), figsize=(4,3))
+        ax.plot(x, x**2)
+        ax.set(xlabel='$x$', ylabel='$x^2$', title=f'figure {fig1.number}')
+        fig1.caption="""Caption for Fig. {fig1.number}, which
+                shows $x^2$ vs. $x$.    
+            """
 
         self.publishme()
 

@@ -120,8 +120,6 @@ class PPWrapper(Wrapper):
         text = pp.pformat(self.obj).replace('\n', '<br>\n')
         return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
 
-
-
     
 # Maps classes, and associated keywords to replacements for display purposes
 
@@ -175,10 +173,6 @@ class ObjectReplacer(dict):
     def folders(self):
         return document_folders
 
-  
-    # def __repr__(self):
-    #     return self)
-         
     def __call__(self, vars):
         """for each value in the vars dict, replace it with a new object that
         implements return of appropriate HTML for the original object

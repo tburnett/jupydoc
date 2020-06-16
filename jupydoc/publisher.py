@@ -31,26 +31,12 @@ class Publisher(object):
             ):
         """
         """
-    
-        docstring = self.__doc__ 
-        try:
-            doc_dict = yaml.safe_load(docstring) 
-        except Exception as e:
-            print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
-            return
-        
-        self.doc_info = DocInfo(doc_dict)
-        # parse_docstring( doc_dict)
-
-
-
+         
         # output, display stuff
         self.docpath = docpath
         self.doc_folders = [docpath] if docpath else []
 
-        self._no_display = no_display
-        self.display_on = not no_display # user can set
-        
+
         self.object_replacer = ObjectReplacer()
         
         # predefind symbols for convenience
@@ -60,15 +46,29 @@ class Publisher(object):
                 endp='</p>',
                 linkto_top = '<a href="top">top</a>'
             )
-        # add anchor links to section
-        # for i,name in enumerate(self._section_names):
-        #     self.predefined[f'linkto_{name}'] = '<a href="#{name}">Section {i}</a>'
-
         self.date=str(datetime.datetime.now())[:16]
+        self.display_on=True
         self.clear()
     
+        # now add document stuff if the docstring is appropriate
+        self.doc_info = {}
+        docstring = self.__doc__ 
+        if docstring:
+            try:
+                doc_dict = yaml.safe_load(docstring) 
+            except Exception as e:
+                print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
+                return
+
+            self.doc_info = DocInfo(doc_dict)
+            self._no_display = no_display
+            self.display_on = not no_display # user can set
+        
+            self.clear()
+
     def __repr__(self):
-        return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title "{self._title_info["title"]}"'
+        title = self.doc_info.get('title', '(no title)')
+        return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title {title}'
 
     def _publish(self, text):
         """ add text to the document, display with IPython if set"""        
@@ -110,7 +110,10 @@ class Publisher(object):
         """
         """
         import inspect
-        self.section_number, self.subsection_number = self._current_index
+        if self.doc_info:
+            self.section_number, self.subsection_number = self._current_index
+        else:
+            self.section_number = self.subsection_number = 0
     
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
