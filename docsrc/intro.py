@@ -486,7 +486,7 @@ class JupyDoc(DocPublisher):
 
         """Setup
 
-        Here is a single cell in a Jupyter notebook:
+        Here is a  Jupyter notebook cell:
         ```
         from jupydoc import DocMan
         dm = DocMan('docsrc')
@@ -495,19 +495,19 @@ class JupyDoc(DocPublisher):
         The first line imports the Jupydoc document manager <samp>DocMan</samp>. The second
         instantiates it with the name of the package, or folder containing source documents. 
         It must be in the Python path, or have been already loaded. 
-        The last line generates a summary of the file structure
+        The final line generates a summary of the file structure
         and available document classes: 
         ```
         
-            Modules                  Classes
+            Modules                   Classes
               docsrc.
                 intro                   ['JupyDoc']
                 workflow                ['MultipleDocs', 'Workflow']
 
             docspath: /home/burnett/work/tburnett.github.io
         ```
-        The first column, uner "Modules" shows the file structure. Names ending with a period are folders including a "__init.py", files
-        making them a package,  otherwise python files, or modulees. The second column has the document classes declared in the module.
+        The first column, under "Modules", shows the file structure. Names ending with a period are folders including an "__init__.py" file
+        making them a package,  otherwise python files, or modules. The second column has the document classes declared in the module.
         In this case the package "docsrc" has two modules.
         
         Each source file defining a module needs to declare class(es) that it contains. For the present one has
@@ -519,10 +519,9 @@ class JupyDoc(DocPublisher):
 
         #### docspath
         The parameter `docspath` is indentical to the `docpath` discussed <a href="#output_specification"> above </a>. The "s" is to
-        convey the multiple document orientation.  There are several ways to define it, with highest priority at the start
-        * an argument to the `DocMan` constructor
-        * a statement `docspath="<something>"` in the `__init__.py` of a package, or a module. If the declaration is relative, it will
-        be with respect to the enclosing package.
+        convey the multiple document orientation.  It can be defined in the by a `docspath=` in the top-level package's `__init__.py`, which would
+        be overridden with an argument to the `DocMan` instantiation. 
+        If the declaration is relative, it will be with respect to the top-level package.
 
         """
         self.publishme()
