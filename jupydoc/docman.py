@@ -47,7 +47,7 @@ class Modules(dict):
                 if field != current[i]:
                     current[i]=field
                     r+= tab*(i+1) + field+'.\n'
-            r+= tab*(n)+ f'{fields[-1]:20s}'+ tab*2+ f'{docs}\n'
+            r+= f'{tab*(n)+ fields[-1]:24s}'+ tab*2+ f'{docs}\n'
         return r
     def __repr__(self): return str(self)
     
@@ -145,7 +145,9 @@ def find_modules( path):
 
 class DocMan(object):
     
-    def __init__(self, rootname, docspath='', set_verbose=False):
+    def __init__(self, rootname:'',
+                     docspath:''='', 
+                     set_verbose=False):
         
         # set globals for helper classes
         global verbose, packagepath, rootpath, packages, modules

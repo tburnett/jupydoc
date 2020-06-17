@@ -52,7 +52,18 @@ class DocPublisher(jupydoc.Publisher):
     
         self.clear()
 
+    def __str__(self):
+        r = self.doc_info.get('title', '').split('\n')[0]+'\n'
+        for sid, sname, _ in self.doc_info:
+            if sid==0: continue
+            sid = str(sid).replace('.0', "")
+            r += f'{sid}    {sname}\n'
+        if self.docpath:
+            r += f' -> {os.path.join(self.docpath, self.docname)}'
+        return r
 
+    def __repr__(self): return str(self)
+    
     def title_page(self):
         """
         <a id="title_page"> <h1>{title}</h1> </a>

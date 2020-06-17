@@ -12,7 +12,7 @@ class JupyDoc(DocPublisher):
     """
     title: |
             Jupydoc: Generate documents with Python code 
-            Introduction and demonstration
+            
     author: |
             Toby Burnett <tburnett@uw.edu>
             University of Washington
@@ -22,8 +22,8 @@ class JupyDoc(DocPublisher):
               variable_formatting [scalars list_and_dict latex images 
                                 figures dataframes other_formatting_options]
               making_a_document [ class_docstring document_generation output_specification]
-              file_structure 
-
+              multiple_documents [docman_setup  docman_usage]
+    
     """ 
     def __init__(self,  **kwargs):
         doc_folder = kwargs.get('doc_folder', None)
@@ -359,6 +359,42 @@ class JupyDoc(DocPublisher):
 
         self.publishme()
 
+    def other_formatting_options(self):
+        r"""
+        Other Formatting options
+        
+        Markdown text is designed to be readable and easy to compose, a huge difference from
+        the formal HTML, to which it is translated. One can of course insert HTML 
+        directly into the text, of course compromising the readability, and requiring HTML knowledge. 
+        Jupydoc processing allows inserting predefined strings when processing the docstring text, 
+        which represents a  compromise. 
+        
+
+
+        #### Indenting
+        Indenting a paragraph is not directly possible with markdown. But we can easily insert the appropriate HTML
+        
+        * {{indent}}: `{indent}` &mdash;the margin is predefined, easily changed by the user
+        *  {{endp}}: `{endp}` &mdash; Since it represents the end of a paragraph.
+        
+        Demonstration:
+        {indent}
+        This paragraph is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
+        <br>To start a new line in this, or any other paragraph, insert "&lt;br&gt;". 
+        {endp}
+        
+        #### Preformatted text
+        The function `monospace(*text*)` is provided to achieve insertion of 
+        "preformatted" text with a monospace font.
+        It can be invoked with a text string, or any object which returns a description of itself via its class `__str__` 
+        function. For example "test_string = self.monospace('This is a multi-line test.\nAfter a newline.')", 
+        with a corresponding  "{{test_string}}" will look like:
+                 {linkto_top}
+        {test_string}
+        """
+        test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
+        self.publishme()
+
     def making_a_document(self):
         """Making a document
         
@@ -405,16 +441,24 @@ class JupyDoc(DocPublisher):
     def document_generation(self):
         """Document Generation
         
-        Creation of the document is performed by invoking the instantiated call. `DodPublisher` itself allows for a demonstration:
+        Creation of the document is performed by invoking the instantiated call. `DocPublisher` itself allows for a demonstration:
         ```
         from jupydoc import DocPublisher
         doc = DocPublisher()
+        doc
+        ```
+        The last line provides a table of contents useful for selecting a section of subsection to display online. Actual production
+        of the document is accomplished by invoking it as a function, e.g.,
+        ```
         doc('all')
         ```
+
         The "job" of the class is to produce the document that it is designed to do, which is performed by invoking it as a function.
         The interactive display is intended to select a single section, or subsection to examine while developing the 
         code. If an output has been set, it will always generate the full HTML version. The argument possibilites are: 'all'
-        as above, the name of the function whose output to examine, or the section or subsection number.
+        as above, the name of the function whose output to examine, or the section or subsection number. In that case, a number that 
+        is beyond the range of sections or subsections will select the last on for display. For example, if section 4 has 5 subsections,
+        "4.9" will select 4.5 for display. "4.0" displays section 4 and all its subsections.
 
         """    
         self.publishme()
@@ -422,7 +466,7 @@ class JupyDoc(DocPublisher):
     def output_specification(self):
         """Output Specification
 
-        The call described here runs the `save()` function described in the <a href=#basic>Basic Framework sect</a>
+        The call described here runs the `save()` function described in the <a href=#basic>Basic Framework section</a>
         The HTML document is a folder, containing the the document in a file `index.html` and folders `figures` or `images` 
         if needed. The name of that folder, called `docname` is by default constructed by appending the class name to the
         the Python *module* name, itself related to the *file* name by
@@ -431,6 +475,82 @@ class JupyDoc(DocPublisher):
         """
         self.publishme()
         
+    def multiple_documents(self):
+        """Multiple Documents
+
+        This section describes the enhancement provided by `jupydoc.DocMan` to manage multiple documents, both the source files, or Python modules, and generated documents.
+        """
+        self.publishme()
+
+    def docman_setup(self):
+
+        """Setup
+
+        Here is a single cell in a Jupyter notebook:
+        ```
+        from jupydoc import DocMan
+        dm = DocMan('docsrc')
+        dm
+        ```
+        The first line imports the Jupydoc document manager <samp>DocMan</samp>. The second
+        instantiates it with the name of the package, or folder containing source documents. 
+        It must be in the Python path, or have been already loaded. 
+        The last line generates a summary of the file structure
+        and available document classes: 
+        ```
+        
+            Modules                  Classes
+              docsrc.
+                intro                   ['JupyDoc']
+                workflow                ['MultipleDocs', 'Workflow']
+
+            docspath: /home/burnett/work/tburnett.github.io
+        ```
+        The first column, uner "Modules" shows the file structure. Names ending with a period are folders including a "__init.py", files
+        making them a package,  otherwise python files, or modulees. The second column has the document classes declared in the module.
+        In this case the package "docsrc" has two modules.
+        
+        Each source file defining a module needs to declare class(es) that it contains. For the present one has
+        the lines:
+        ```
+        from jupydoc import DocPublisher
+        __docs__ = ['JupyDoc']   
+        ```
+
+        #### docspath
+        The parameter `docspath` is indentical to the `docpath` discussed <a href="#output_specification"> above </a>. The "s" is to
+        convey the multiple document orientation.  There are several ways to define it, with highest priority at the start
+        * an argument to the `DocMan` constructor
+        * a statement `docspath="<something>"` in the `__init__.py` of a package, or a module. If the declaration is relative, it will
+        be with respect to the enclosing package.
+
+        """
+        self.publishme()
+
+    def docman_usage(self):
+        """Usage
+        
+        With the DocMan instance generated in the setup phase, the following instantiates
+        a document instance "JupyDoc", as described in the <a href="#making_a_document">
+        "Making a Document" section</a>.  
+        ```
+        doc = dm('JupyDoc')
+        ```
+        
+        One useful feature of instantiating the document via `DocMan` is that the module
+        containing the class is reloaded first, relieving the need to separately manage that
+        in the notebook. So changes to source are immediately made, and compilation errors
+        reported.
+
+        """
+        #--------------------------------------------------------------------
+        self.publishme()
+
+class OtherSections(DocPublisher):
+    """
+    sections: [workflow other_formatting_options object_replacement]
+    """
+
     def subsections(self):
         """Subsections
         

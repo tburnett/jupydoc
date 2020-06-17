@@ -75,17 +75,15 @@ class DocInfo(collections.OrderedDict):
         return ret            
     
     def parse_section_string(self, section_string):
+        # remove commas, make sure [] will be tokens
         t = section_string.replace(',', ' ').replace('[', ' [ ').replace(']', ' ] ')
         tokens = t.split()
-        subs=False
+        subs = False
         for token in tokens:
-            if    token=='[': subs = True
-            elif token ==']': subs = False 
-            else:
-                if not subs : 
-                    current_section = self['sections'][token] = []
-                else: 
-                    current_section.append(token)
+            if   token=='[': subs = True
+            elif token==']': subs = False 
+            elif not subs  : current_section = self['sections'][token] = []
+            else:            current_section.append(token)
     @property
     def names(self):
         nm = []
@@ -94,7 +92,7 @@ class DocInfo(collections.OrderedDict):
             nm += subs
         return nm
 
-    def set_selection(self, select:'name of function | section | subsection'):
+    def set_selection(self, select:'"all" | name of function | section number | subsection number'):
         self._selection = select
 
     def is_selected(self, sid:'section id', name:'function name'):
@@ -108,8 +106,12 @@ class DocInfo(collections.OrderedDict):
             select_section = round(sel*10) % 10 ==0
             if select_section:
                 n =len(self.section_names)
-                return sel==int(sid) or sel>=n and int(sid)==n
-            return  sid==sel
+                return sel==int(sid) or sel>=n and int(sid)==n-1
+            # a subsection: either exact, of get last if too big
+            i = int(sel); j = int(10*sel-i)
+            m = len(self.sections[self.section_names[i]] )
+            t = i+m/10 #max sub number
+            return  sid==sel or sel>t and sid==t 
         else:
             return name==sel
 
