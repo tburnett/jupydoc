@@ -7,8 +7,9 @@ import yaml
 
 from .indexer import DocIndex
 from .helpers import DocInfo
+from .publisher import Publisher
 
-class DocPublisher(jupydoc.Publisher):
+class DocPublisher(Publisher):
     """
     title: |
             `DocPublisher`: Derived from `jupydoc.Publisher` to support structured documents

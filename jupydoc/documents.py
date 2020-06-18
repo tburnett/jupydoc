@@ -6,9 +6,9 @@ import os
 import numpy as np
 
 from jupydoc import DocPublisher
-__docs__ = ['JupyDoc', 'OtherSections']
+__docs__ = ['Manual', 'Technicals']
 
-class JupyDoc(DocPublisher):
+class Manual(DocPublisher):
     """
     title: |
             Jupydoc: Generate documents with Python code 
@@ -241,23 +241,30 @@ class JupyDoc(DocPublisher):
         Using the jupydoc function <samp>image</samp>, set a variable with
         a call `self.image(filename)':
         ```
-        launch_image = self.image("$HOME/images/fermi-launch.jpg",
-                            caption="The launch of Fermi on a Delta II on June 11, 2008",
-                            width=300)
+        path,_ = os.path.split(self.filename)
+        filename = os.path.join(path, "../images/fermi-launch.jpg")
+        
+        launch_image = self.image(filename,
+                            caption="The launch of Fermi on a Delta II on June 11, 2008", width=300)
         ```
         
         referred to in this text as "{{launch_image}}", will produce this:
        
         {launch_image}
-        
+
         This uses the [HTML5 `figure` tag](https://www.w3schools.com/tags/tag_figure.asp),
         which manages a caption. One can also set the width or height, 
         see the discussion on the 
         [HTML `img` tag](https://www.w3schools.com/tags/tag_img.asp).
 
+        Note that the image was specified relative to the path for this source file, which
+        was obtained from the variable `self.filename`. 
         """
-         
-        launch_image = self.image("$HOME/images/fermi-launch.jpg",
+
+        path,_ = os.path.split(self.filename)
+        filename = os.path.join(path, "../images/fermi-launch.jpg")
+        
+        launch_image = self.image(filename,
                             caption="The launch of Fermi on a Delta II on June 11, 2008", width=300)
         self.publishme()
 
@@ -494,7 +501,7 @@ class JupyDoc(DocPublisher):
         Here is a  Jupyter notebook cell:
         ```
         from jupydoc import DocMan
-        dm = DocMan('docsrc')
+        dm = DocMan('jupydoc')
         dm
         ```
         The first line imports the Jupydoc document manager <samp>DocMan</samp>. The second
@@ -505,23 +512,25 @@ class JupyDoc(DocPublisher):
         ```
         
             Modules                   Classes
-              docsrc.
-                intro                   ['JupyDoc']
-                workflow                ['MultipleDocs', 'Workflow']
+            jupydoc.
+                documents               ['Manual', 'Technicals']
+
 
             docspath: /home/burnett/work/tburnett.github.io
         ```
         The first column, under "Modules", shows the file structure. Names ending with a period are packages, that is, 
         folders containing an `__init__.py` file, otherwise python files, or modules. The second column has the document 
         classes declared in the module.
-        In this case the package "docsrc" has two modules.
+        In this case the package is `jupydoc` itself. Only one of its modules, the present one, the file, `documents.py` declared document classes. 
         
-        Each source file defining a module needs to declare class(es) that it contains. For the present one has
+        Each source file defining a module needs to declare class(es) that it contains. This one has
         the lines:
         ```
         from jupydoc import DocPublisher
-        __docs__ = ['JupyDoc']   
+        __docs__ = ['Manual', 'Technicals']   
         ```
+
+        `DocMan` does a recursive search for all modules contained within the parent package. 
 
         #### docspath
         The parameter `docspath` is indentical to the `docpath` discussed <a href="#output_specification"> above </a>. The "s" is to
@@ -540,7 +549,7 @@ class JupyDoc(DocPublisher):
         a document instance "JupyDoc", as described in the <a href="#making_a_document">
         "Making a Document" section</a>.  
         ```
-        doc = dm('JupyDoc')
+        doc = dm('Manual')
         ```
         
         One useful feature of instantiating the document via `DocMan` is that the module
@@ -599,188 +608,18 @@ class JupyDoc(DocPublisher):
         #----------------------------------
         self.publishme()
 
-class OtherSections(DocPublisher):
+
+class Technicals(DocPublisher):
     """
-    sections: [workflow other_formatting_options object_replacement]
-    """
-
-    def subsections(self):
-        """Subsections
-        
-        Subsection functions have the **same** function structure as for sections. To be a subsection,
-        it must be declared in the "subsections" par
-
-
-        ```
-
-        ```
-        
-        Any symbols accessible in the section are available in the docstring portion here. For example,
-        the section to which this subsection belongs set a random number $r$ to {r:.3f}.
-        """
-        self.publishme()
-        
-    def other_text(self):
-        """Other text
-        
-        Text not fitting into the section structure can be added with a call to the member function
-        `markdown`, providing a text string. 
-        """
-        self.publishme()
-        
-    def assembly(self):
-        """Assembly
-        
-        Assembling the document requires calling the section functions in the desired order, starting with 
-        the built in `title_page`. This may be done by hand of course, by adding a function to do that to
-        the user subclass, or from code external to the class. But a simpler way, in the spirt of the class code
-        transparently defining itself: There are up to four fields in the *class* docstring, 
-        separated by empty lines: title, author, abstract, and section list. The section list is a list of the
-        section function names, separated by blanks on one or more lines. For this document, for example, it is
-        
-        {section_name_text}
-        
-        The Publisher superclass defines a `__call__` function, making it callable. So to produce, 
-        and write out if the output document folder has been specified, one simply calls the document object.
-        
-        For development in the JupyterLab environment, one may display all, or a range of sections. 
-        Optional calls to the function can be
-        * a (start,stop) range of indeces
-        * a single integer, the index of the section function in the list
-        * the name of the section
-        
-        Figures are added to a "figs" folder in the current folder, as well as the destination document folder.
-        """
-        #----------------------------------------------------------------
-        section_name_text = self.monospace("""title_page introduction formatting_summary document_structure
-        file_structure other_formatting_options object_replacement workflow""")
-        #----------------------------------------------------------------
-        
-        self.publishme()
-
-    def file_structure(self):
-        """
-        File structure
-        
-        ## Web
-        The resulting Web document has two components: the HTML file with all the text and formatting, and, in the
-        same folder, a  subfolder "figs" with the figures, which are included via the 
-        HTML e.g., `<img src="figs/fig_1.png"/>`.
-                
-        The use case motivating this was to develop the document in Jupyter, and easily save it as a 
-        Web document. In order for the figures to be displayed in the notebook, the figures must be 
-        saved in its folder.
-       
-        Creating the Web document then entails creating (using nbconvert) the HTML file in the destination
-        document folder, and copying the figure folder into it.
-                
-        ### PDF?
-        Using nbconvert for this seems to fail. A better solution, in the works, is to use code that I 
-        found in [`notebook-as-pdf`](https://github.com/betatim/notebook-as-pdf), which uses a headless
-        chrome, relying on [`pyppeteer`](https://pypi.org/project/pyppeteer/) to render the HTML to a PDF file.
-        """
-        self.publishme()
-        
-    def workflow(self):
-        """
-        Workflow
-        
-        #### Development
-        This facility has transformed the way I generate analysis code.  
-        I use notebooks only to develop the code *and* documentation. This is an incremental process, with one 
-        section at a time. But the computation up to the point of adding something in a new section is perhaps 
-        lengthy. Since changing code in the module requires reloading and re-executing it, it can be 
-        prohibitive to edit it.
-        
-        An approach I'm using is to create a new module, say "dev", only for the development code, with this pattern:        
-      
-        ```
-        from jupydoc import Publisher
-        class Development(Publisher): 
-            '''title: The title of this document
-               sections: new_section
-            '''
-            def __init__(self, **kwargs):
-                super().__init__( **kwargs)
-                ''' 
-                text to summarize setup
-                '''
-                # setup self to correspond to needs of code here
-                self.publishme('Setup')
-                
-            def new_section(self):
-                '''New Section
-                <text>
-                '''
-                # code using self
-                self.publishme()
-        ```
-        
-        In the notebook, I use `%autoreload` when executing the development module with code like. 
-        
-        ```
-        %aimport dev
-        from dev import Development
-        ```
-        
-        Followed by
-        ```
-        %autoreload 1
-        self=Development( input_data):
-        self.new_section()
-        ```
-        
-        To play with new code in the notebook before inserting into the module, I have "self" available. Executing such
-        cells may need a "%autoreload 0" to disable the automatic reloading of the development module.
-        
-        While generating and testing a document, the display in the notebook may be large. For this reason,
-        This does not affect the document itself, all of which will be written to the "doc_folder" folder. It is
-        very useful to a have a window open to the browser display of this file, to monitor the entire document.
-        
-        """
-        self.publishme()
+    title: JupyDoc technical detalis
+    sections: object_replacement
     
-    def other_formatting_options(self):
-        r"""
-        Other Formatting options
-        
-        Markdown text is designed to be readable and easy to compose, a huge difference from
-        the formal HTML, to which it is translated. One can of course insert HTML 
-        directly into the text, of course compromising the readability, and requiring HTML knowledge. 
-        Jupydoc processing allows inserting predefined strings when processing the docstring text, 
-        which represents a  compromise. 
-        
+    abstract: This document contains various technical details.
+    """
 
-
-        #### Indenting
-        Indenting a paragraph is not directly possible with markdown. But we can easily insert the appropriate HTML
-        
-        * {{indent}}: `{indent}` &mdash;the margin is predefined, easily changed by the user
-        *  {{endp}}: `{endp}` &mdash; Since it represents the end of a paragraph.
-        
-        Demonstration:
-        {indent}
-        This paragraph is indented 5%. It was preceded by {{indent}} and followed by {{endl}}.
-        <br>To start a new line in this, or any other paragraph, insert "&lt;br&gt;". 
-        {endp}
-        
-        #### Preformatted text
-        The function `monospace(*text*)` is provided to achieve insertion of 
-        "preformatted" text with a monospace font.
-        It can be invoked with a text string, or any object which returns a description of itself via its class `__str__` 
-        function. For example "test_string = self.monospace('This is a multi-line test.\nAfter a newline.')", 
-        with a corresponding  "{{test_string}}" will look like:
-                 {linkto_top}
-        {test_string}
-        """
-        test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
-        self.publishme()
-
+    
     def object_replacement(self):
-        """
-        Some technical details
-        
-        ### Object replacement
+        """Object Replacement
         
         A key feature of jupydoc is its ability to recognize the class of a 
         variable appearing in the document, and  replace it with an instance of a "wrapper" class, 
@@ -788,12 +627,6 @@ class OtherSections(DocPublisher):
         original class. This is done by default for Figure, DataFrame and dict.
         It happens in the class `jupydoc.replacer.ObjectReplacer`, which inherits from `dict`. 
         An instance is in the Publisher instance.
-        The initial value of `self.object_replacer` is:
-        
-        {self.object_replacer}
-        
-        (illustrating the replacement for a Python dict)
-        The value is a tuple, the two columns displayed.
         
        
         So in the constructor of a subclass, one can modify this instance, using 'update`, to change current keyword args, or 

@@ -67,9 +67,9 @@ class DocIndex(dict ):
         info = doc.doc_info
         t ={}
         t[doc.docname] = dict(
-                    title=info.get('title','(no title)'.split('\n')[0]) ,
+                    title=info.get('title','').split('\n')[0] ,
                     date= info.get('date', str(datetime.datetime.now())[:16]), 
-                    author=info.get('author', ''),
+                    author=info.get('author', '').split('\n')[0],
             )
         self.update(t)
 

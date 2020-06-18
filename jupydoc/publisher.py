@@ -7,6 +7,7 @@ import os, inspect, datetime
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
 
+
 ## special style stuff or start of document
 jupydoc_css =\
 """
@@ -58,7 +59,10 @@ class Publisher(object):
                 endp='</p>',
                 linkto_top = '<a href="top">top</a>'
             )
+        # make current date, and this file name avaailable
         self.date=str(datetime.datetime.now())[:16]
+        self.filename = inspect.stack()[0][1]
+
         self.display_on=True
         self.clear()
 
