@@ -2,10 +2,12 @@
 import os, sys, glob
 import importlib 
 
-# make instance available via module
-docman_instance = None
-def instance():
-    return docman_instance
+from .indexer import DocIndex
+
+# # make instance available via module
+# docman_instance = None
+# def instance():
+#     return docman_instance
 
 # local globals    
 verbose = False
@@ -52,7 +54,6 @@ class Modules(dict):
     def __repr__(self): return str(self)
     
     
-    
 class Packages(dict):
     # manage a set of packages, folders containing an __init__.py 
     def __init__(self):
@@ -92,7 +93,6 @@ class Packages(dict):
 def traceback_message(e):
     import traceback
     tb = e.__traceback__
-    self.exception = e # save for possible detailed exam
     traceback.print_tb(tb, -1)
     
 def import_module(name, package=None):
@@ -240,9 +240,12 @@ class DocMan(object):
             #  docspath for it
             toeval = f'module.{classname}'
             obj = eval(toeval)(docpath=docspath, **kwargs)
+  
         except Exception as e:
             print(f'Error evaluating "{toeval}": {e.__class__.__name__}')
             traceback_message(e)
             return None
+        # finally set for it to update the index
+        obj.indexer = DocIndex( obj )
         return obj
    

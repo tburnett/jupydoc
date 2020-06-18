@@ -80,8 +80,15 @@ class DocInfo(collections.OrderedDict):
         tokens = t.split()
         subs = False
         for token in tokens:
-            if   token=='[': subs = True
-            elif token==']': subs = False 
+            if   token=='[': 
+                if subs:
+                    raise Exception('Found unexpected "[" in section specification:'
+                         'only one  level of subsections is supported')
+                subs = True
+            elif token==']': 
+                if not subs:
+                    raise Exception('Found unexpected "]" in section specification')
+                subs = False 
             elif not subs  : current_section = self['sections'][token] = []
             else:            current_section.append(token)
     @property

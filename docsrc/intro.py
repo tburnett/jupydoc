@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from jupydoc import DocPublisher
-__docs__ = ['JupyDoc', ]
+__docs__ = ['JupyDoc', 'OtherSections']
 
 class JupyDoc(DocPublisher):
     """
@@ -22,8 +22,10 @@ class JupyDoc(DocPublisher):
               variable_formatting [scalars list_and_dict latex images 
                                 figures dataframes other_formatting_options]
               making_a_document [ class_docstring document_generation output_specification]
-              multiple_documents [docman_setup  docman_usage]
+              multiple_documents [docman_setup  docman_usage docman_web]
+              workflow
     
+    user_info: This is available to user.
     """ 
     def __init__(self,  **kwargs):
         doc_folder = kwargs.get('doc_folder', None)
@@ -404,8 +406,6 @@ class JupyDoc(DocPublisher):
         1. the class needs to inherit from `DocPublisher`, 
         2. the layout of the document must be defined in the *class* docstring. 
         
-       
-
         """
         #------------------------
         r = np.random.random(1)[0] # will be available for subsection documents
@@ -430,10 +430,14 @@ class JupyDoc(DocPublisher):
                 variable_formatting [scalars list_and_dict latex images 
                                     figures dataframes other_formatting_options]
                 making_a_document [ class_docstring document_generation output_specification]
-                file_structure 
+                multiple_documents [docman_setup  docman_usage docman_web]
 
         ```
         Commas and line breaks are ignored, and subsection names enclosed in square brakets following the section name.
+
+        Any unrecognized fields are added to attributes of the class, available for
+        user configuration perhaps. For this, it is 
+        `user_info`: "{self.user_info}"
         """
        
         self.publishme()
@@ -478,7 +482,8 @@ class JupyDoc(DocPublisher):
     def multiple_documents(self):
         """Multiple Documents
 
-        This section describes the enhancement provided by `jupydoc.DocMan` to manage multiple documents, both the source files, or Python modules, and generated documents.
+        This section describes the enhancement provided by `jupydoc.DocMan` to manage multiple documents, both the source files, 
+        or Python modules, and any generated documents.
         """
         self.publishme()
 
@@ -506,8 +511,9 @@ class JupyDoc(DocPublisher):
 
             docspath: /home/burnett/work/tburnett.github.io
         ```
-        The first column, under "Modules", shows the file structure. Names ending with a period are folders including an "__init__.py" file
-        making them a package,  otherwise python files, or modules. The second column has the document classes declared in the module.
+        The first column, under "Modules", shows the file structure. Names ending with a period are packages, that is, 
+        folders containing an `__init__.py` file, otherwise python files, or modules. The second column has the document 
+        classes declared in the module.
         In this case the package "docsrc" has two modules.
         
         Each source file defining a module needs to declare class(es) that it contains. For the present one has
@@ -526,6 +532,7 @@ class JupyDoc(DocPublisher):
         """
         self.publishme()
 
+
     def docman_usage(self):
         """Usage
         
@@ -543,6 +550,53 @@ class JupyDoc(DocPublisher):
 
         """
         #--------------------------------------------------------------------
+        self.publishme()
+
+    def docman_web(self):
+        """Web site
+
+        After `DocMan` instantiates a document class, before returning it to the user, 
+        it adds an *indexer* attribute, a `DocIndex` instance. Then, before the document
+        saves itself, it invokes the indexer.
+        
+        The indexer manages the folder `docspath`, containg the document as website.
+
+        This involves two files:
+        * `index.html`, which defines content for the website, specifically a table
+        of the documents that it contains
+        * `index.yaml` An editable index with information for each document, at least
+        the date and title.
+      
+        When the indexer is invoked, it updates both files.
+   
+        Here is what the index looks like:
+        
+        {index_image}
+  
+        """
+        #--------------------------------------------------------------------
+        index_image = self.image("$HOME/images/jupydoc-index.png", caption='')
+        self.publishme()
+
+    def workflow(self):
+        """Workflow
+
+        This started as a little project to allow me to better organize my research, 
+        incorporating generating research notebook (not JupyterLab) entries and facilitating
+        generation of presentations. Some of the motivations were hinted at in the 
+        <a href="#introduction"> introduction</a>.
+
+        It soon became apparent that this could be similarly useful to others, which
+        generated a substantial effort to turn it into a clean package that would be iniviting
+        not only to use, but to make improvements to.
+
+        It represents for me, a dramatic workflow paradigm change, implying revisions to 
+        present code, with a different file structure.
+
+        I have yet to spend much time on that, and plan to record conclusions here as I update
+        this file.
+        """
+        #----------------------------------
         self.publishme()
 
 class OtherSections(DocPublisher):

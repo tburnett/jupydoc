@@ -1,4 +1,4 @@
-import os, yaml
+import os, yaml,  datetime
 import inspect
 import numpy as np
 
@@ -56,9 +56,24 @@ List of documents maintained here
 """
 class DocIndex(dict ):
 
-    def __init__(self, document, verbose=False):
-        assert os.path.isdir(document), f'Expect a document folder, not {document}'
-        self.docspath, _ = os.path.split(document)
+    def __init__(self, doc:'An jupydoc.DocPublisher object',
+               verbose=False):
+        
+        if not hasattr(doc, 'docpath') or not hasattr(doc, 'doc_info'):
+            raise Exception('Expected a DocPublisher object')
+
+        # set up index entry with info from the doc
+        self.docspath = doc.docpath
+        info = doc.doc_info
+        t ={}
+        t[doc.docname] = dict(
+                    title=info.get('title','(no title)'.split('\n')[0]) ,
+                    date= info.get('date', str(datetime.datetime.now())[:16]), 
+                    author=info.get('author', ''),
+            )
+        self.update(t)
+
+
         self.verbose=verbose
         self.index_file = os.path.join(self.docspath, 'index.yaml')
         if os.path.exists(self.index_file):
@@ -121,3 +136,8 @@ class DocIndex(dict ):
             out.write(doc)
         if self.verbose: print(f'Wrote file {filename}')
         return
+
+    def __call__(self):
+        self.to_html()
+        self.save()        
+      

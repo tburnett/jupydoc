@@ -6,9 +6,7 @@ import jupydoc
 import yaml
 
 from .indexer import DocIndex
-from .helpers import doc_formatter, DocInfo
-from .doc_manager import docman_instance as docman
-
+from .helpers import DocInfo
 
 class DocPublisher(jupydoc.Publisher):
     """
@@ -42,6 +40,8 @@ class DocPublisher(jupydoc.Publisher):
                 raise
 
         self.doc_info = DocInfo(doc_dict)
+        self.doc_info['date'] = self.date
+
         self._no_display = no_display
         self.display_on = not no_display # user can set
 
@@ -117,6 +117,9 @@ class DocPublisher(jupydoc.Publisher):
             eval(f'self.{function}()')
             
         if not display_only:
+            # update the document index if instantiated by DocMan 
+            if hasattr(self, 'indexer'):
+                self.indexer()
             self.save()
 
     def process_doc(self, doc, vars):
@@ -164,30 +167,3 @@ class DocPublisher(jupydoc.Publisher):
         doc = self.doc_info.section_header + header + doc
         return doc
 
-    def setup_save(self):        
-
-        indexer = DocIndex(os.path.join(self.docpath, self.docname))
-        #  update the entry in the index
-           
-        title = self.doc_info.get('title','(no title)'.split('\n')[0])
-        t ={}
-        t[self.docname] = dict(
-                    title=title, 
-                    date=self.date, 
-                    author=self.doc_info.get('author', '')
-            )
-        # 
-        indexer.update(t)
-        return indexer
-        
-    def save(self):
-        # overide the file save to update the entry in the index
-        if not self.docpath:
-            print(f'(Not saved --no document path was defined)')
-            return
-        indexer = self.setup_save()
-        if not indexer: return
-        self.indexer = indexer 
-        indexer.to_html()
-        indexer.save()        
-        super().save()
