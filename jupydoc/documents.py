@@ -33,6 +33,11 @@ class Manual(DocPublisher):
             doc_folder = os.path.join(doc_path, doc_folder)
         kwargs['doc_folder'] = doc_folder
         super().__init__( **kwargs)
+
+        # set up default image folder
+        self.image_folder = os.path.abspath(os.path.join(self.path, '../images'))
+        if not os.path.isdir(self.image_folder):
+            print(f'Manual: {self.image_folder} is not a folder')
                     
     def introduction(self):
         """
@@ -241,11 +246,8 @@ class Manual(DocPublisher):
         Using the jupydoc function <samp>image</samp>, set a variable with
         a call `self.image(filename)':
         ```
-        path,_ = os.path.split(self.filename)
-        filename = os.path.join(path, "../images/fermi-launch.jpg")
-        
-        launch_image = self.image(filename,
-                            caption="The launch of Fermi on a Delta II on June 11, 2008", width=300)
+        launch_image = self.image( 'fermi-launch.jpg',
+                caption='launch of Fermi on a Delta II on June 11, 2008", width=300)
         ```
         
         referred to in this text as "{{launch_image}}", will produce this:
@@ -257,15 +259,16 @@ class Manual(DocPublisher):
         see the discussion on the 
         [HTML `img` tag](https://www.w3schools.com/tags/tag_img.asp).
 
-        Note that the image was specified relative to the path for this source file, which
-        was obtained from the variable `self.filename`. 
+        The full path for the name is relative to the source file, except this 
+        class specified 
+        ```
+        self.image_folder = os.path.join(self.path, '../images')
+        ``` 
+        in its class `__init__`.
         """
-
-        path,_ = os.path.split(self.filename)
-        filename = os.path.join(path, "../images/fermi-launch.jpg")
-        
-        launch_image = self.image(filename,
-                            caption="The launch of Fermi on a Delta II on June 11, 2008", width=300)
+       
+        launch_image = self.image( 'fermi-launch.jpg',
+                caption='launch of Fermi on a Delta II on June 11, 2008', width=300)
         self.publishme()
 
     def figures(self):
@@ -584,7 +587,7 @@ class Manual(DocPublisher):
   
         """
         #--------------------------------------------------------------------
-        index_image = self.image("$HOME/images/jupydoc-index.png", caption='')
+        index_image = self.image("jupydoc-index.png", caption='')
         self.publishme()
 
     def workflow(self):

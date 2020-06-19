@@ -59,9 +59,10 @@ class Publisher(object):
                 endp='</p>',
                 linkto_top = '<a href="top">top</a>'
             )
-        # make current date, and this file name avaailable
+        # make current date, and this file's path and name avaailable
         self.date=str(datetime.datetime.now())[:16]
-        self.filename = inspect.stack()[0][1]
+        full_filename = inspect.stack()[0][1]
+        self.path, self.filename = os.path.split(full_filename)
 
         self.display_on=True
         self.clear()
@@ -153,16 +154,20 @@ class Publisher(object):
               browser_subfolder:'The subfolder in the HTML location'='images',
               image_extensions=['.png', '.jpg', '.gif', '.jpeg'],
               fig_style='jupydoc_fig',
-             )->'a JupydocImage object that generates HTML':
+              )->'a JupydocImage object that generates HTML':
         error=''
+        image_path = getattr(self, 'image_folder', self.path)
         filename = os.path.expandvars(filename)
+
         if not os.path.isfile(filename):
-            error = f'Image file {filename} not found.'
-        else:
+            filename = os.path.join(image_path, filename)
+            if not os.path.isfile(filename):
+                error = f'Image file {filename} not found.'
+        if not error:
             _, ext = os.path.splitext(filename)
             if not ext in image_extensions:
                 error = f'File {filename} not an image? "{ext}" not in {image_extensions}' 
-            self.docpath
+
 
         class JupydocImage(object):
             def __init__(self, folders):
