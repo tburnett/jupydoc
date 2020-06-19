@@ -99,7 +99,6 @@ class Hello(Publisher):
         Hello there, {to}!        
         See you later.
         """
-        print(to)
         self.publishme()
 h =Hello()
 h.sayhi('world')
