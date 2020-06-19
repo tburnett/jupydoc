@@ -19,6 +19,7 @@ except:
     pd=None
 
 document_folders = ['.']
+figure_number=0
                      
 class Wrapper(object):
     """Base class for the replacement classes
@@ -28,8 +29,7 @@ class Wrapper(object):
         self.obj = pars[0]
         self.vars=pars[1]
         self.indent = kwargs.pop('indent', '5%')
-    def set_folders(self, folders):
-        pass
+
     def __repr__(self): return str(self)
     def _repr_html_(self): return str(self)
     def __str__(self):
@@ -39,21 +39,13 @@ class Wrapper(object):
 
 
 if plt: 
-    class FigNumberer(object):
-        """ used"""
-        def __init__(self, previous_number=0):
-            self.number = previous_number
-        
-        def __call__(self):
-            self.number+=1
-            return self.number  
-    fig_numberer = FigNumberer()
 
     class FigureWrapper(Wrapper,plt.Figure):
         
         def __init__(self, *pars, **kwargs): 
                     #fig, vars, folder_name='figs', fig_folders=[], fig_numberer=FigNumberer(),   fig_class='jupydoc_fig'):
             
+            global figure_number
             super().__init__(*pars, **kwargs)
 
             fig = self.obj
@@ -63,11 +55,14 @@ if plt:
             self.folder_name=kwargs.pop('folder_name', 'figs')
             self.fig_folders=kwargs.pop('fig_folders', [])
             
-            self.number = fig.number = fig_numberer() # get a new number
+            figure_number += 1
+            self.number = fig.number = figure_number
             self.fig_class=kwargs.pop('fig_class', 'jupydoc_fig') 
 
             for folder in self.fig_folders:
                 os.makedirs(os.path.join(folder,  self.folder_name),exist_ok=True)
+
+
 
         def __str__(self):
             
@@ -153,6 +148,7 @@ class ObjectReplacer(dict):
         # folder management for these guys
         global document_folders
         document_folders = folders
+        self.clear()
         # set up 
 
         if pd:
@@ -167,7 +163,11 @@ class ObjectReplacer(dict):
             
         if plt:
             self.add_rep('Figure', FigureWrapper, dict(fig_folders=folders) )
-                            
+
+    def clear(self):
+        global figure_number
+        figure_number= 0
+                     
 
     @property
     def folders(self):
