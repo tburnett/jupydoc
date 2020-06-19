@@ -126,5 +126,5 @@ will display all of this manual, a test of most of the package functionality, as
 
 ## An analysis code development paradigm shift:
 I'm using this to fundamentally reorganize my analysis, with a focus on documenting code and results as I generate them. I'll
-report on insights in the last section of the manual.
+report on insights in the [last section](https://tburnett.github.io/jupydoc.documents.Manual#workflow) of the manual.
 
