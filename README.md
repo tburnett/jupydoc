@@ -86,7 +86,7 @@ formulae, plots with captions and relevant description have already been done.
 
 ---
 ### Installation
-To try out this beta version, download it via clone or zip. The only requirement is
+To try out this beta version, download it via clone or zip. The only requirement not satisfied by the JupyterLab environment is
 [`yaml`](https://pyyaml.org/wiki/PyYAMLDocumentation), installed with
 ```
 pip install pyyaml
