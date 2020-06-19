@@ -85,8 +85,15 @@ Well, I'd not go that far, but the evolution to such should be easy, especially 
 formulae, plots with captions and relevant description have already been done.
 
 ---
-To try out the development version, put its single folder into your path (get it via clone or zip).
+### Installation
+To try out this beta version, download it via clone or zip. The only requirement is
+[`yaml`](https://pyyaml.org/wiki/PyYAMLDocumentation), installed with
+```
+pip install pyyaml
+```
+I'll put it into PyPI after I, and a few others, have experience with using it for research.
 
+### Simple hello
 Here is a simple hello world, code in a Jupyter code cell:
 
 ```
@@ -96,7 +103,7 @@ class Hello(Publisher):
     
     def sayhi(self, to):
         """         
-        Hello there, {to}!        
+        Hello there, **{to}**!        
         See you later.
         """
         self.publishme()
@@ -104,7 +111,18 @@ h =Hello()
 h.sayhi('world')
 ```
 which displays, below the code cell, the following:
-`Hello there, world! See you later.`
+
+Hello there, **world**! See you later.
+
+### Regenerate this document
+
+The following in a cell
+
+```
+from jupydoc import DocMan
+DocMan('jupydoc')('Manual')('all')
+```
+will display all of this manual, a test of most of the package functionality, as implemented by the class "Manual", found in this "jupydoc" package.
 
 ## An analysis code development paradigm shift:
 I'm using this to fundamentally reorganize my analysis, with a focus on documenting code and results as I generate them. I'll

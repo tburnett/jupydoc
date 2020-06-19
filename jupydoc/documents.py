@@ -535,6 +535,9 @@ class Manual(DocPublisher):
 
         `DocMan` does a recursive search for all modules contained within the parent package. 
 
+        Note that instead of "dm" on the last line, that "dm?" produces that, but also the signature
+        had help for the function.
+        
         #### docspath
         The parameter `docspath` is indentical to the `docpath` discussed <a href="#output_specification"> above </a>. The "s" is to
         convey the multiple document orientation.  It can be defined in the by a `docspath=` in the top-level package's `__init__.py`, which would
@@ -543,7 +546,6 @@ class Manual(DocPublisher):
 
         """
         self.publishme()
-
 
     def docman_usage(self):
         """Usage
@@ -619,7 +621,6 @@ class Technicals(DocPublisher):
     
     abstract: This document contains various technical details.
     """
-
     
     def object_replacement(self):
         """Object Replacement
