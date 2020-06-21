@@ -1,13 +1,10 @@
+"""Document management for jupydoc 
 
+"""
 import os, sys, glob
 import importlib 
 
 from .indexer import DocIndex
-
-# # make instance available via module
-# docman_instance = None
-# def instance():
-#     return docman_instance
 
 # local globals    
 verbose = False
@@ -90,10 +87,11 @@ class Packages(dict):
         return r
     def __repr__(self): return str(self)
     
-def traceback_message(e):
+def traceback_message(e, limit=-2, skip=0, ):
     import traceback
     tb = e.__traceback__
-    traceback.print_tb(tb, -1)
+    for i in range(skip): tb = tb.tb_next
+    traceback.print_tb(tb, limit)
     
 def import_module(name, package=None):
     # return a module object, creating if package specified, which must be the name
@@ -121,10 +119,10 @@ def import_module(name, package=None):
         #importlib.reload(sys.modules[package]) # since already exists, reload
         return importlib.import_module('.'+name, package=package)
     except Exception as e:
-        print(f'Failed trying to create new module adding .{name} '\
-              f'to existing module {package}:\n {e}')
+        print(f'Failed trying to create new module adding ".{name}" '\
+              f'to existing module "{package}":\n {e}')
         # compilation error, maybe
-        traceback_message(e)
+        traceback_message(e, -2)
         return None
 
 def find_modules( path):
@@ -145,8 +143,8 @@ def find_modules( path):
 
 class DocMan(object):
     
-    def __init__(self, rootname:'',
-                     docspath:''='', 
+    def __init__(self, rootname:'Package to index for document classes',
+                     docspath:'folder to hold output'='', 
                      set_verbose=False):
         
         # set globals for helper classes
@@ -188,12 +186,11 @@ class DocMan(object):
         if not docspath:
             self.docspath = packages.get(rootname, '')
             if not self.docspath:
-                print(f'Warning: root package {rootname}'\
-                  f' did not declare "docspath" and it was not set with an arg')
+                print(f'No HTML output: set the parameter "docspath" '
+                      f'in "{rootname}.__init__.py" or with an arg to DocMan.')
         find_modules(packagepath)   
 
         # generate lookup table for class names from the result
-
         for md, cl in modules.items():
             for  c in cl:
                 self.lookup_module[c]=md  
@@ -216,10 +213,9 @@ class DocMan(object):
         return dict(packages)
 
     def __str__(self):
-        return str(modules) + f'\ndocspath: {self.docspath}'
+        return str(modules) +  (f'\ndocspath: {self.docspath}' if self.docspath else '')
     def __repr__(self): return str(self)
    
-
     def __call__(self, classname:'name of a document classs'=None, 
                     **kwargs:' arguments for class'):
 
@@ -243,7 +239,7 @@ class DocMan(object):
   
         except Exception as e:
             print(f'Error evaluating "{toeval}": {e.__class__.__name__}')
-            traceback_message(e)
+            traceback_message(e, limit=-2 ,skip=1, )
             return None
         # finally set for it to update the index
         obj.indexer = DocIndex( obj )

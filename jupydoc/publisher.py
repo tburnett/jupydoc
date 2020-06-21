@@ -214,6 +214,14 @@ class Publisher(object):
         text = str(text).replace('\n', '<br>')
         return f'<p style="margin-left: {indent}"><samp>{text}</samp></p>'
     
+    def shell(self, text:'a shell command '):
+        import subprocess
+        try:
+            ret = subprocess.check_output([text], shell=True).decode('utf-8')
+        except Exception as e:
+            ret = f'Command {text} failed : {e}'
+        return self.monospace(ret)
+
     def add_caption(self, 
                 text:'text of caption for most recent figure'):
         fig = plt.gcf()

@@ -96,7 +96,7 @@ class DocPublisher(Publisher):
 
     def __call__(self, 
             examine:'"all" | section number | subsection number'=None, 
-            display_only:'set to only use the display'=False,
+            save_ok:'will also save the doc if set'=True,
             ):
         """assemble and save the document if docpath is set        
         """
@@ -110,14 +110,16 @@ class DocPublisher(Publisher):
                 raise Exception(f'Function {function} not defined')
             self._current_index = [int(sid), int(sid*10%10)]
             self.display_on = selected
-            # try:
-            #     eval(f'self.{function}()')
-            # except Exception as e:
-            #     print(f'Function {function} Failed: {e}')
-            # TODO: sensible reaction here--info for user function
-            eval(f'self.{function}()')
-            
-        if not display_only:
+            try:
+                eval(f'self.{function}()')
+            except Exception as e:
+                import traceback
+                print(f'Function {function} Failed: {e}')
+                tb = e.__traceback__
+                traceback.print_tb(tb, limit=-1)
+ 
+
+        if save_ok:
             # update the document index if instantiated by DocMan 
             if hasattr(self, 'indexer'):
                 self.indexer()
