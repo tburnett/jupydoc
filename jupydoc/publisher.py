@@ -36,7 +36,7 @@ class Publisher(object):
         # output, display stuff
         if docpath:
             if not os.path.isdir(docpath):
-                raise Exception('{docpath} is not an existing folder')
+                raise Exception(f'{docpath} is not an existing folder')
         
         self.docpath = docpath
         module = self.__module__

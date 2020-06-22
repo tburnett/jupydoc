@@ -403,8 +403,19 @@ class Manual(DocPublisher):
         with a corresponding  "{{test_string}}" will look like:
                  {linkto_top}
         {test_string}
+
+        #### Shell output
+        A function `shell` will execute one or more shell commands, return the preformatted text.
+        So, this code line, 
+        ```shell_test = self.shell('env | grep PYTHON')```
+         produces this:
+       
+        {shell_test}
+        
+
         """
         test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
+        shell_test = self.shell('env | grep PYTHON')
         self.publishme()
 
     def making_a_document(self):
@@ -609,6 +620,18 @@ class Manual(DocPublisher):
 
         I have yet to spend much time on that, and plan to record conclusions here as I update
         this file.
+
+        ### Log of updates, observations
+        #### 06/18/2020
+        Release "beta" version
+        #### 06/22/2020
+        * Add `self.shell`.
+        * Adjust generation loop to avoid output to the document if any section fails, and 
+        optionally terminate.
+        This is part of a realization that my early focus on this as a document-creation
+        project needs to account for the more research-oriented *analysis*, where sections
+        represent stages&mdash;so a failure of any stage should interrupt the process.
+
         """
         #----------------------------------
         self.publishme()

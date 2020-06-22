@@ -105,21 +105,29 @@ class DocPublisher(Publisher):
         # the DocInfo object implements an iterator, and detects selection for display
         self.doc_info.set_selection(examine)
 
+        ok = True
         for sid, function, selected in self.doc_info:
             if not hasattr(self, function):
                 raise Exception(f'Function {function} not defined')
+                ok=False
+                continue
             self._current_index = [int(sid), int(sid*10%10)]
             self.display_on = selected
             try:
-                eval(f'self.{function}()')
+                fail = eval(f'self.{function}()')
+                if fail:
+                    print(f'function {function} failure message: {fail}')
+                    return
+
             except Exception as e:
                 import traceback
                 print(f'Function {function} Failed: {e}')
                 tb = e.__traceback__
                 traceback.print_tb(tb, limit=-1)
+                ok=False
  
 
-        if save_ok:
+        if ok and save_ok:
             # update the document index if instantiated by DocMan 
             if hasattr(self, 'indexer'):
                 self.indexer()
