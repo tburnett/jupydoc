@@ -147,7 +147,7 @@ def doc_formatter(
             try:
                 return super().vformat(format_string, [], kwargs)
             except AttributeError as msg:
-                return f'Failed processing because: {msg.args[0]}'
+                return f'Docstring formatting failed: {msg.args[0]}'
         def get_value(self, key, args, kwargs):
             return kwargs.get(key, Formatter.Unformatted(key))
 

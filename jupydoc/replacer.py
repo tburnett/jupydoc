@@ -134,6 +134,7 @@ class ObjectReplacer(dict):
 
         self.add_rep('dict', PPWrapper)  
         self.add_rep('list', PPWrapper)
+        self.debug=False
         
         
     def add_rep(self, class_name:'name of class to replace', 
@@ -153,9 +154,9 @@ class ObjectReplacer(dict):
 
         if pd:
             df_kwargs= dict( notebook=True, 
-                    max_rows=10, 
+                    max_rows=6, 
                     index=False,
-                    show_dimensions=False, 
+                    show_dimensions=True, 
                     justify='right',
                     float_format=lambda x: f'{x:.3f}',
                     )
@@ -179,6 +180,8 @@ class ObjectReplacer(dict):
         (Note uses the *class name*, which may not be unique, as a key)
         """
         for key,value in vars.items():
+            if self.debug:
+                print(f'{key}: {value.__class__.__name__} ')
 
             new_class, kwargs = self.get(value.__class__.__name__, (None,None))
             
@@ -196,12 +199,12 @@ class ObjectReplacer(dict):
             return
 
         print(f'replacement: {self[_name]}')
-        print(f'before: "{var}"')
+        print(f'{"-"*37}before{"-"*37}\n{var}\n')
         # make a simple vars dict: key is the variable name, value its object
         vars = {'x': var}
         self(vars)
         x = vars['x']
-        print(f'after : "{x}"')
+        print(f'{"-"*37}after {"-"*37}\n{x}\n{"-"*80}\n')
         return 
 
 def test(previous=20):

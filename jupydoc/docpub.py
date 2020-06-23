@@ -123,7 +123,7 @@ class DocPublisher(Publisher):
                 import traceback
                 print(f'Function {function} Failed: {e}')
                 tb = e.__traceback__
-                traceback.print_tb(tb, limit=-1)
+                traceback.print_tb(tb, limit=-2)
                 ok=False
  
 

@@ -331,7 +331,7 @@ class Manual(DocPublisher):
         
         ```
         
-        <br>Results in "{{df}}" being appearing as
+        <br>Results in "{{df}}" appearing as
         {df}
     
 
@@ -660,6 +660,10 @@ class Technicals(DocPublisher):
         add a new wrapper class.
         A wrapper class is instantiated with two arguments: the instance that it will interpret, and the kwargs. 
         
+        **Note**
+        If the object to be displayed is an attribute of a class, `{{self.something}}`, then the replacer only 
+        "sees" `self`, and will not process the `something`. The current solution is to create a variable local to
+        the method. 
         """
         #---------------------------------------------------------------------------------
         self.publishme()
