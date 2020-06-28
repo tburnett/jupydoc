@@ -3,10 +3,8 @@
 
 import os, inspect, datetime
 
-
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
-
 
 ## special style stuff or start of document
 jupydoc_css =\
@@ -28,10 +26,12 @@ class Publisher(object):
     def __init__(self, 
              docpath:'if set, save() will write the output folder to this folder'='',
              docname:'if set, will be the name of the document folder; otherwise use its class name'='', 
-             **kwargs
+             **kwargs,
             ):
         """
         """
+        if kwargs:
+            print(f'Publisher: unexpected kwargs: {kwargs}')
          
         # output, display stuff
         if docpath:
@@ -41,6 +41,9 @@ class Publisher(object):
         self.docpath = docpath
         module = self.__module__
         self.docname = docname or (module+'.' if module!='__main__' else '')+self.__class__.__name__
+
+        # if the name was compound, make version available
+        self.version = '' if self.docname.find('.')<1 else self.docname.split('.')[-1]
 
         if docpath:
 
@@ -66,7 +69,6 @@ class Publisher(object):
 
         self.display_on=True
         self.clear()
-
 
     def __repr__(self):
         title = self.doc_info.get('title', '(no title)')
@@ -117,7 +119,7 @@ class Publisher(object):
         # do nothing in this class
         return doc
 
-    def save(self):
+    def save(self, quiet=False):
         """ Create Web document
         """
         if not self.docpath: 
@@ -135,7 +137,8 @@ class Publisher(object):
         
         md_to_html(self.data, os.path.join(fullpath,'index.html'), title=self.docname) 
          
-        print(f'\n------\nsaved to  "{fullpath}"')
+        if not quiet:
+            print(f'\n------\nDocument saved to "{fullpath}"')
              
     def markdown(self, text:"markdown text to add to document",
                  indent:'left margin in percent'=None,
@@ -212,7 +215,7 @@ class Publisher(object):
                   indent='5%')->str:
 
         text = str(text).replace('\n', '<br>')
-        return f'<p style="margin-left: {indent}"><samp>{text}</samp></p>'
+        return f'<p style="margin-left: {indent}"><pre>{text}</pre></p>'
     
     def shell(self, text:'a shell command '):
         import subprocess

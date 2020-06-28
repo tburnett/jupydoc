@@ -1,11 +1,10 @@
 """
 Document creation 
 """
-import os
+import os, sys
 import jupydoc
 import yaml
 
-from .indexer import DocIndex
 from .helpers import DocInfo
 from .publisher import Publisher
 
@@ -25,11 +24,11 @@ class DocPublisher(Publisher):
     def __init__(self,  
                 no_display:'set True to disable IPython display output'=False, 
                 doc_dict:'Alternative to parsing docstring'={},
+                client_mode:'Set for client mode'=False,
                 **kwargs):
         super().__init__(**kwargs)
 
-        # get the required docstring            
-        
+        # get the required docstring or alternate doc_dict           
         if not doc_dict:
             docstring = self.__doc__ 
             if not docstring:
@@ -42,15 +41,17 @@ class DocPublisher(Publisher):
 
         self.doc_info = DocInfo(doc_dict)
         self.doc_info['date'] = self.date
+        self.doc_info['version'] = getattr(self, 'version', '')
 
         self._no_display = no_display
         self.display_on = not no_display # user can set
+        self.client_mode = client_mode
 
-        # make non-doc items available
+        # make non-doc items available as attribues and in self.info
         info = doc_dict
         for k in 'title author sections'.split(): info.pop(k, None)
         if info: self.__dict__.update(info)
-    
+        self.info = info    
         self.clear()
 
     def __str__(self):
@@ -75,7 +76,6 @@ class DocPublisher(Publisher):
         {abstract}
         """
 
-        #ti = self._title_info
         ti = self.doc_info # has title, etc.
         ts=self.doc_info['title'].split('\n')
         title=ts[0]
@@ -112,26 +112,29 @@ class DocPublisher(Publisher):
                 ok=False
                 continue
             self._current_index = [int(sid), int(sid*10%10)]
-            self.display_on = selected
+            self.display_on = selected and not self.client_mode
             try:
                 fail = eval(f'self.{function}()')
                 if fail:
-                    print(f'function {function} failure message: {fail}')
+                    print(f"function '{function}' failure message: {fail}")
                     return
 
             except Exception as e:
                 import traceback
-                print(f'Function {function} Failed: {e}')
+                print(f"Function '{function}' Failed: {e}", file=sys.stderr)
                 tb = e.__traceback__
-                traceback.print_tb(tb, limit=-2)
+                traceback.print_tb(tb, limit=-1)
                 ok=False
+
+            if not selected and not self.client_mode:
+                print(f'{sid:5} {function}')
  
 
         if ok and save_ok:
             # update the document index if instantiated by DocMan 
-            if hasattr(self, 'indexer'):
-                self.indexer()
-            self.save()
+            if hasattr(self, 'docman'):
+                self.docman.update(self)
+            self.save(quiet=self.client_mode)
 
     def process_doc(self, doc, vars):
         """Override the base class to add document features to the output of a doc function

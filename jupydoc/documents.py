@@ -631,7 +631,10 @@ class Manual(DocPublisher):
         This is part of a realization that my early focus on this as a document-creation
         project needs to account for the more research-oriented *analysis*, where sections
         represent stages&mdash;so a failure of any stage should interrupt the process.
-
+        #### 06/24/2020
+        Start on the idea of making a doc class a client: quietly perform some task with link to
+        as associated document. 
+        Also allow a _version_ of a document, with a compound name, classname.version
         """
         #----------------------------------
         self.publishme()
