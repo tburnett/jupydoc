@@ -87,11 +87,12 @@ class Packages(dict):
         return r
     def __repr__(self): return str(self)
     
-def traceback_message(e, limit=-2, skip=0, ):
+def traceback_message(e, limit=None, skip=0, ):
     import traceback
     tb = e.__traceback__
-    for i in range(skip): tb = tb.tb_next
-    traceback.print_tb(tb, limit)
+    traceback.print_last(limit)
+    #for i in range(skip): tb = tb.tb_next
+    #traceback.print_tb(tb, limit)
     
 def import_module(name, package=None):
     # return a module object, creating if package specified, which must be the name
@@ -102,15 +103,15 @@ def import_module(name, package=None):
         try:
             module  = importlib.import_module(name)
         except Exception as e:
-            print(f'Failed to import existing module "{name}"')
+            print(f'Failed to import existing module "{name}"', file=sys.stderr)
             return
         try:
             importlib.reload(module)
             return module
         except Exception as e:
             # compilation error, maybe
-            print(f'Failed to reload module "{name}": ')
-            traceback_message(e)
+            print(f'Failed to reload module "{name}": ', file=sys.stderr)
+            traceback_message(e, limit=-2)
             return None
     # create new module
     if verbose: print(f'')
@@ -120,9 +121,9 @@ def import_module(name, package=None):
         return importlib.import_module('.'+name, package=package)
     except Exception as e:
         print(f'Failed trying to create new module adding ".{name}" '\
-              f'to existing module "{package}":\n {e}')
+              f'to existing module "{package}":\n {e}', file=sys.stderr)
         # compilation error, maybe
-        traceback_message(e, -2)
+        #traceback_message(e, limit=-1)
         return None
 
 def find_modules( path):
@@ -216,12 +217,20 @@ class DocMan(object):
         return str(modules) +  (f'\ndocspath: {self.docspath}' if self.docspath else '')
     def __repr__(self): return str(self)
    
-    def __call__(self, classname:'name of a document classs'=None, 
-                    **kwargs:' arguments for class'):
+    def __call__(self, 
+                docname:'name | name[.version] where name is a doc class'='', 
+                as_client:'set True for client mode'=False,
+                **kwargs:' arguments for class'
+                ):
 
-        if not classname:
+        if not docname:
             print(f'List of document classes:\n {self.doc_classes}')
             return
+
+        # split off version after first period if any
+        t = docname.split('.')
+        classname, version = (t[0], '.'.join(t[1:])) if len(t)>1 else (docname, '')
+
         package_name = self.lookup_module.get(classname, None)
         if not package_name:
             print(f'{classname} not found in {self.doc_classes}')
@@ -229,19 +238,49 @@ class DocMan(object):
 
         # get the module containing the class declaration
         module = import_module(package_name)
+        if module is None:
+            return
         docspath = packages.get(package_name, self.docspath )
 
         try:
             # call the class constructor, setting a default, parhaps
-            #  docspath for it
+            #  docspath for it; pass in version
             toeval = f'module.{classname}'
-            obj = eval(toeval)(docpath=docspath, **kwargs)
+            obj = eval(toeval)(docpath=docspath, docname=docname, 
+                    client_mode=as_client,**kwargs)
   
         except Exception as e:
             print(f'Error evaluating "{toeval}": {e.__class__.__name__}')
-            traceback_message(e, limit=-2 ,skip=1, )
+            traceback_message(e, skip=1, )
             return None
-        # finally set for it to update the index
-        obj.indexer = DocIndex( obj )
+        # finally set for it to be able to call back
+        obj.docman = self
+        if as_client:
+            link = f'{docname}/index.html'
+            rlink = '../'+link
+            alink = os.path.join(self.docspath,link)
+            if not os.path.isfile(alink):
+                print(f'*** File {alink} not found')
+            self.link = rlink
+
         return obj
-   
+
+    def update(self, obj):
+        """Update the index info for given doc class object
+        """
+        indexer = DocIndex(obj)
+        indexer()
+        return indexer
+
+    # def linkto(self, docname):
+    #     """create a doc, execute it, return it and a relative link"""
+    #     try:
+    #         obj = self(docname)
+    #         obj(client_mode=True)
+    #     except Exception as e:
+    #         print(f'Fail to load {docname}: {e}')
+    #         raise
+    #     link = f'../{docname}/index.html'
+    #     if not os.path.isfile(link):
+    #         print(f'Relative link {link} not found')
+    #     return obj
