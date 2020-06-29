@@ -276,6 +276,7 @@ class DocMan(object):
         """create a doc, execute it in client mode, return it and a relative link"""
         try:
             obj = self(docname, as_client=True)
+            obj()
         except Exception as e:
             print(f'Fail to load {docname}: {e}', file=sys.stderr)
             return

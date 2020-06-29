@@ -52,7 +52,8 @@ class DocInfo(collections.OrderedDict):
         # set up next index
         # will return section id, function name, selection status
         i,j =  self.current_index
-        if i==len(self.section_names): 
+        if i==len(self.section_names):
+            # a last link?
             raise StopIteration
         k = self.section_names[i] 
         f =  k if j==0 else self.sections[k][j-1]
@@ -63,9 +64,10 @@ class DocInfo(collections.OrderedDict):
         hdr=''
         if j==0:
             # New section: link to top unless at the top, set anchor with function name
-            hdr = '' if i<2 else f'<p style="text-align: right;"><a href="#top">top</a></p>\n\n'
-            hdr += f'<a id="{f}"></a>'
+            hdr = f'<a id="{f}"></a>'
         self.section_header = hdr
+        self.section_trailer = '' if f=='title_page' else\
+             '<p style="text-align: right;"><a href="#top">top</a></p>\n\n'
         
         # increment either index
         m = len(self.sections[k])

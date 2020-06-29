@@ -33,12 +33,13 @@ class DocPublisher(Publisher):
         if not doc_dict:
             docstring = self.__doc__ 
             if not docstring:
-                raise Exception('a docstring or doc_dict arg is required')
+                print('DocPublisher: a docstring or doc_dict arg is required', file=sys.stderr)
+                return
             try:
                 doc_dict = yaml.safe_load(docstring) 
             except Exception as e:
                 print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}',file=sys.stderr)
-                raise
+                return               
 
         self.doc_info = DocInfo(doc_dict)
         self.doc_info['date'] = self.date
@@ -99,6 +100,7 @@ class DocPublisher(Publisher):
             examine:'"all" | section number | subsection number'=None, 
             save_ok:'will also save the doc if set'=True,
             client_mode:'Set True in this case'=False,
+            quiet:'Set to avoid printing a line per section'='False',
             ):
         """assemble and save the document if docpath is set        
         """
@@ -118,7 +120,7 @@ class DocPublisher(Publisher):
             try:
                 fail = eval(f'self.{function}()')
                 if fail:
-                    print(f"function '{function}' failure message: {fail}")
+                    print(f"function '{function}' failure message: {fail}", file=sys.stderr)
                     return
 
             except Exception as e:
@@ -180,6 +182,6 @@ class DocPublisher(Publisher):
         # prepend section or subsection header if requested and not the title page
         header = f'\n\n{hchars} {hnumber} {section_title}\n\n' if section_title else ''   
                         
-        doc = self.doc_info.section_header + header + doc
+        doc = self.doc_info.section_header + header + doc + self.doc_info.section_trailer
         return doc
 
