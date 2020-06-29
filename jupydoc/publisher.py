@@ -70,10 +70,6 @@ class Publisher(object):
         self.display_on=True
         self.clear()
 
-    def __repr__(self):
-        title = self.doc_info.get('title', '(no title)')
-        return f'jupydoc.Publisher subclass "{self.__class__.__name__}", title {title}'
-        
     def publishme(self,  **kwargs:'additional variable definitions',
                  )->None:
         """

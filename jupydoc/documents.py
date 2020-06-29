@@ -27,18 +27,7 @@ class Manual(DocPublisher):
     
     user_info: This is available to user.
     """ 
-    def __init__(self,  **kwargs):
-        doc_folder = kwargs.get('doc_folder', None)
-        if doc_folder and doc_folder[0]!='/':
-            doc_folder = os.path.join(doc_path, doc_folder)
-        kwargs['doc_folder'] = doc_folder
-        super().__init__( **kwargs)
 
-        # set up default image folder
-        self.image_folder = os.path.abspath(os.path.join(self.path, '../images'))
-        if not os.path.isdir(self.image_folder):
-            print(f'Manual: {self.image_folder} is not a folder')
-                    
     def introduction(self):
         """
         Introduction

@@ -70,8 +70,9 @@ class DocIndex(dict ):
                     title=info.get('title','').split('\n')[0] ,
                     date= info.get('date', str(datetime.datetime.now())[:16]), 
                     author=info.get('author', '').split('\n')[0],
-                    info=hasattr(doc, 'info', {}).
-            )
+                    info=getattr(doc, 'info', {}),
+        )
+
         self.update(t)
 
 
