@@ -128,7 +128,7 @@ class Publisher(object):
         self.markdown(
             f'<hr class="thick">\nDocument "{self.docname}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br>'\
             #f'\nCreated by class <samp>{self.__class__.__name__}</samp> {source_text}<br>'\
-            f'\nSaved to <samp>{fullpath})</samp>'
+            f'\nSaved to <samp>{fullpath}</samp>'
             )
         
         md_to_html(self.data, os.path.join(fullpath,'index.html'), title=self.docname) 

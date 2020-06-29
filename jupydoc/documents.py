@@ -589,10 +589,32 @@ class Manual(DocPublisher):
         Here is what the index looks like:
         
         {index_image}
-  
+
+        #### Linked documents&mdash;client-mode
+
+        One can insert links to other documents saved by `DocMan`. This is especially useful in an 
+        analysis mode where the linked document was generated in conjunction with a previous 
+        analysis stage, perhaps preparing a dataset, available as attributes of the object.
+
+        To implement this, `DocMan` adds a callback to itself, 'docman`, to the object before calling it. Then the document can invoke the other document like this:
+        ```
+          otherdoc, link = self.docman.client('Technicals')
+        ```
+
+        and then use the link: {{link}}, which evaluates to `{link}`, can be used like this:
+        ```
+           <a href={{link}}>some technical details</a>
+        ```
+        generates a link to <a href={link}>some technical details</a>, as well as 
+        the other document object itself.
+
+        The other document can detect that it was invoked in this way with an attribute
+        `client_mode`, and not regenerate the document if it exists.
+
         """
         #--------------------------------------------------------------------
         index_image = self.image("jupydoc-index.png", caption='')
+        otherdoc, link = self.docman.client('Technicals')
         self.publishme()
 
     def workflow(self):
@@ -635,11 +657,22 @@ class Manual(DocPublisher):
 class Technicals(DocPublisher):
     """
     title: JupyDoc technical detalis
-    sections: object_replacement
+    sections: client_example object_replacement
     
     abstract: This document contains various technical details.
     """
-    
+    def client_example(self):
+        """Client Example
+
+        If this document was invoked to serve as a client, as the Manual document does,
+        its attribute `client_mode` would be set: Now it is in fact **{self.client_mode}**.
+
+        To set this, the `DocMan` function call needs to have a parameter `as_client` set 
+        to True. 
+        
+        """
+        self.publishme()
+
     def object_replacement(self):
         """Object Replacement
         

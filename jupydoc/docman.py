@@ -272,15 +272,12 @@ class DocMan(object):
         indexer()
         return indexer
 
-    # def linkto(self, docname):
-    #     """create a doc, execute it, return it and a relative link"""
-    #     try:
-    #         obj = self(docname)
-    #         obj(client_mode=True)
-    #     except Exception as e:
-    #         print(f'Fail to load {docname}: {e}')
-    #         raise
-    #     link = f'../{docname}/index.html'
-    #     if not os.path.isfile(link):
-    #         print(f'Relative link {link} not found')
-    #     return obj
+    def client(self, docname):
+        """create a doc, execute it in client mode, return it and a relative link"""
+        try:
+            obj = self(docname, as_client=True)
+        except Exception as e:
+            print(f'Fail to load {docname}: {e}', file=sys.stderr)
+            return
+        link = f'"../{docname}/index.html"'
+        return obj, link

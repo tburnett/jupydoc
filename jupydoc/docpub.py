@@ -26,6 +26,7 @@ class DocPublisher(Publisher):
                 doc_dict:'Alternative to parsing docstring'={},
                 client_mode:'Set for client mode'=False,
                 **kwargs):
+
         super().__init__(**kwargs)
 
         # get the required docstring or alternate doc_dict           
@@ -36,7 +37,7 @@ class DocPublisher(Publisher):
             try:
                 doc_dict = yaml.safe_load(docstring) 
             except Exception as e:
-                print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}')
+                print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}',file=sys.stderr)
                 raise
 
         self.doc_info = DocInfo(doc_dict)
@@ -97,6 +98,7 @@ class DocPublisher(Publisher):
     def __call__(self, 
             examine:'"all" | section number | subsection number'=None, 
             save_ok:'will also save the doc if set'=True,
+            client_mode:'Set True in this case'=False,
             ):
         """assemble and save the document if docpath is set        
         """
