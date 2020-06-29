@@ -2,7 +2,7 @@ The following is a description from the introduction in the manual  **[document]
 
 ---
 
-# [Jupydoc: Generate documents with Python code](https://tburnett.github.io/jupydoc.documents.Manual) 
+# [Jupydoc: Generate documents with Python code](https://tburnett.github.io/Manual/index.html) 
 
 <p style="text-align: right;">2020-06-18 17:36</p> 
 <p style="text-align: center;" >Toby Burnett &lt;tburnett@uw.edu&gt;<br>University of Washington<br></p>

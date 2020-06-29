@@ -260,7 +260,7 @@ class Manual(DocPublisher):
         """
        
         launch_image = self.image( 'fermi-launch.jpg',
-                caption='launch of Fermi on a Delta II on June 11, 2008', width=300)
+                caption='launch of $Fermi$ (n&eacute;e GLAST) on a Delta II on June 11, 2008', width=300)
         self.publishme()
 
     def figures(self):
