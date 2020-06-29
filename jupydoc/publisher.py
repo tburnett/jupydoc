@@ -156,6 +156,8 @@ class Publisher(object):
               )->'a JupydocImage object that generates HTML':
         error=''
         image_path = getattr(self, 'image_folder', self.path)
+        if image_path[0]=='$':
+            image_path = os.path.expandvars(image_path)
         filename = os.path.expandvars(filename)
 
         if not os.path.isfile(filename):

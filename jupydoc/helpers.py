@@ -63,7 +63,7 @@ class DocInfo(collections.OrderedDict):
         hdr=''
         if j==0:
             # New section: link to top unless at the top, set anchor with function name
-            hdr = '' if i<2 else f'<p style="text-align: right;"></p>\n\n'
+            hdr = '' if i<2 else f'<p style="text-align: right;"><a href="#top">top</a></p>\n\n'
             hdr += f'<a id="{f}"></a>'
         self.section_header = hdr
         

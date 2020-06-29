@@ -27,6 +27,9 @@ class Manual(DocPublisher):
     
     user_info: This is available to user.
     """ 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.image_folder = '$HOME/images'
 
     def introduction(self):
         """
@@ -251,9 +254,9 @@ class Manual(DocPublisher):
         The full path for the name is relative to the source file, except this 
         class specified 
         ```
-        self.image_folder = os.path.join(self.path, '../images')
+        self.image_folder = os.path.join(self.path, '$HOME/images')
         ``` 
-        in its class `__init__`.
+        in its otherwise optional class `__init__` function.
         """
        
         launch_image = self.image( 'fermi-launch.jpg',
