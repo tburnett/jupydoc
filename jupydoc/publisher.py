@@ -1,7 +1,7 @@
 """Generate documents for Jupyterlab display 
 """
 
-import os, inspect, datetime
+import os, sys, inspect, datetime
 
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
@@ -31,13 +31,15 @@ class Publisher(object):
         """
         """
         if kwargs:
-            print(f'Publisher: unexpected kwargs: {kwargs}')
+            print(f'Publisher: unexpected kwargs: {kwargs}', file=sys.stderr)
          
         # output, display stuff
         if docpath:
+            if docpath[0]=='$': 
+                docpath = os.path.expandvars(docpath)
             if not os.path.isdir(docpath):
-                print(f'Publisher: {docpath} is not an existing folder')
-                return
+                print(f'Publisher: {docpath} is not an existing folder', file=sys.stderr)
+                docpath=''
 
         self.docpath = docpath
         module = self.__module__
@@ -223,6 +225,30 @@ class Publisher(object):
         except Exception as e:
             ret = f'Command {text} failed : {e}'
         return self.monospace(ret)
+
+    def capture_print(self):
+
+        monospace = self.monospace
+
+        class Capture_print(object):
+            _stream = 'stdout'
+            
+            def __init__(self):
+                import io
+                self._new = io.StringIO()
+                self._old = getattr(sys, self._stream)
+
+            def __enter__(self):
+                setattr(sys, self._stream, self._new)
+                return self
+            
+            def __exit__(self, exctype, excinst, exctb):
+                setattr(sys, self._stream, self._old)
+                
+            def __str__(self):
+                return monospace(self._new.getvalue())
+
+        return Capture_print()
 
     def add_caption(self, 
                 text:'text of caption for most recent figure'):

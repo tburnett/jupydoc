@@ -404,10 +404,26 @@ class Manual(DocPublisher):
        
         {shell_test}
         
+        #### Capture printout
+        To execute code containg uses of the print function, that is, writing to sys.stdout,
+        the function `capture_print` is provided. As an example
+        ```
+        with self.capture_print() as capture_text:
+            print('This a a line')
+            print('And a second line')
+
+        ```
+        Then {{captured_text}} will be rendered as:
+        {captured_text}
 
         """
         test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
         shell_test = self.shell('env | grep PYTHON')
+
+        with self.capture_print() as captured_text:
+            print('This a a line')
+            print('And a second line')
+        
         self.publishme()
 
     def making_a_document(self):
