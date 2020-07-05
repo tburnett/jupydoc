@@ -6,13 +6,13 @@ import os, sys, inspect, datetime
 from .helpers import doc_formatter, md_to_html
 from .replacer import ObjectReplacer
 
-## special style stuff or start of document
+## special style stuff at start of document
 jupydoc_css =\
 """
-<style >
+<style>
  .jupydoc_fig { text-align: center; }
  .errorText {color:red;}
-  hr.thick{border-top: 3px solid black;}
+  hr.thick{border-top: 3px solid black;}  
 </style>
 """
 
@@ -26,7 +26,7 @@ class Publisher(object):
     def __init__(self, 
              docpath:'if set, save() will write the output folder to this folder'='',
              docname:'if set, will be the name of the document folder; otherwise use its class name'='', 
-             **kwargs,
+             **kwargs:'should be none',
             ):
         """
         """
@@ -45,11 +45,11 @@ class Publisher(object):
         module = self.__module__
         self.docname = docname or (module+'.' if module!='__main__' else '')+self.__class__.__name__
 
-        # if the name was compound, make version available
-        self.version = '' if self.docname.find('.')<1 else self.docname.split('.')[-1]
+        # if the name was compound, make version available, allowing multiple periods
+        i = self.docname.find('.')
+        self.version = '' if i<1 else self.docname[i+1:]
 
         if docpath:
-
             fp = os.path.abspath(os.path.join(docpath, self.docname))
             os.makedirs(fp, exist_ok=True)
         
@@ -212,21 +212,27 @@ class Publisher(object):
         self._fignum+=1
         return self._fignum
         
-    def monospace(self, text:'Either a string, or an object', 
-                  indent='5%')->str:
+    def monospace(self, text:'Either a string, or an object',
+                    summary:'string for <details>'=None,
+                    open:'initially show details'=False, 
+                    indent='5%',
+                  )->str:
 
         text = str(text).replace('\n', '<br>')
-        return f'<p style="margin-left: {indent}"><pre>{text}</pre></p>'
+        out = f'<p style="margin-left: {indent}"><pre>{text}</pre></p>'
+        if not summary:
+            return out
+        return f'<details {"open" if open else ""}><summary> {summary} </summary> {out} </details>'
     
-    def shell(self, text:'a shell command '):
+    def shell(self, text:'a shell command ', **kwargs):
         import subprocess
         try:
             ret = subprocess.check_output([text], shell=True).decode('utf-8')
         except Exception as e:
             ret = f'Command {text} failed : {e}'
-        return self.monospace(ret)
+        return self.monospace(ret, **kwargs)
 
-    def capture_print(self):
+    def capture_print(self, **kwargs):
 
         monospace = self.monospace
 
@@ -246,7 +252,7 @@ class Publisher(object):
                 setattr(sys, self._stream, self._old)
                 
             def __str__(self):
-                return monospace(self._new.getvalue())
+                return monospace(self._new.getvalue(), **kwargs)
 
         return Capture_print()
 

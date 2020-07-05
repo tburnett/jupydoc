@@ -20,6 +20,9 @@ except:
 
 document_folders = ['.']
 figure_number=0
+
+# a dict accumulated here, used to initialze set of wrappers for ObjectReplacer
+wrappers = {}
                      
 class Wrapper(object):
     """Base class for the replacement classes
@@ -35,8 +38,6 @@ class Wrapper(object):
     def __str__(self):
         text = str(self.obj).replace('\n', '\n<br>')
         return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
-
-
 
 if plt: 
 
@@ -87,10 +88,12 @@ if plt:
                         f' <figcaption>{caption}</figcaption>'\
                         '</figure></div>\n'
             return self._html
- 
 
     def __str__(self):
         return str(self.img)
+
+    wrappers['Figure'] = (FigureWrapper, {})
+
 if pd:
     class DataFrameWrapper(Wrapper): 
         def __init__(self, *pars, **kwargs):
@@ -103,6 +106,14 @@ if pd:
             if not hasattr(self, '_html'):
                 self._html = self._df.to_html(**self.kw)                
             return self._html
+    df_kwargs= dict( notebook=True, 
+                    max_rows=6, 
+                    index=False,
+                    show_dimensions=False, #True, 
+                    justify='right',
+                    float_format=lambda x: f'{x:.3f}',
+                    )
+    wrappers['DataFrame'] = (DataFrameWrapper,  df_kwargs) 
 
 class PPWrapper(Wrapper):
     """Use PrettyPrint
@@ -115,8 +126,20 @@ class PPWrapper(Wrapper):
         text = pp.pformat(self.obj).replace('\n', '<br>\n')
         return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
 
-    
-# Maps classes, and associated keywords to replacements for display purposes
+wrappers['dict'] = (PPWrapper, {} )
+wrappers['list'] = (PPWrapper, {} )
+
+class ImageWrapper(Wrapper):
+    """ Wrap IPython.display.Image
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._image = self.obj
+    def __str__(self):
+        return self._image._repr_mimebundle_()
+# Placeholder until I figure out how IPyton does this in a notebook
+# Until then, must create jpeg or png, save with the document, link in in
+# wrappers['Image'] = (ImageWrapkper, {})
 
 class ObjectReplacer(dict):
     """
@@ -132,10 +155,8 @@ class ObjectReplacer(dict):
                 ):
         self.set_folders(folders)
 
-        self.add_rep('dict', PPWrapper)  
-        self.add_rep('list', PPWrapper)
+        self.update(wrappers)
         self.debug=False
-        
         
     def add_rep(self, class_name:'name of class to replace', 
                     out_class:'replacement class', 
@@ -150,26 +171,11 @@ class ObjectReplacer(dict):
         global document_folders
         document_folders = folders
         self.clear()
-        # set up 
-
-        if pd:
-            df_kwargs= dict( notebook=True, 
-                    max_rows=6, 
-                    index=False,
-                    show_dimensions=True, 
-                    justify='right',
-                    float_format=lambda x: f'{x:.3f}',
-                    )
-            self.add_rep('DataFrame', DataFrameWrapper, df_kwargs)
-            
-        if plt:
-            self.add_rep('Figure', FigureWrapper, dict(fig_folders=folders) )
 
     def clear(self):
         global figure_number
         figure_number= 0
-                     
-
+ 
     @property
     def folders(self):
         return document_folders

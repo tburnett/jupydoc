@@ -259,8 +259,9 @@ class DocMan(object):
             link = f'{docname}/index.html'
             rlink = '../'+link
             alink = os.path.join(self.docspath,link)
+            if alink[0]=='$': alink = os.path.expandvars(alink)
             if not os.path.isfile(alink):
-                print(f'*** File {alink} not found')
+                print(f'*** File {alink} not found', file=sys.stderr)
             self.link = rlink
 
         return obj

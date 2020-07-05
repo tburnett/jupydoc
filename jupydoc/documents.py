@@ -32,8 +32,7 @@ class Manual(DocPublisher):
         self.image_folder = '$HOME/images'
 
     def introduction(self):
-        """
-        Introduction
+        """Introduction
         
         ### What it is **not**
         Jupydoc, despite the name, does not explicitly depend on Jupyterlab. 
@@ -44,11 +43,11 @@ class Manual(DocPublisher):
         ### What is it, and how does it work?
         Jupydoc is not centered on a jupyterlab notebook. It is designed to make it easy to *develop* a
         document with a noteboook, but the *medium* is a Python class, not a  notebook. Since it is
-        based on code, that implies developing the code at well&mdash;the document 
-        may represent the code development itself.
+        based on code, to the extent that details of the document depend on execution of the code,
+        the document may represent the code development itself.
         
-        While designed to be used to develop documents based on code in a JupyterLab enviornment,
-        It does not actually require it, but depends on IPython and nbconvert.
+        So while it is designed to be used to develop documents based on code in a JupyterLab environment,
+        It does not actually require that, but does depend on the IPython and nbconvert components.
          
         Some points to illustrate the design and operation are:
         
@@ -123,7 +122,7 @@ class Manual(DocPublisher):
         ```
         from jupydoc import Publisher
 
-        class Basic(publisher.Publisher):
+        class Basic(Publisher):
 
             def doit(self):
                 """This is the output from a minimal example
@@ -374,8 +373,7 @@ class Manual(DocPublisher):
         which represents a  compromise. 
         
 
-
-        #### Indenting
+        ### Indenting
         Indenting a paragraph is not directly possible with markdown. But we can easily insert the appropriate HTML
         
         * {{indent}}: `{indent}` &mdash;the margin is predefined, easily changed by the user
@@ -387,42 +385,56 @@ class Manual(DocPublisher):
         <br>To start a new line in this, or any other paragraph, insert "&lt;br&gt;". 
         {endp}
         
-        #### Preformatted text
+        ### Preformatted text from other sources
+        There are several ways to introduce text from other sources, all of which use the monospace font
+
+        #### monospace
         The function `monospace(*text*)` is provided to achieve insertion of 
         "preformatted" text with a monospace font.
         It can be invoked with a text string, or any object which returns a description of itself via its class `__str__` 
-        function. For example "test_string = self.monospace('This is a multi-line test.\nAfter a newline.')", 
-        with a corresponding  "{{test_string}}" will look like:
-                 {linkto_top}
-        {test_string}
+        function. 
+        
+        It has options `summary` and `open` to allow collapsible output. These use the 
+        [HTML5 `<details>` tag](https://www.w3schools.com/TAGS/tag_details.asp). Specifically, if `summary` is set to a string,
+        that will be displayed with a clickable diamond. The output will be hidden unless there is also a `open=True`.
 
-        #### Shell output
-        A function `shell` will execute one or more shell commands, return the preformatted text.
+        For example 
+        ```
+        test_string = '\n'.join([f'This is line {i}' for i in range(10)])
+        mono_string = self.monospace(test_string, summary='monospace demo')
+        ```
+        Produces this:
+ 
+        {mono_string}
+
+        The following all invoke `monospace`, allowing also `summary` and `open` args.
+
+        #### shell: capture output from a shell command
+        The function `shell` will execute one or more shell commands, return the preformatted text.
         So, this code line, 
         ```shell_test = self.shell('env | grep PYTHON')```
          produces this:
        
         {shell_test}
         
-        #### Capture printout
+        #### capture_print: capture printout
         To execute code containg uses of the print function, that is, writing to sys.stdout,
         the function `capture_print` is provided. As an example
         ```
-        with self.capture_print() as capture_text:
-            print('This a a line')
-            print('And a second line')
-
+        with self.capture_print(summary='captured printout') as captured_text:
+            print(test_string)
         ```
         Then {{captured_text}} will be rendered as:
         {captured_text}
 
         """
-        test_string = self.monospace('This is a multi-line test.\nAfter a newline.')
+        test_string = '\n'.join([f'This is line {i}' for i in range(10)])
+        mono_string = self.monospace(test_string, summary='monospace demo')
         shell_test = self.shell('env | grep PYTHON')
 
-        with self.capture_print() as captured_text:
-            print('This a a line')
-            print('And a second line')
+        with self.capture_print(summary='captured printout') as captured_text:
+            print(test_string)
+   
         
         self.publishme()
 
@@ -665,6 +677,8 @@ class Manual(DocPublisher):
         Start on the idea of making a doc class a client: quietly perform some task with link to
         as associated document. 
         Also allow a _version_ of a document, with a compound name, classname.version
+        #### 07/04/2020
+        Implement `<detais>' for `monospace` output, including the functions `shell` and `capture_print`.
         """
         #----------------------------------
         self.publishme()

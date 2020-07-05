@@ -5,6 +5,10 @@ jupydoc helper class DocInfo, functions doc_formatter and md_to_html
 import string, pprint , collections
 from nbconvert.exporters import  HTMLExporter
 
+
+
+
+
 class DocInfo(collections.OrderedDict):
     """Manage the Jupydoc document structure
 
@@ -62,20 +66,35 @@ class DocInfo(collections.OrderedDict):
 
         # set section header containing anchor, perhaps link to top
         hdr=''
-        if j==0:
+        self._newsection = j==0
+        if self._newsection:
             # New section: link to top unless at the top, set anchor with function name
             hdr = f'<a id="{f}"></a>'
-        self.section_header = hdr
-        self.section_trailer = '' if f=='title_page' else\
-             '<p style="text-align: right;"><a href="#top">top</a></p>\n\n'
+            if i>0: hdr +='\n<h2>{}</h2>\n\n' 
+        else:
+            hdr = f'<h3 id="{f}">'+ '{} </h3>\n'
+        self.section_header = hdr 
+        self.section_trailer = '' 
         
         # increment either index
         m = len(self.sections[k])
         i, j =  (i, j+1) if j<m else (i+1, 0 )
         self.current_index=[i,j]
+        if j==0 and i>1: # end of a section
+            self.section_trailer = '\n<p style="text-align: right;"><a href="#top">top</a></p>\n'
 
-        return ret            
-    
+        return ret
+
+    def annotate(self, header_text, doc):
+        i, j = self.current_index
+        # Can't get this to work since MD puts in <p> tags 
+        # file://wsl%24/Ubuntu-20.04/home/burnett/work/jupydoc/notebooks/collapsile.css
+        # hdr='' if (i>1 or j>0) else \
+        #     '<link rel="stylesheet" href="../../collapsible.css">'\
+        #     '\n<script src="../../collapsible.js"></script>\n'
+        hdr=''
+        return hdr+self.section_header.format(header_text)  +doc + self.section_trailer 
+  
     def parse_section_string(self, section_string):
         # remove commas, make sure [] will be tokens
         t = section_string.replace(',', ' ').replace('[', ' [ ').replace(']', ' ] ')

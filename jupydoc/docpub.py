@@ -166,22 +166,22 @@ class DocPublisher(Publisher):
         
         elif  subsection_number==0:
             # a new non-title section
-            hchars ='##'
-            hnumber=f'{section_number:}'
+            hnumber=f'{section_number:}.'
                
             # for subsections, if any
             self._saved_symbols = vars
         else: 
             # a subsection
-            hchars = '###'
             # maybe make numbering optional?
             hnumber=f'{section_number:}.{subsection_number}'
              # add the locals and kwargs to section symbol list
             vars.update(self._saved_symbols)
 
         # prepend section or subsection header if requested and not the title page
-        header = f'\n\n{hchars} {hnumber} {section_title}\n\n' if section_title else ''   
-                        
-        doc = self.doc_info.section_header + header + doc + self.doc_info.section_trailer
+        header = f'{hnumber} {section_title}' if section_title else ''   
+
+        # puths in anchors and links, maybe colappse                
+        doc = self.doc_info.annotate(header, doc)
+        # doc = self.doc_info.section_header + header + doc + self.doc_info.section_trailer
         return doc
 
