@@ -73,11 +73,17 @@ class Publisher(object):
         self.display_on=True
         self.clear()
 
-    def publishme(self,  **kwargs:'additional variable definitions',
+    def _repr_mimebundle_(self, include=None, exclude=None):
+        return {'text/markdown': self.data}
+
+    def publishme(self,  
+                display_on:'Set False for no immediate display'=True,
+                **kwargs:'additional variable definitions',
                  )->None:
         """
         """
         import inspect
+        self.display_on = display_on
 
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
@@ -91,13 +97,12 @@ class Publisher(object):
         # hook to modify either, perhaps prepend to doc, more vars
         doc  = self.process_doc(doc, vars)
 
-
         # add locals and kwargs, run the object replacer
         vars.update(locs)
         vars.update(kwargs)
         self.object_replacer(vars)
 
-        # Now use the helper function to the formatting, replace {xx} if xx is recognized
+        # Now use the helper function to do the formatting, replace {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
         self.data = self.data + '\n\n' + md_data
 
