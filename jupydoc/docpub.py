@@ -131,9 +131,8 @@ class DocPublisher(Publisher):
                 ok=False
 
             if not selected and not self.client_mode:
-                print(f'{sid:5} {function}')
+                print(f'Not displaying: {sid:5} {function}')
  
-
         if ok and save_ok:
             # update the document index if instantiated by DocMan 
             if hasattr(self, 'docman'):

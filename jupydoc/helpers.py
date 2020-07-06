@@ -63,7 +63,7 @@ class DocInfo(collections.OrderedDict):
         f =  k if j==0 else self.sections[k][j-1]
         sid = i+j/10
         ret = (sid, f, self.is_selected(sid, f)) 
-
+        
         # set section header containing anchor, perhaps link to top
         hdr=''
         self._newsection = j==0
@@ -123,25 +123,27 @@ class DocInfo(collections.OrderedDict):
     def set_selection(self, select:'"all" | name of function | section number | subsection number'):
         self._selection = select
 
-    def is_selected(self, sid:'section id', name:'function name'):
+    def is_selected(self, sid:'section id', fname:'function name'):
         import numbers
-        
+
         sel = getattr(self, '_selection', None)
+
         if sel=='all': return True
-        if not sel:
+        if sel is None :
             return False
         if isinstance(sel, numbers.Real):
             select_section = round(sel*10) % 10 ==0
             if select_section:
                 n =len(self.section_names)
-                return sel==int(sid) or sel>=n and int(sid)==n-1
+                isid = int(sid)
+                return sel==isid or (sel>=n and isid==n-1)
             # a subsection: either exact, of get last if too big
             i = int(sel); j = int(10*sel-i)
             m = len(self.sections[self.section_names[i]] )
             t = i+m/10 #max sub number
             return  sid==sel or sel>t and sid==t 
         else:
-            return name==sel
+            return fname==sel
 
     def __str__(self):
         pp = pprint.PrettyPrinter(indent=2)

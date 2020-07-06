@@ -74,16 +74,16 @@ class Publisher(object):
         self.clear()
 
     def _repr_mimebundle_(self, include=None, exclude=None):
-        return {'text/markdown': self.data}
+        if self._has_data:
+            return {'text/markdown': self.data}
+        return {'text/plain': str(self) }
 
     def publishme(self,  
-                display_on:'Set False for no immediate display'=True,
-                **kwargs:'additional variable definitions',
+                 **kwargs:'additional variable definitions',
                  )->None:
         """
         """
         import inspect
-        self.display_on = display_on
 
         # use inspect to get caller frame, the function name, locals dict, and doc
         back =inspect.currentframe().f_back
@@ -114,10 +114,12 @@ class Publisher(object):
 
         if self.display_on:
             display.display(display.Markdown(md_data)) 
+            self._has_data = True
 
     def clear(self):
         self.data=jupydoc_css + '<a id="top"></a>'
         self._fignum = 0
+        self._has_data = False
 
     def process_doc(self, doc, vars):
         # do nothing in this class
