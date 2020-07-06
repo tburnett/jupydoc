@@ -127,7 +127,8 @@ class DocPublisher(Publisher):
                 import traceback
                 print(f"Function '{function}' Failed: {e}", file=sys.stderr)
                 tb = e.__traceback__
-                traceback.print_tb(tb, limit=-1)
+                for i in range(2): tb = tb.tb_next # skip our calls
+                traceback.print_tb(tb, limit=2)
                 ok=False
 
             if not selected and not self.client_mode:
