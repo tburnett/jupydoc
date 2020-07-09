@@ -251,7 +251,7 @@ class DocMan(object):
   
         except Exception as e:
             print(f'Error evaluating "{package_name}{classname}": {e.__class__.__name__}', file=sys.stderr)
-            traceback_message(e, skip=1, )
+            traceback_message(e,  )
             return None
         # finally set for it to be able to call back
         obj.docman = self

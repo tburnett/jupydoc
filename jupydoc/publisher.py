@@ -102,22 +102,27 @@ class Publisher(object):
         vars.update(kwargs)
         self.object_replacer(vars)
 
-        # Now use the helper function to do the formatting, replace {xx} if xx is recognized
+        # Now use the helper function to do the formatting, replacing {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
-        self.data = self.data + '\n\n' + md_data
 
-        # perhaps display
+        # self.data = self.data + '\n\n' + md_data._repr_mimebundle_()['text/markdown']
+        # add this displayable object to the output tuple
+        self.data += (md_data,)
+
+        # perhaps display it
         self._display(md_data)
          
     def _display(self, md_data):
-        import IPython.display as display #only dependence on IPython
+        import IPython.display as display #only explicit dependence on IPython
 
         if self.display_on:
-            display.display(display.Markdown(md_data)) 
+            #display.display(display.Markdown(md_data)) 
+            display.display( md_data )
             self._has_data = True
 
     def clear(self):
-        self.data=jupydoc_css + '<a id="top"></a>'
+        # start the objs tuple 
+        self.data = (doc_formatter(jupydoc_css + '\n<a id="top"></a>', ),)
         self._fignum = 0
         self._has_data = False
 
@@ -155,7 +160,7 @@ class Publisher(object):
             text = f'<p style="margin-left: [indent]%" {text}</p>'
         if clean:
             text= inspect.cleandoc(text)
-        self.data = self.data +'\n\n'+ text   
+        self.data  += (doc_formatter( text ) ,)
      
     def image(self, filename, 
               caption='', 

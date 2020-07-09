@@ -153,9 +153,11 @@ class DocInfo(collections.OrderedDict):
 
 def doc_formatter(
         text:'text string to process',
-        vars:'variable dict', 
-    )->str:
-    
+        vars:'variable dict'={}, 
+        mimetype='text/markdown',
+    )->'MimeBundleObject':
+    # Returns an object that can be displayed by IPython, interpreted as the mimetype
+
     # Use a string.Formatter subclass to ignore bracketed names that are not found
     #adapted from  https://stackoverflow.com/questions/3536303/python-string-format-suppress-silent-keyerror-indexerror
 
@@ -180,40 +182,64 @@ def doc_formatter(
             #print(f'\tformatting {value} with spec {format_spec}') #', object of class {eval(value).__class__}')
             return format(value, format_spec)
                
-    docx = Formatter().vformat(text+'\n', vars)       
+    docx = Formatter().vformat(text+'\n', vars)  if vars else text     
     # enhances this: docx = text.format(**vars)
 
-    return docx
+    class MimeBundleObject(object):
+        def _repr_mimebundle_(self, include=None, exclude=None):
+            return {mimetype: docx}
+
+    return MimeBundleObject()
 
 def md_to_html(output, filename, title='jupydoc'):
     """write nbconverted markdown to a file 
     
     parameters
     ----------
-    output : string | IPython.utils.capture.CapturedIO object
+    output : string | tuple | IPython.utils.capture.CapturedIO object
         if not a string extract the markdown from each of the outputs list 
     """
-
-       
-    if type(output)==str:
-        md_text=output
-    elif hasattr(output, 'outputs'):
-        md_text=''
-        for t in output.outputs:            
-            md_text += '\n\n'+t.data['text/markdown']
-    else:
-        raise Exception(f'output not recognized: {output.__class__} not a string or CapturedIO object?')
-    
     class Dict(dict):
         def __init__(self, **kwargs):
             self.__dict__.update(kwargs)
             self.update(kwargs)
-    nb = Dict(
-            cells= [Dict(cell_type="markdown", 
+       
+    if type(output)==str:
+        # just a markdown string
+        cells= [Dict(cell_type="markdown", 
                          metadata={}, 
-                         source=md_text,
+                         source=output,
                         )
-                   ],
+                   ]
+   
+    elif type(output)==tuple:
+        # a tuple of displayable objects
+        cells = []
+        for obj in output:
+            mimetype, text = list(obj._repr_mimebundle_().items())[0]
+            assert mimetype[:5]=='text/', f'Wrong mimetype: {mimetype}'
+            cells.append(
+                Dict(cell_type=mimetype[5:],
+                    metadata={},
+                    source = text,
+                )
+            )
+
+    elif hasattr(output, 'outputs'):
+        # a CapturedIO object? assume all markdwon si guess (never used this)
+        text=''
+        for t in output.outputs:            
+            text += '\n\n'+t.data['text/markdown']
+        cells= [Dict(cell_type="markdown", 
+                         metadata={}, 
+                         source=text,
+                        )
+                   ]
+    else:
+        raise Exception(f'output not recognized: {output.__class__} not a string, tuple, or CapturedIO object?')
+
+    nb = Dict(
+            cells=cells,
             metadata={},
             nbformat=4,
             nbformat_minor=4,
@@ -228,6 +254,7 @@ def md_to_html(output, filename, title='jupydoc'):
     
     with open(filename, 'wb') as f:
         f.write(output.encode('utf8'))
+        
 #---------------------------------------------------------------------------------
 def test_formatter():
     
