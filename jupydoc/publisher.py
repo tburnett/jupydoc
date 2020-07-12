@@ -236,13 +236,15 @@ class Publisher(object):
             return out
         return f'<details {"open" if open else ""}><summary> {summary} </summary> {out} </details>'
     
-    def shell(self, text:'a shell command ', **kwargs):
+    def shell(self, text:'a shell command ', 
+                monospace:'process with monospace'=True, 
+                **kwargs:'pass to monospace'):
         import subprocess
         try:
             ret = subprocess.check_output([text], shell=True).decode('utf-8')
         except Exception as e:
             ret = f'Command {text} failed : {e}'
-        return self.monospace(ret, **kwargs)
+        return self.monospace(ret, **kwargs) if monospace else ret
 
     def capture_print(self, **kwargs):
 

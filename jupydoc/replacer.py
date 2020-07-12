@@ -44,7 +44,6 @@ if plt:
     class FigureWrapper(Wrapper,plt.Figure):
         
         def __init__(self, *pars, **kwargs): 
-                    #fig, vars, folder_name='figs', fig_folders=[], fig_numberer=FigNumberer(),   fig_class='jupydoc_fig'):
             
             global figure_number
             super().__init__(*pars, **kwargs)
@@ -54,7 +53,7 @@ if plt:
             self.fig = fig
             # from kwargs
             self.folder_name=kwargs.pop('folder_name', 'figs')
-            self.fig_folders=kwargs.pop('fig_folders', [])
+            self.fig_folders=kwargs.pop('fig_folders', document_folders)
             
             figure_number += 1
             self.number = fig.number = figure_number
@@ -62,8 +61,6 @@ if plt:
 
             for folder in self.fig_folders:
                 os.makedirs(os.path.join(folder,  self.folder_name),exist_ok=True)
-
-
 
         def __str__(self):
             
