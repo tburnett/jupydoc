@@ -54,7 +54,7 @@ if plt:
             self.fig = fig
             # from kwargs
             self.folder_name=kwargs.pop('folder_name', 'figs')
-            self.fig_folders=kwargs.pop('fig_folders', [])
+            self.fig_folders=kwargs.pop('fig_folders', document_folders)
             
             figure_number += 1
             self.number = fig.number = figure_number

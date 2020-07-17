@@ -6,9 +6,6 @@ import string, pprint , collections
 from nbconvert.exporters import  HTMLExporter
 
 
-
-
-
 class DocInfo(collections.OrderedDict):
     """Manage the Jupydoc document structure
 
@@ -96,6 +93,7 @@ class DocInfo(collections.OrderedDict):
         return hdr+self.section_header.format(header_text)  +doc + self.section_trailer 
   
     def parse_section_string(self, section_string):
+        if not section_string: return
         # remove commas, make sure [] will be tokens
         t = section_string.replace(',', ' ').replace('[', ' [ ').replace(']', ' ] ')
         tokens = t.split()
