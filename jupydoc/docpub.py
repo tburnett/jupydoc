@@ -37,11 +37,12 @@ class DocPublisher(Publisher):
                 return
             try:
                 doc_dict = yaml.safe_load(docstring) 
+                if doc_dict is None: doc_dict={}
             except Exception as e:
                 print(f'yaml error: {e.__class__.__name__}: {e.args}\n{docstring}',file=sys.stderr)
                 return               
 
-        self.doc_info = DocInfo(doc_dict)
+        self.doc_info = DocInfo(doc_dict) 
         self.doc_info['date'] = self.date
         self.doc_info['version'] = getattr(self, 'version', '')
 
@@ -50,7 +51,7 @@ class DocPublisher(Publisher):
         self.client_mode = client_mode
 
         # make non-doc items available as attribues and in self.info
-        info = doc_dict
+        info = doc_dict if doc_dict  else {}
         for k in 'title author sections'.split(): info.pop(k, None)
         if info: self.__dict__.update(info)
         self.info = info    

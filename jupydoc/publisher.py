@@ -141,7 +141,7 @@ class Publisher(object):
         fullpath = os.path.abspath(os.path.join(self.docpath, self.docname))
 
         self.markdown(
-            f'<hr class="thick">\nDocument "{self.docname}", created using [jupydoc](http://github.com/tburnett/jupydoc)<br>'\
+            f'<hr class="thick">\nDocument "{self.docname}", created using [jupydoc](http://github.com/tburnett/jupydoc) on {self.date}<br>'\
             #f'\nCreated by class <samp>{self.__class__.__name__}</samp> {source_text}<br>'\
             f'\nSaved to <samp>{fullpath}</samp>'
             )
@@ -236,9 +236,7 @@ class Publisher(object):
             return out
         return f'<details {"open" if open else ""}><summary> {summary} </summary> {out} </details>'
     
-    def shell(self, text:'a shell command ', 
-                monospace:'process with monospace'=True, 
-                **kwargs:'pass to monospace'):
+    def shell(self, text:'a shell command ', monospace=True, **kwargs):
         import subprocess
         try:
             ret = subprocess.check_output([text], shell=True).decode('utf-8')
