@@ -115,6 +115,7 @@ class DocPublisher(Publisher):
                 raise Exception(f'Function {function} not defined')
                 ok=False
                 continue
+
             self._current_index = [int(sid), int(sid*10%10)]
             self.display_on = selected and not self.client_mode
             try:
@@ -145,6 +146,10 @@ class DocPublisher(Publisher):
         * headers with (sub)section numbers
         * make section symbols available to subsections
         """
+
+        if not hasattr(self, '_current_index'):
+            # not in a loop over the document
+            return super().process_doc(doc, vars)
 
         section_number, subsection_number = self._current_index
 

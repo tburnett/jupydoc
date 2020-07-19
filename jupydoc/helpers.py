@@ -28,6 +28,7 @@ class DocInfo(collections.OrderedDict):
         title_page_name='title_page',
         verify_list:'list of acceptable function names'=[]):
  
+        if not doc_dict: return
         for key in 'title author abstract'.split():
             self[key] = doc_dict.get(key, '')
         self['sections']= {title_page_name: []}

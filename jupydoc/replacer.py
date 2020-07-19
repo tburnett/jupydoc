@@ -18,8 +18,6 @@ try:
 except:
     pd=None
 
-document_folders = ['.']
-figure_number=0
 
 # a dict accumulated here, used to initialze set of wrappers for ObjectReplacer
 wrappers = {}
@@ -32,6 +30,7 @@ class Wrapper(object):
         self.obj = pars[0]
         self.vars=pars[1]
         self.indent = kwargs.pop('indent', '5%')
+        self.replacer = kwargs.pop('replacer')
 
     def __repr__(self): return str(self)
     def _repr_html_(self): return str(self)
@@ -45,7 +44,6 @@ if plt:
         
         def __init__(self, *pars, **kwargs): 
             
-            global figure_number
             super().__init__(*pars, **kwargs)
 
             fig = self.obj
@@ -53,14 +51,19 @@ if plt:
             self.fig = fig
             # from kwargs
             self.folder_name=kwargs.pop('folder_name', 'figs')
-            self.fig_folders=kwargs.pop('fig_folders', document_folders)
+            self.fig_folders=kwargs.pop('fig_folders', self.replacer.document_folders)
+            # print(f'***fig_folders: {self.fig_folders}')
             
-            figure_number += 1
-            self.number = fig.number = figure_number
+            self.replacer.figure_number += 1
+            self.number = self.replacer.figure_number
             self.fig_class=kwargs.pop('fig_class', 'jupydoc_fig') 
 
             for folder in self.fig_folders:
-                os.makedirs(os.path.join(folder,  self.folder_name),exist_ok=True)
+                t = os.path.join(folder,  self.folder_name)
+                os.makedirs(t, exist_ok=True)
+                assert os.path.isdir(t), f'{t} not found'
+                # print(f'*** saving to {t}')
+
 
         def __str__(self):
             
@@ -97,6 +100,7 @@ if pd:
 
             super().__init__(*pars, **kwargs)
             self._df = self.obj
+            kwargs.pop('replacer') # rest should be OK
             self.kw = kwargs
 
         def __str__(self):
@@ -148,25 +152,26 @@ class ObjectReplacer(dict):
             2. kwargs to apply to new object
     """
     def __init__(self, 
-                  folders:'one or more document folders to save images'=['.'], 
+                 folders:'one or more document folders to save images'=['.'], 
                 ):
-        self.set_folders(folders)
 
         self.update(wrappers)
+        self.set_folders(folders)
+        self.figure_number=0
         self.debug=False
         
-    def add_rep(self, class_name:'name of class to replace', 
-                    out_class:'replacement class', 
-                    kwargs:'Any parameters to pass to output class'={}):
-        """
-        add a replacement entry
-        """
-        self[class_name] = (out_class, kwargs)
+    # def add_rep(self, class_name:'name of class to replace', 
+    #                 out_class:'replacement class', 
+    #                 kwargs:'Any parameters to pass to output class'={}):
+    #     """
+    #     add a replacement entry
+    #     """
+    #     self[class_name] = (out_class, kwargs)
     
     def set_folders(self, folders):
         # folder management for these guys
-        global document_folders
-        document_folders = folders
+        #global document_folders
+        self.document_folders = folders
         self.clear()
 
     def clear(self):
@@ -175,7 +180,7 @@ class ObjectReplacer(dict):
  
     @property
     def folders(self):
-        return document_folders
+        return self.document_folders
 
     def __call__(self, vars):
         """for each value in the vars dict, replace it with a new object that
@@ -183,13 +188,14 @@ class ObjectReplacer(dict):
         (Note uses the *class name*, which may not be unique, as a key)
         """
         for key,value in vars.items():
+            tkey = value.__class__.__name__
             if self.debug:
-                print(f'{key}: {value.__class__.__name__} ')
+                print(f'{key}: {tkey} ')
 
-            new_class, kwargs = self.get(value.__class__.__name__, (None,None))
+            new_class, kwargs = self.get(tkey, (None,None))
             
             if new_class:
-                newvalue = new_class(value, vars, **kwargs)
+                newvalue = new_class(value, vars, replacer=self, **kwargs)
                 vars[key] = newvalue
                 
     def test(self, var:'any object'):
