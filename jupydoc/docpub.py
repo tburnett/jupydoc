@@ -80,11 +80,12 @@ class DocPublisher(Publisher):
         """
 
         ti = self.doc_info # has title, etc.
-        ts=self.doc_info['title'].split('\n')
+        ts = ti['title'].format(**self.__dict__).split('\n')
         title=ts[0]
         subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
+
         author=  ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
-        abstract=ti.get('abstract', '')
+        abstract=ti.get('abstract', '').format(**self.__dict__)
         author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
         date_line=f'<p style="text-align: right;">{self.date}</p>'
         self.publishme()

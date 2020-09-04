@@ -458,7 +458,7 @@ class Manual(DocPublisher):
         The docstring is in [`yaml`](http://zetcode.com/python/yaml/), a human-readable data-serialization language
         often used for configuration files. The following items, all optional, are used to define the document:
 
-        * **title** If more than one line, the second is a subtitle
+        * **title** If more than one line, the second is a subtitle. Note that this entry may contain curly-bracket fields with class variable names. One example is "{version}". 
         * **author** Will be centered.
         * **sections** A single string with names of functions corresponding to sections and possible subsections that will be parsed
         * **abstract** Can be any length.
@@ -679,6 +679,9 @@ class Manual(DocPublisher):
         Also allow a _version_ of a document, with a compound name, classname.version
         #### 07/04/2020
         Implement `<detais>' for `monospace` output, including the functions `shell` and `capture_print`.
+        #### 07/15/2020
+        Realize that I want it to be easy for a document to be a simple note, appropriate for a sidebar.
+        To do this, I define a "title_page" function, with no sections. Maybe a separate class Memo?
         """
         #----------------------------------
         self.publishme()
