@@ -74,7 +74,6 @@ if plt:
                 fig=self.fig
                 caption=getattr(fig,'caption', '').format(**self.vars)
                 # save the figure to a file, then close it
-                fig.tight_layout(pad=1.05)
                 n =self.number
                 fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
                 browser_fn =fn
