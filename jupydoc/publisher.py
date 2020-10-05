@@ -140,10 +140,13 @@ class Publisher(object):
             return
         fullpath = os.path.abspath(os.path.join(self.docpath, self.docname))
 
+        if hasattr(self, 'docman'):
+            from_file = f' From file <samp>{self.docman.source_file}</samp>,'
+        else: from_file=''
         self.markdown(
-            f'<hr class="thick">\nDocument "{self.docname}", created using [jupydoc](http://github.com/tburnett/jupydoc) on {self.date}<br>'\
-            #f'\nCreated by class <samp>{self.__class__.__name__}</samp> {source_text}<br>'\
-            f'\nSaved to <samp>{fullpath}</samp>'
+            f'<hr class="thick">\nDocument "{self.docname}", {from_file}'\
+            f' created using [jupydoc](http://github.com/tburnett/jupydoc) on {self.date}'
+            f'<br>Saved to <samp>{fullpath}</samp>'
             )
         
         md_to_html(self.data, os.path.join(fullpath,'index.html'), title=self.docname) 

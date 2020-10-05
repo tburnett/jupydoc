@@ -246,6 +246,8 @@ class DocMan(object):
             # call the class constructor, setting a default, parhaps
             #  docspath for it; pass in version
             toeval = f'module.{classname}'
+            self.source_file = module.__file__
+            self.class_name = classname #make available
             obj = eval(toeval)(docpath=docspath, docname=docname, 
                     client_mode=as_client,**kwargs)
   
@@ -280,6 +282,6 @@ class DocMan(object):
             obj()
         except Exception as e:
             print(f'Fail to load {docname}: {e}', file=sys.stderr)
-            return
+            raise #return
         link = f'"../{docname}/index.html"'
         return obj, link

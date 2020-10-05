@@ -2,6 +2,7 @@
 jupydoc helper class DocInfo, functions doc_formatter and md_to_html
 
 """
+import sys
 import string, pprint , collections
 from nbconvert.exporters import  HTMLExporter
 
@@ -25,7 +26,9 @@ class DocInfo(collections.OrderedDict):
         title_page_name='title_page',
         verify_list:'list of acceptable function names'=[]):
  
-        if not doc_dict: return
+        if not doc_dict or type(doc_dict) == str:
+            print(f'Improper or missing class docstring', file=sys.stderr)
+            raise Exception('Improper or missing class docstring')
         for key in 'title author abstract'.split():
             self[key] = doc_dict.get(key, '')
         self['sections']= {title_page_name: []}

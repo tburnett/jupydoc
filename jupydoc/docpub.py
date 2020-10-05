@@ -51,7 +51,7 @@ class DocPublisher(Publisher):
         self.client_mode = client_mode
 
         # make non-doc items available as attribues and in self.info
-        info = doc_dict if doc_dict  else {}
+        info = doc_dict if doc_dict and type(doc_dict) == dict else {}
         for k in 'title author sections'.split(): info.pop(k, None)
         if info: self.__dict__.update(info)
         self.info = info    
