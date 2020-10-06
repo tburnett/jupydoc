@@ -177,6 +177,10 @@ class Publisher(object):
         if image_path[0]=='$':
             image_path = os.path.expandvars(image_path)
         filename = os.path.expandvars(filename)
+        # Get, and increment, current figure number, prepend to caption.
+        self.object_replacer.figure_number +=1
+        fignum =  self.object_replacer.figure_number
+        caption = f'<b>Figure {fignum}</b>. '+caption
 
         if not os.path.isfile(filename):
             filename = os.path.join(image_path, filename)
@@ -191,6 +195,7 @@ class Publisher(object):
         class JupydocImage(object):
             def __init__(self, folders):
                 self.error = error
+                self.fignum = fignum
                 if self.error: 
                     return
                 _, self.name=os.path.split(filename) 

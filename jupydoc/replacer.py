@@ -72,25 +72,27 @@ if plt:
             
                 # only has to do this once:
                 fig=self.fig
-                caption=getattr(fig,'caption', '').format(**self.vars)
-                # save the figure to a file, then close it
                 n =self.number
+                caption = f'<b>Figure {n}</b>. ' + getattr(fig,'caption', '').format(**self.vars)
+
+                # save the figure to a file, then close it
                 fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
                 browser_fn =fn
+                
                 # actually save it for the document, perhaps both in the local, and document folders
                 for folder in self.fig_folders:
                     fig.savefig(os.path.join(folder,fn))#, **fig_kwargs)
                 plt.close(fig) 
 
-                # add the HTML as an attribute, to insert the image, including optional caption
+                # add the HTML as an attribute, to insert the image, including  caption
 
                 self._html =  f'<div class="{self.fig_class}"><figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
                         f' <figcaption>{caption}</figcaption>'\
                         '</figure></div>\n'
             return self._html
 
-    def __str__(self):
-        return str(self.img)
+    # def __str__(self):
+    #     return str(self.img)
 
     wrappers['Figure'] = (FigureWrapper, {})
 
