@@ -81,7 +81,7 @@ if plt:
                 
                 # actually save it for the document, perhaps both in the local, and document folders
                 for folder in self.fig_folders:
-                    fig.savefig(os.path.join(folder,fn))#, **fig_kwargs)
+                    fig.savefig(os.path.join(folder,fn), bbox_inches='tight', pad_inches=0.5)#, **fig_kwargs)
                 plt.close(fig) 
 
                 # add the HTML as an attribute, to insert the image, including  caption
@@ -177,8 +177,7 @@ class ObjectReplacer(dict):
         self.clear()
 
     def clear(self):
-        global figure_number
-        figure_number= 0
+        self.figure_number= 0
  
     @property
     def folders(self):

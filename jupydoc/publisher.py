@@ -123,8 +123,9 @@ class Publisher(object):
     def clear(self):
         # start the objs tuple 
         self.data = (doc_formatter(jupydoc_css + '\n<a id="top"></a>', ),)
-        self._fignum = 0
+        self._fignum = 0 # local convenience, not true 
         self._has_data = False
+        self.object_replacer.clear() # for fig number at least
 
     def process_doc(self, doc, vars):
         # do nothing in this class
