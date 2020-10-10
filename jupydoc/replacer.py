@@ -4,7 +4,7 @@ THis defines a jupydoc helper which manages creation of HTML for objects of sele
 For such classes, replace the object in the variable dictionary with a new one that implements a __str__ function, which returns
 markdown, usually HTML.
 
-Implemented here: dict, and if can be importer plt.Figure, pd.Dataframe
+Implemented here: dict, wrappers for plt.Figure, pd.Dataframe
 """
 import os, shutil
 import pprint 
@@ -83,12 +83,18 @@ if plt:
                 for folder in self.fig_folders:
                     fig.savefig(os.path.join(folder,fn), bbox_inches='tight', pad_inches=0.5)#, **fig_kwargs)
                 plt.close(fig) 
+                img_width = f'width={fig.width}' if hasattr(fig,'width') else ''
 
                 # add the HTML as an attribute, to insert the image, including  caption
-
-                self._html =  f'<div class="{self.fig_class}"><figure> <img src="{browser_fn}" alt="Figure {n} at {browser_fn}">'\
+                self._html =\
+                    f'<div class="{self.fig_class}">'\
+                     f'<a href="{browser_fn}"'\
+                      f'<figure>'\
+                        f'   <img src="{browser_fn}" alt="Figure {n} at {browser_fn}" {img_width}>'\
                         f' <figcaption>{caption}</figcaption>'\
-                        '</figure></div>\n'
+                      '</figure>'\
+                     '</a>'\
+                    '</div>\n'
             return self._html
 
     # def __str__(self):

@@ -219,6 +219,7 @@ class DocMan(object):
    
     def __call__(self, 
                 docname:'name | name[.version] where name is a doc class'='', 
+                version:'optional way to specify verion'=None,
                 as_client:'set True for client mode'=False,
                 **kwargs:' arguments for class'
                 ):
@@ -227,9 +228,13 @@ class DocMan(object):
             print(f'List of document classes:\n {self.doc_classes}')
             return
 
-        # split off version after first period if any
-        t = docname.split('.')
-        classname, version = (t[0], '.'.join(t[1:])) if len(t)>1 else (docname, '')
+        # split off version after first period if any--or use version parm
+        if version is not None:
+            classname=docname
+            docname = '.'.join([docname,version])
+        else:
+            t = docname.split('.')
+            classname, version = (t[0], '.'.join(t[1:])) if len(t)>1 else (docname, '')
 
         package_name = self.lookup_module.get(classname, None)
         if not package_name:
