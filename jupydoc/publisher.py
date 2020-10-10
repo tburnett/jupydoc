@@ -187,10 +187,12 @@ class Publisher(object):
             filename = os.path.join(image_path, filename)
             if not os.path.isfile(filename):
                 error = f'Image file {filename} not found.'
+                print(error, sys.stderr)
         if not error:
             _, ext = os.path.splitext(filename)
             if not ext in image_extensions:
                 error = f'File {filename} not an image? "{ext}" not in {image_extensions}' 
+                print(error, sys.stderr)
 
 
         class JupydocImage(object):
@@ -220,12 +222,24 @@ class Publisher(object):
                 h = '' if not height else f'height={height}'
                 w  = '' if not width  else f'width={width}'
                 browser_fn = self.browser_subfolder+'/'+self.name
-                return f'<div class="{fig_style}"><figure> <img src="{browser_fn}" {h} {w}'\
-                    f'  alt="Image {self.name} at {browser_fn}">'\
-                    f' \n  <figcaption>{caption}</figcaption>'\
-                    '\n</figure></div>\n'
+                return\
+                    f'<div class="{fig_style}">'\
+                    f' <a href="{browser_fn}">'\
+                     '  <figure>'\
+                    f'    <img src="{browser_fn}" {h} {w}'\
+                    f'       alt="Image {self.name} at {browser_fn}">'\
+                    f'\n  <figcaption>{caption}</figcaption>'\
+                    '</figure></a></div>\n'
         r = JupydocImage(folders = self.doc_folders) 
         return r       
+    
+    def figure(self, fig, caption=None, width=None):
+        """convenient way to add caption and width attributes
+        """
+        assert fig.__class__.__name__=='Figure', 'Expect fig to be a Figure'
+        if caption: fig.caption=caption
+        if width: fig.width=width
+        return fig
     #-----------------------------------------------------------
     # User convenience functions
 
