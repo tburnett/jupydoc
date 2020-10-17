@@ -253,7 +253,8 @@ class DocMan(object):
             toeval = f'module.{classname}'
             self.source_file = module.__file__
             self.class_name = classname #make available
-            obj = eval(toeval)(docpath=docspath, docname=docname, 
+            self.class_obj = eval(toeval) # make the  class object available for inspection
+            obj = self.class_obj(docpath=docspath, docname=docname, 
                     client_mode=as_client,**kwargs)
   
         except Exception as e:

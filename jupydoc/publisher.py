@@ -131,7 +131,7 @@ class Publisher(object):
         # do nothing in this class
         return doc
 
-    def save(self, quiet=False):
+    def save(self, append='', quiet=False):
         """ Create Web document
         """
         if not self.docpath: 
@@ -149,7 +149,9 @@ class Publisher(object):
             f' created using [jupydoc](http://github.com/tburnett/jupydoc) on {self.date}'
             f'<br>Saved to <samp>{fullpath}</samp>'
             )
-        
+        if append:
+            self.markdown(append, clean=False)
+
         md_to_html(self.data, os.path.join(fullpath,'index.html'), title=self.docname) 
          
         if not quiet:

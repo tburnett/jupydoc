@@ -106,6 +106,7 @@ class DocPublisher(Publisher):
             ):
         """assemble and save the document if docpath is set        
         """
+        import inspect
         self.clear()
         
         # the DocInfo object implements an iterator, and detects selection for display
@@ -141,7 +142,17 @@ class DocPublisher(Publisher):
             # update the document index if instantiated by DocMan 
             if hasattr(self, 'docman'):
                 self.docman.update(self)
-            self.save(quiet=self.client_mode)
+
+                # append the source
+                s = '<details> <summary> Python source code </summary> '
+                s+=    '<pre>'
+                s+=     inspect.getsource(self.docman.class_obj)
+                s+=     '</pre>'
+                s+= '</details>'
+            else: s=''
+
+
+            self.save(quiet=self.client_mode, append=s)
 
     def process_doc(self, doc, vars):
         """Override the base class to add document features to the output of a doc function
