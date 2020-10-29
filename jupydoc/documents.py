@@ -16,6 +16,10 @@ class Manual(DocPublisher):
     author: |
             Toby Burnett <tburnett@uw.edu>
             University of Washington
+
+    abstract: |
+            This is a comprehensive manual for the Jupydoc document-creation system, 
+            which both describes, and tests. all its features.
    
     sections: introduction
               basic
@@ -127,9 +131,11 @@ class Manual(DocPublisher):
             def doit(self):
                 """This is the output from a minimal example
 
+                The value of $x$ is {x}, but {2*x} is not recognized.
                 """
                 #-------- code ---------
                 #-----------------------
+                x=99
                 self.publishme()
                 
         doc = Basic(docpath='.')
@@ -146,7 +152,7 @@ class Manual(DocPublisher):
         output.
         3. Last line of the code is `self.publishme()`.
 
-        Unlike a formatted string, entries in curly brackets cannot be expressions.
+        Unlike a formatted string, entries in curly brackets cannot be executed; they are names of variables accessible to the code.
 
         #### Output
         The above generates a display in the notebook. Note that the `docpath='.' specifies that output should go

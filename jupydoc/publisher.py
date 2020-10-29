@@ -167,7 +167,12 @@ class Publisher(object):
         if clean:
             text= inspect.cleandoc(text)
         self.data  += (doc_formatter( text ) ,)
-     
+
+    # disable for now--couidn't make it work
+    # def html(self, text:'raw HTML text to add to document',
+    #     )->'HTML':
+    #     self.data += (doc_formatter(text, mimetype='text/html'),)
+
     def image(self, filename, 
               caption='', 
               width=None,height=None, 

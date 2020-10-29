@@ -103,6 +103,7 @@ class DocPublisher(Publisher):
             save_ok:'will also save the doc if set'=True,
             client_mode:'Set True in this case'=False,
             quiet:'Set to avoid printing a line per section'='False',
+            raise_if_exception:'set True to raise exceptions'=False,
             ):
         """assemble and save the document if docpath is set        
         """
@@ -130,6 +131,7 @@ class DocPublisher(Publisher):
             except Exception as e:
                 import traceback
                 print(f"Function '{function}' Failed: {e}", file=sys.stderr)
+                if raise_if_exception: raise
                 tb = e.__traceback__
                 for i in range(2): tb = tb.tb_next # skip our calls
                 traceback.print_tb(tb, limit=2)
@@ -139,18 +141,20 @@ class DocPublisher(Publisher):
                 print(f'Not displaying: {sid:5} {function}')
  
         if ok and save_ok:
-            # update the document index if instantiated by DocMan 
+            # update the document index if instantiated by DocMan and this guy has a name
+            s = ''
             if hasattr(self, 'docman'):
-                self.docman.update(self)
+                if self.docname:
+                    print(f'Updating {self.docname}')
+                    self.docman.update(self)
 
-                # append the source
-                s = '<details> <summary> Python source code </summary> '
-                s+=    '<pre>'
-                s+=     inspect.getsource(self.docman.class_obj)
-                s+=     '</pre>'
-                s+= '</details>'
-            else: s=''
-
+                # ** Getting the index instead--fix & enable later
+                # # append the source
+                # s = '<details> <summary> Python source code </summary> '
+                # s+=    '<pre>'
+                # s+=     inspect.getsource(self.docman.class_obj)
+                # s+=     '</pre>'
+                # s+= '</details>'
 
             self.save(quiet=self.client_mode, append=s)
 
@@ -198,7 +202,7 @@ class DocPublisher(Publisher):
         # prepend section or subsection header if requested and not the title page
         header = f'{hnumber} {section_title}' if section_title else ''   
 
-        # puths in anchors and links, maybe colappse                
+        # puts in anchors and links, maybe colappse                
         doc = self.doc_info.annotate(header, doc)
         # doc = self.doc_info.section_header + header + doc + self.doc_info.section_trailer
         return doc

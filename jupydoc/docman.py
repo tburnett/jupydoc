@@ -278,7 +278,16 @@ class DocMan(object):
         """Update the index info for given doc class object
         """
         indexer = DocIndex(obj)
-        indexer()
+        # check to see if there is a class named "Index" and it is not this
+        if 'Index' in self.doc_classes and obj.docname!='Index':
+            indexer.save() # updates the yaml index 
+            print(f'Running the Index document for {obj.docname}')
+            self('Index')()
+            assert True
+        else: 
+            print('Updating index and basic index.html')
+            # this updates yaml    
+            indexer()
         return indexer
 
     def client(self, docname):

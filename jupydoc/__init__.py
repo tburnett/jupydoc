@@ -6,4 +6,4 @@
 from .publisher import Publisher
 from .docpub import DocPublisher
 from .docman import DocMan
-
+from .index import Index

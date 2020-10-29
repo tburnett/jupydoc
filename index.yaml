@@ -1,0 +1,12 @@
+Manual:
+  author: Toby Burnett <tburnett@uw.edu>
+  date: 2020-09-26 11:47
+  info:
+    user_info: This is available to user.
+  title: 'Jupydoc: Generate documents with Python code '
+Technicals:
+  author: ''
+  date: 2020-09-26 11:45
+  info:
+    abstract: This document contains various technical details.
+  title: JupyDoc technical detalis

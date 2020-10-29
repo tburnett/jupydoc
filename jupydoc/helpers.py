@@ -83,6 +83,8 @@ class DocInfo(collections.OrderedDict):
         self.current_index=[i,j]
         if j==0 and i>1: # end of a section
             self.section_trailer = '\n<p style="text-align: right;"><a href="#top">top</a></p>\n'
+        elif i==1: # top
+            self.section_trailer = '\n<p style="text-align: right;"><a href="../index.html?skipDecoration">back to index</a></p>'
 
         return ret
 
@@ -219,13 +221,35 @@ def md_to_html(output, filename, title='jupydoc'):
         cells = []
         for obj in output:
             mimetype, text = list(obj._repr_mimebundle_().items())[0]
-            assert mimetype[:5]=='text/', f'Wrong mimetype: {mimetype}'
-            cells.append(
-                Dict(cell_type=mimetype[5:],
+            if mimetype=='text/markdown':
+
+                cell = Dict(cell_type='markdown',
                     metadata={},
                     source = text,
                 )
-            )
+            # elif mimetype=='text/html':
+            #     # HTML output has to kluge as a code cell that created it
+            #     # (But couldn't get this to work)
+            #     cell = Dict(
+            #         cell_type='code',
+            #         metadata={},
+            #         source=[],
+            #         execution_count=1,
+            #         output_type='execute_result',
+            #         outputs =[ 
+            #             {'data':
+            #                 {'text/html': [text] ,
+            #                  'text/plain':[''],
+            #                 }
+            #             }
+            #            ] ,                   
+            #         )
+            else:
+                raise Exception(f'Unrecognized mimetype:{mimetype}')
+
+            cells.append( cell)
+
+            
 
     elif hasattr(output, 'outputs'):
         # a CapturedIO object? assume all markdwon si guess (never used this)
@@ -246,7 +270,7 @@ def md_to_html(output, filename, title='jupydoc'):
             nbformat=4,
             nbformat_minor=4,
             )
-
+    # print('Converting to HTML')
     # now pass it to nbconvert to write as an HTML file
     exporter = HTMLExporter()
     output, resources = exporter.from_notebook_node(nb) 
@@ -254,8 +278,13 @@ def md_to_html(output, filename, title='jupydoc'):
     # Change the title from default "Notebook"
     output = output.replace('Notebook', title)
     
-    with open(filename, 'wb') as f:
-        f.write(output.encode('utf8'))
+    # print(f'writing rendered HTML to {filename}')
+    if filename:
+        with open(filename, 'wb') as f:
+            f.write(output.encode('utf8'))
+    else:
+        # for debugging
+        return output
         
 #---------------------------------------------------------------------------------
 def test_formatter():
