@@ -114,7 +114,11 @@ class DocPublisher(Publisher):
         self.doc_info.set_selection(examine)
 
         ok = True
-        for sid, function, selected in self.doc_info:
+        for sid, funarg, selected in self.doc_info:
+            ff = funarg.split('.')
+            function = ff[0]
+            hasarg = len(ff)>1
+     
             if not hasattr(self, function):
                 raise Exception(f'Function {function} not defined')
                 ok=False
@@ -123,7 +127,11 @@ class DocPublisher(Publisher):
             self._current_index = [int(sid), int(sid*10%10)]
             self.display_on = selected and not self.client_mode
             try:
-                fail = eval(f'self.{function}()')
+                if hasarg:
+                    arg = ff[1:]
+                    fail = eval(f'self.{function}(*{arg})')
+                else:
+                    fail = eval(f'self.{function}()')
                 if fail:
                     print(f"function '{function}' failure message: {fail}", file=sys.stderr)
                     return
