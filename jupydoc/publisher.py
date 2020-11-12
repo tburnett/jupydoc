@@ -208,7 +208,9 @@ class Publisher(object):
                 self.fignum = fignum
                 if self.error: 
                     return
-                _, self.name=os.path.split(filename) 
+                _, name=os.path.split(filename) 
+                # make tne name unique by appending current fig number
+                self.name = name.replace('.', f'_fig_{fignum:02d}.')
                 self.set_browser_folder(browser_subfolder)
                 for folder in folders:
                     self.saveto(folder)
