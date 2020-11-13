@@ -78,11 +78,13 @@ class DocPublisher(Publisher):
        
         {abstract}
         """
-
         ti = self.doc_info # has title, etc.
         ts = ti['title'].format(**self.__dict__).split('\n')
-        title=ts[0]
+        # update title in doc_info
+
+        title = ti['title']=ts[0]
         subtitle = '' if len(ts)==1 else ' '.join(ts[1:])
+        if subtitle: ti['subtitle']=subtitle
 
         author=  ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
         abstract=ti.get('abstract', '').format(**self.__dict__)
