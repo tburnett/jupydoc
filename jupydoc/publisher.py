@@ -143,7 +143,9 @@ class Publisher(object):
             ---
             Document not saved.""")
             return
-        fullpath = os.path.abspath(os.path.join(self.docpath, self.docname))
+        fullpath = os.path.abspath(self.docpath)
+        if self.docname!='Index':
+            fullpath = os.path.join(fullpath, self.docname)
 
         if hasattr(self, 'docman'):
             from_file = f' From file <samp>{self.docman.source_file}</samp>,'
@@ -156,7 +158,7 @@ class Publisher(object):
         if append:
             self.markdown(append, clean=False)
 
-        html_title = self.docname if self.docname else f'{os.path.split(self.docpath)[-1]} index'
+        html_title = self.docname if self.docname !='Index' else f'{os.path.split(self.docpath)[-1]} index'
         md_to_html(self.data, os.path.join(fullpath,'index.html'), title=html_title) 
          
         if not quiet:

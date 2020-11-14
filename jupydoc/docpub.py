@@ -154,11 +154,11 @@ class DocPublisher(Publisher):
             # update the document index if instantiated by DocMan and this guy has a name and not invoked as a client
             s = ''
             if hasattr(self, 'docman'):
-                if self.docname:
+                if self.docname != 'Index':
                     print(f'Updating {self.docname}')
                     self.docman.update(self)
 
-                    if hasattr(self.docman, 'class_obj'):
+                    if hasattr(self.docman, 'class_obj') :
                         s = '<details> <summary> Python source code </summary> '
                         s+=    '<pre>'
                         s+=     inspect.getsource(self.docman.class_obj)

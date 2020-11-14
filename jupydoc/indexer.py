@@ -130,7 +130,7 @@ class DocIndex(dict ):
         # get current doc info as dict
         info = doc.doc_info
         t ={}
-        if doc.docname:
+        if doc.docname != 'Index':
             # make, or update an entry if it has a name
 
             t[doc.docname] = dict(
