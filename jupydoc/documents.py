@@ -19,14 +19,14 @@ class Manual(DocPublisher):
 
     abstract: |
             This is a comprehensive manual for the Jupydoc document-creation system, 
-            which both describes, and tests. all its features.
+            which both describes and tests all its features.
    
     sections: introduction
               basic
               variable_formatting [scalars list_and_dict latex images 
                                 figures dataframes other_formatting_options]
               making_a_document [ class_docstring document_generation output_specification]
-              multiple_documents [docman_setup  docman_usage docman_web]
+              multiple_documents [docman_setup  docman_usage docman_web index_document]
               workflow
     
     user_info: This is available to user.
@@ -690,6 +690,32 @@ class Manual(DocPublisher):
         To do this, I define a "title_page" function, with no sections. Maybe a separate class Memo?
         """
         #----------------------------------
+        self.publishme()
+
+    def index_document(self):
+        """Index Document
+
+        The index.html file that is managed by default can be enhanced with a special document named "Index".
+        If such a class is found in the module, it will be invoked after any other document is saved.
+        The only difference is that it will be saved in the root folder. 
+
+        The easiest use is to inherit from jupydoc.Docindex, and supply the title, abstract, and possibly author fields in the yaml class docstring.
+
+        ```
+        from jupydoc import DocIndex
+
+        __docs__ = ['Index']
+
+        class Index(DocIndex):
+            '''
+            title:  A collection of documents
+
+            abstract: |
+                These are the documents relevant to an important study.
+            '''
+        ```
+        This will call the `title_page` function of `DocIndex`, which includes a table for the index. 
+        """
         self.publishme()
 
 

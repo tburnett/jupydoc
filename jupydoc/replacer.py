@@ -132,7 +132,7 @@ class PPWrapper(Wrapper):
 
     def __str__(self):
         pp = pprint.PrettyPrinter(indent=2)
-        text = pp.pformat(self.obj).replace('\n', '<br>\n')
+        text = pp.pformat(self.obj)#.replace('\n', '<br>\n')
         return f'<p style="margin-left: {self.indent}"><samp>{text}</samp></p>'
 
 wrappers['dict'] = (PPWrapper, {} )

@@ -254,7 +254,7 @@ class DocMan(object):
             self.source_file = module.__file__
 
             class_obj = eval(toeval) 
-            if classname != 'Index':
+            if classname != 'Index' and not as_client:
                 # make the  class object and name available on first call
                 print(f'Setting DocMan.class_name to {classname}')
                 self.class_name = classname 

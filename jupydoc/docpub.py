@@ -150,8 +150,8 @@ class DocPublisher(Publisher):
             if not selected and not self.client_mode:
                 print(f'Not displaying: {sid:5} {function}')
  
-        if ok and save_ok:
-            # update the document index if instantiated by DocMan and this guy has a name
+        if ok and save_ok and not getattr(self,'client_mode', False):
+            # update the document index if instantiated by DocMan and this guy has a name and not invoked as a client
             s = ''
             if hasattr(self, 'docman'):
                 if self.docname:

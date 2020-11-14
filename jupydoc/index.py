@@ -10,16 +10,10 @@ class DocIndex(DocPublisher):
             Document Index
 
     abstract: |
-            This is a special, optional **index** document, meant to provide a top-level guide to the related 
-            documents in this folder. To be an index, the constructor must set the docname to "".
+            This is a base class, or and example for an optional **index** document, meant to provide a top-level guide to the related 
+            documents in this folder. To be an index, the document name must be "Index".
 
-    index: true
     """
-
-    def __init__(self, **kwargs):        
-        super().__init__(**kwargs)
-        # this makes it an index for the docpath folder (expect the class to be named 'Index')
-        self.docname='' 
 
     def title_page(self):
         """        
@@ -42,4 +36,4 @@ class DocIndex(DocPublisher):
                 
         self.publishme()
 
-      
+ 
