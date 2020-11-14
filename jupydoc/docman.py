@@ -252,15 +252,21 @@ class DocMan(object):
             #  docspath for it; pass in version
             toeval = f'module.{classname}'
             self.source_file = module.__file__
-            self.class_name = classname #make available
-            self.class_obj = eval(toeval) # make the  class object available for inspection
-            obj = self.class_obj(docpath=docspath, docname=docname, 
+
+            class_obj = eval(toeval) 
+            if classname != 'Index':
+                # make the  class object and name available on first call
+                print(f'Setting DocMan.class_name to {classname}')
+                self.class_name = classname 
+                self.class_obj = class_obj
+            obj = class_obj(docpath=docspath, docname=docname, 
                     client_mode=as_client,**kwargs)
   
         except Exception as e:
             print(f'Error evaluating "{package_name}.{classname}": {e.__class__.__name__}', file=sys.stderr)
-            traceback_message(e,  )
-            return None
+            raise
+            # traceback_message(e,  )
+            # return None
         # finally set for it to be able to call back
         obj.docman = self
         if as_client:

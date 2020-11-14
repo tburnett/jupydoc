@@ -158,13 +158,12 @@ class DocPublisher(Publisher):
                     print(f'Updating {self.docname}')
                     self.docman.update(self)
 
-                # ** Getting the index instead--fix & enable later
-                # # append the source
-                # s = '<details> <summary> Python source code </summary> '
-                # s+=    '<pre>'
-                # s+=     inspect.getsource(self.docman.class_obj)
-                # s+=     '</pre>'
-                # s+= '</details>'
+                    if hasattr(self.docman, 'class_obj'):
+                        s = '<details> <summary> Python source code </summary> '
+                        s+=    '<pre>'
+                        s+=     inspect.getsource(self.docman.class_obj)
+                        s+=     '</pre>'
+                        s+= '</details>'
 
             self.save(quiet=self.client_mode, append=s)
 

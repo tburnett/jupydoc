@@ -1,18 +1,19 @@
-import pandas as pd
+
 from . import DocPublisher, indexer
 
-__docs__=['Index']
+__docs__=['DocIndex']
 
-class Index(DocPublisher):
+class DocIndex(DocPublisher):
     """
 
     title: |
             Document Index
 
     abstract: |
-            This is an **index** document, meant to provide a top-level guide to the related 
-            documents in this folder.
+            This is a special, optional **index** document, meant to provide a top-level guide to the related 
+            documents in this folder. To be an index, the constructor must set the docname to "".
 
+    index: true
     """
 
     def __init__(self, **kwargs):        
@@ -24,14 +25,19 @@ class Index(DocPublisher):
         """        
         <h2> {title}</h2> 
        
+        {author_line}
+
         {abstract}
 
         {index_table}
 
         """
-        title = self.doc_info.get('title', '')
-        abstract = self.doc_info.get('abstract', '')
+        ti = self.doc_info # has title, etc.
+        title = ti.get('title', '')
+        abstract = ti.get('abstract', '')
 
+        author=  ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
+        author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
         index_table = indexer.DocIndex(self)._repr_html_()
                 
         self.publishme()

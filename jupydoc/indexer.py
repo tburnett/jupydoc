@@ -1,4 +1,4 @@
-import os, yaml,  datetime
+import os, yaml,  datetime, glob
 import inspect
 import numpy as np
 
@@ -107,10 +107,31 @@ class DocIndex(dict ):
 
         # set up index entry with info from the doc
         self.docspath = doc.docpath
+        self.verbose=verbose
+        self.index_file = os.path.join(self.docspath, 'index.yaml')
+        
+        # load the current index yaml file, if it exists
+        if os.path.exists(self.index_file):
+            try:
+                with open(self.index_file, 'r') as stream:
+                    id =  yaml.safe_load(stream)
+                    self.update(id)
+            except Exception as msg:
+                raise Exception(f'Failed to parse {self.index_file}:\n{msg}')
+        
+            # remove entries with no corresponding document
+            subdirs = list(filter(lambda d: os.path.isdir(d), glob.glob(self.docspath+'/*'))); 
+            docnames=list(map(lambda d: os.path.split(d)[1], subdirs))
+            toremove = list(filter(lambda t: t not in docnames, self.keys()))
+            for key in toremove:
+                print(f'DocIndex is removing entry for missing document {key}')
+                self.pop(key)
+        
+        # get current doc info as dict
         info = doc.doc_info
         t ={}
         if doc.docname:
-            # add this if nas a name
+            # make, or update an entry if it has a name
 
             t[doc.docname] = dict(
                         title=info.get('title','').split('\n')[0] ,
@@ -123,15 +144,8 @@ class DocIndex(dict ):
             # this is an "Index" document
             self.index_doc = info
 
-        self.verbose=verbose
-        self.index_file = os.path.join(self.docspath, 'index.yaml')
-        if os.path.exists(self.index_file):
-            try:
-                with open(self.index_file, 'r') as stream:
-                    id =  yaml.safe_load(stream)
-                    self.update(id)
-            except Exception as msg:
-                raise Exception(f'Failed to parse {self.index_file}:\n{msg}')
+
+
 
     def _repr_html_(self, heads='name date title abstract'.split(), header=False ):
         # doc = doc_style 
@@ -163,8 +177,9 @@ class DocIndex(dict ):
             doc += f'<td {ta}>{value["date"]}</td>\n'
             # title, then abstract in last cell
 
-            doc += f'  <td {ta}>{value["title"]}<br>\n'
-            doc += info.get('abstract', '')
+            doc += f'  <td {ta}>{value["title"]}<br style="line-height:5x"/>\n'
+            abstract = info.get('abstract', '')
+            doc += '<p>'+abstract+'</p>\n' if abstract else ''
             doc += '  </td>\n'
             doc += ' </tr>\n'
         doc += f'</tbody></table>\n'

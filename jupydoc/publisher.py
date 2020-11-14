@@ -9,10 +9,14 @@ from .replacer import ObjectReplacer
 ## special style stuff at start of document
 jupydoc_css =\
 """
-<style>
+<style type="text/css">
  .jupydoc_fig { text-align: center; }
  .errorText {color:red;}
   hr.thick{border-top: 3px solid black;}  
+ .rendered_html tr, .rendered_html th, .rendered_html td {
+    text-align: left;
+    vertical-align: top;
+}
 </style>
 """
 
@@ -152,10 +156,12 @@ class Publisher(object):
         if append:
             self.markdown(append, clean=False)
 
-        md_to_html(self.data, os.path.join(fullpath,'index.html'), title=self.docname) 
+        html_title = self.docname if self.docname else f'{os.path.split(self.docpath)[-1]} index'
+        md_to_html(self.data, os.path.join(fullpath,'index.html'), title=html_title) 
          
         if not quiet:
-            print(f'\n------\nDocument saved to "{fullpath}"')
+            t = f'Document {self.docname}' if self.docname else 'Index'
+            print(f'\n------\n{t} saved to "{fullpath}"')
              
     def markdown(self, text:"markdown text to add to document",
                  indent:'left margin in percent'=None,
