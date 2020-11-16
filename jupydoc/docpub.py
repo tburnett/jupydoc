@@ -2,11 +2,13 @@
 Document creation 
 """
 import os, sys
-import jupydoc
+
 import yaml
 
 from .helpers import DocInfo
 from .publisher import Publisher
+from .indexer import DocIndexer
+
 
 class DocPublisher(Publisher):
     """
@@ -156,7 +158,7 @@ class DocPublisher(Publisher):
             if hasattr(self, 'docman'):
                 if self.docname != 'Index':
                     print(f'Updating {self.docname}')
-                    self.docman.update(self)
+                    self.update_index()
 
                     if hasattr(self.docman, 'class_obj') :
                         s = '<details> <summary> Python source code </summary> '
@@ -167,6 +169,36 @@ class DocPublisher(Publisher):
 
             self.save(quiet=self.client_mode, append=s)
 
+    def update_index(self):
+
+        """Update the index info 
+        """
+        indexer = DocIndexer(self)
+        indexer.save() # updates the yaml index 
+        
+        docman = self.docman
+        
+        # check to see if there is a class named "Index" and it is not this
+        if 'Index' in docman.doc_classes and self.docname!='Index':
+            print(f'Running the Index document for {obj.docname}')
+            docman('Index')()
+            assert True
+        elif hasattr(docman, 'indexdoc', ) and docman.indexdoc:
+            # DocMan has found an Index declaration, a yaml string, in the __init__.py of this package
+            # use it with DocIndex to create a document to save in the docpath folder
+            
+            print(f'Updating index, applying "Index" declaration in __index__.py')
+            Index.__doc__ = docman.indexdoc
+            di  = Index(docpath=self.docpath, docname='Index')
+            di(save_ok=False)
+            di.save()
+
+        else: 
+            print('Updating index and basic index.html')
+            # this updates yaml    
+            indexer()
+        return 
+    
     def process_doc(self, doc, vars):
         """Override the base class to add document features to the output of a doc function
         * headers with (sub)section numbers
@@ -216,3 +248,40 @@ class DocPublisher(Publisher):
         # doc = self.doc_info.section_header + header + doc + self.doc_info.section_trailer
         return doc
 
+
+class Index(DocPublisher):
+    """
+
+    title: |
+            Document Index
+
+    abstract: |
+            This is a base class, or and example for an optional **index** document, meant to provide a top-level guide to the related 
+            documents in this folder. To be an index, the document name must be "Index".
+
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+    def title_page(self):
+        """        
+        <h2> {title}</h2> 
+       
+        {author_line}
+
+        {abstract}
+
+        {index_table}
+
+        """
+        ti = self.doc_info # has title, etc.
+        title = ti.get('title', '')
+        abstract = ti.get('abstract', '')
+
+        author=  ti.get('author', '').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>')
+        author_line=f'<p style="text-align: center;" >{author}</p>' if author else ''
+        index_table = DocIndexer(self)._repr_html_()
+                
+        self.publishme()

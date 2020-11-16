@@ -2,102 +2,41 @@ import os, yaml,  datetime, glob
 import inspect
 import numpy as np
 
-# generated from https://divtable.com/table-styler/
-table_class = 'greyGridTable'
-doc_style="""\
-<style type="text/css">
-body, th, td {
-  font-family:verdana,arial,sans-serif;font-size:10pt;margin:50px;
-  background-color:white;
-}
-table.greyGridTable {
-  border: 2px solid #FFFFFF;
-  width: 90%;
-  text-align: left;
-  border-collapse: collapse;
-}
-table.greyGridTable td, table.greyGridTable th {
-  border: 1px solid #FFFFFF;
-  padding: 3px 4px;
-}
-table.greyGridTable tbody td {
-  font-size: 13px;
-}
-table.greyGridTable td:nth-child(even) {
-  background: #EBEBEB;
-}
-table.greyGridTable thead {
-  background: #FFFFFF;
-  border-bottom: 4px solid #333333;
-}
-table.greyGridTable thead th {
-  font-size: 15px;
-  font-weight: bold;
-  color: #333333;
-  text-align: left;
-  border-left: 2px solid #333333;
-}
-table.greyGridTable thead th:first-child {
-  border-left: none;
-}
 
-table.greyGridTable tfoot td {
-  font-size: 14px;
-}
-</style> 
-"""
+
+
 
 doc_head="""\
 <html> 
 <head> <title>Document list</title> 
 <style type="text/css">
-body, th, td {	font-family:verdana,arial,sans-serif;
-font-size:10pt;
-margin:50px;
-background-color:white;
-}
-table.greyGridTable {
-  border: 2px solid #FFFFFF;
-  width: 90%;
-  text-align: left;
+.rendered_html_table {
+  margin-left: 10px;
+  margin-right: auto;
+  border: none;
   border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
 }
-table.greyGridTable td, table.greyGridTable th {
-  border: 1px solid #FFFFFF;
-  padding: 3px 4px;
-}
-table.greyGridTable tbody td {
-  font-size: 13px;
-}
-table.greyGridTable td:nth-child(even) {
-  background: #EBEBEB;
-}
-table.greyGridTable thead {
-  background: #FFFFFF;
-  border-bottom: 4px solid #333333;
-}
-table.greyGridTable thead th {
-  font-size: 15px;
-  font-weight: bold;
-  color: #333333;
-  text-align: left;
-  border-left: 2px solid #333333;
-}
-table.greyGridTable thead th:first-child {
-  border-left: none;
-}
-
-table.greyGridTable tfoot td {
-  font-size: 14px;
-}
-</style> 
+.rendered_html tr,
+.rendered_html th,
+.rendered_html td {
+  text-align: right;
+  vertical-align: top;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+  }
+  </style>
 </head>
 """
-doc_body_head="""
-<h3>Documents</h3>
-List of documents maintained here
-"""
-class DocIndex(dict ):
+
+
+class DocIndexer(dict ):
 
     def __init__(self, doc:'A jupydoc.DocPublisher object',
                verbose=False):
@@ -124,14 +63,14 @@ class DocIndex(dict ):
             docnames=list(map(lambda d: os.path.split(d)[1], subdirs))
             toremove = list(filter(lambda t: t not in docnames, self.keys()))
             for key in toremove:
-                print(f'DocIndex is removing entry for missing document {key}')
+                print(f'DocIndexer is removing entry for missing document {key}')
                 self.pop(key)
         
         # get current doc info as dict
         info = doc.doc_info
         t ={}
-        if doc.docname != 'Index':
-            # make, or update an entry if it has a name
+        if doc.docname != 'Index' and doc.docname != 'DocIndex':
+            # make, or update an entry if it isn't an index
 
             t[doc.docname] = dict(
                         title=info.get('title','').split('\n')[0] ,
@@ -143,9 +82,6 @@ class DocIndex(dict ):
         else:
             # this is an "Index" document
             self.index_doc = info
-
-
-
 
     def _repr_html_(self, heads='name date title abstract'.split(), header=False ):
         # doc = doc_style 
@@ -203,9 +139,10 @@ class DocIndex(dict ):
         with open(self.index_file, 'w') as stream:
             yaml.dump(out, stream)
             
-    def to_html(self, filename=None,
+    def to_html(self, filename=None, 
+                indexdoc:'dict that may nave title, author, abstract'={},
                 heads='name date title'.split(), 
-                classname=table_class):
+                ):
         
         if filename is None: 
             inspect.stack()[0].filename
@@ -214,10 +151,15 @@ class DocIndex(dict ):
         parent_path, folder_name = os.path.split(self.docspath)
         _, parent = os.path.split(parent_path)
         parent_ref = '../index.html' if os.path.isfile(os.path.join(parent_path,'index.html')) else '../'
-        doc+=f"""<h2>Documents in folder "{folder_name}"</h2>
-        <p style="text-align: right;"><a href="{parent_ref}"> Back to {parent}</a></p>\n
-        """
-        doc+= f'<table class="{classname}">\n<thead>\n <tr>\n'
+        
+        doc+='<h2>' + indexdoc.get('title', f'Documents in folder "{folder_name}"') + '</h2>\n'
+        
+        doc+=f'<p style="text-align: right;"><a href="{parent_ref}"> Back to {parent}</a></p>\n'
+        
+        abstract=indexdoc.get('abstract', '').format(**self.__dict__)
+        doc+=f'<p> {abstract} </p>'
+
+        doc+= f'<table ">\n<thead>\n <tr>\n'
         for head in heads:
             doc+=f'  <th>{head}</th>\n'
         doc+=f' </tr>\n</thead>\n<tbody>\n'
@@ -243,8 +185,11 @@ class DocIndex(dict ):
         if self.verbose: print(f'Wrote file {filename}')
         return
 
-    def __call__(self):
-
-        self.to_html()
+    def __call__(self, indexdoc):
+        if indexdoc:
+            doc = yaml.safe_load(indexdoc)
+            self.to_html(indexdoc=doc)
+        else:
+            self.to_html()
         self.save()        
       

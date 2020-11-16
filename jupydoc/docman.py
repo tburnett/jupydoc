@@ -4,7 +4,7 @@
 import os, sys, glob
 import importlib 
 
-from .indexer import DocIndex
+# from .indexer import DocIndex
 
 # local globals    
 verbose = False
@@ -54,7 +54,7 @@ class Modules(dict):
 class Packages(dict):
     # manage a set of packages, folders containing an __init__.py 
     def __init__(self):
-        pass
+        self.indexdoc = '' # record if "Index" attribute found
  
     def check(self, path):
         ok = os.path.isfile(path+'/__init__.py')
@@ -73,6 +73,10 @@ class Packages(dict):
     def add_entry(self, package):
         if not package: return
         docspath = getattr(package, 'docspath', '')
+        index = getattr(package, 'Index', '')
+        if index:
+            if verbose: print(f'Package {package} has an Index')
+            self.indexdoc = package.Index
         if not docspath: return
         if docspath[0]!='/':
             docspath = os.path.abspath(os.path.join(packagepath, docspath))
@@ -252,11 +256,12 @@ class DocMan(object):
             #  docspath for it; pass in version
             toeval = f'module.{classname}'
             self.source_file = module.__file__
+            self.indexdoc = packages.indexdoc
 
             class_obj = eval(toeval) 
             if classname != 'Index' and not as_client:
                 # make the  class object and name available on first call
-                print(f'Setting DocMan.class_name to {classname}')
+                # print(f'Setting DocMan.class_name to {classname}')
                 self.class_name = classname 
                 self.class_obj = class_obj
             obj = class_obj(docpath=docspath, docname=docname, 
@@ -280,21 +285,6 @@ class DocMan(object):
 
         return obj
 
-    def update(self, obj):
-        """Update the index info for given doc class object
-        """
-        indexer = DocIndex(obj)
-        # check to see if there is a class named "Index" and it is not this
-        if 'Index' in self.doc_classes and obj.docname!='Index':
-            indexer.save() # updates the yaml index 
-            print(f'Running the Index document for {obj.docname}')
-            self('Index')()
-            assert True
-        else: 
-            print('Updating index and basic index.html')
-            # this updates yaml    
-            indexer()
-        return indexer
 
     def client(self, docname):
         """create a doc, execute it in client mode, return it and a relative link"""

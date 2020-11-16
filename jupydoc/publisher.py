@@ -55,7 +55,6 @@ class Publisher(object):
 
         if docpath:
             fp = os.path.abspath(os.path.join(docpath, self.docname))
-            os.makedirs(fp, exist_ok=True)
         
         # a list for saving figures and or images -- will include '.' if interactive
         self.doc_folders = [fp, '.'] if docpath else ['.']
@@ -150,8 +149,9 @@ class Publisher(object):
         if hasattr(self, 'docman'):
             from_file = f' From file <samp>{self.docman.source_file}</samp>,'
         else: from_file=''
+        docname = f'Document {self.docname}' if self.docname else 'Index document'
         self.markdown(
-            f'<hr class="thick">\nDocument "{self.docname}", {from_file}'\
+            f'<hr class="thick">\n{docname}, {from_file}'\
             f' created using [jupydoc](http://github.com/tburnett/jupydoc) on {self.date}'
             f'<br>Saved to <samp>{fullpath}</samp>'
             )
