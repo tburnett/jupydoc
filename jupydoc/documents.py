@@ -33,7 +33,7 @@ class Manual(DocPublisher):
     """ 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.image_folder = '$HOME/images'
+        # self.image_folder = '$HOME/images'
 
     def introduction(self):
         """Introduction
@@ -146,7 +146,7 @@ class Manual(DocPublisher):
         This shows the basic requirements for a function with this capability:
 
         1. Is a member of a class inheriting from  `jupydoc.Publisher` 
-        1. Has a *docstring*, comment text which will be interpreted as JUpyter-style markdown, and which
+        1. Has a *docstring*, comment text which will be interpreted as Jupyter-style markdown, and which
          may contain  variable  names in curly-brackets, 
         2. Has executable code, presumably creating variables, the values of which will shown in the
         output.
@@ -239,11 +239,11 @@ class Manual(DocPublisher):
     def images(self):
         """Images
 
-        Images be inserted into the docucument, as follows: 
+        Images may be inserted into the docucument, as follows: 
         Using the jupydoc function <samp>image</samp>, set a variable with
         a call `self.image(filename)':
         ```
-        launch_image = self.image( 'fermi-launch.jpg',
+        launch_image = self.image( 'images/fermi-launch.jpg',
                 caption='launch of Fermi on a Delta II on June 11, 2008", width=300)
         ```
         
@@ -256,15 +256,18 @@ class Manual(DocPublisher):
         see the discussion on the 
         [HTML `img` tag](https://www.w3schools.com/tags/tag_img.asp).
 
-        The full path for the name is relative to the source file, except this 
-        class specified 
+        The full path for the name if not absolute, is relative to the source file. 
+        Unless the image is already in the subfolder `images` as is the case here, it will be copied there, with an appended `fig_xx`. 
+        
+        An option is to specify an `image_folder` in the class constructor, for example
+   
         ```
-        self.image_folder = os.path.join(self.path, '$HOME/images')
+        self.image_folder =  '$HOME/images'
         ``` 
-        in its otherwise optional class `__init__` function.
+
         """
        
-        launch_image = self.image( 'fermi-launch.jpg',
+        launch_image = self.image( 'images/fermi-launch.jpg',
                 caption='launch of $Fermi$ (n&eacute;e GLAST) on a Delta II on June 11, 2008', width=300)
         self.publishme()
 
@@ -477,10 +480,11 @@ class Manual(DocPublisher):
                 variable_formatting [scalars list_and_dict latex images 
                                     figures dataframes other_formatting_options]
                 making_a_document [ class_docstring document_generation output_specification]
-                multiple_documents [docman_setup  docman_usage docman_web]
+                multiple_documents [docman_setup  docman_usage docman_web index_document]
+                workflow
 
         ```
-        Commas and line breaks are ignored, and subsection names enclosed in square brakets following the section name.
+        Commas and line breaks are ignored, with subsection names enclosed in square brakets following the section name.
 
         Any unrecognized fields are added to attributes of the class, available for
         user configuration perhaps. For this, it is 
@@ -623,6 +627,7 @@ class Manual(DocPublisher):
         Here is what the index looks like:
         
         {index_image}
+        It is described in the next subsection.
 
         #### Linked documents&mdash;client-mode
 
@@ -647,7 +652,7 @@ class Manual(DocPublisher):
 
         """
         #--------------------------------------------------------------------
-        index_image = self.image("jupydoc-index.png", caption='')
+        index_image = self.image("images/jupydoc-index.png", caption='Appearence of index.html in a browser')
         otherdoc, link = self.docman.client('Technicals')
         self.publishme()
 
@@ -679,15 +684,20 @@ class Manual(DocPublisher):
         This is part of a realization that my early focus on this as a document-creation
         project needs to account for the more research-oriented *analysis*, where sections
         represent stages&mdash;so a failure of any stage should interrupt the process.
+        
         #### 06/24/2020
         Start on the idea of making a doc class a client: quietly perform some task with link to
         as associated document. 
         Also allow a _version_ of a document, with a compound name, classname.version
+        
         #### 07/04/2020
         Implement `<detais>' for `monospace` output, including the functions `shell` and `capture_print`.
         #### 07/15/2020
         Realize that I want it to be easy for a document to be a simple note, appropriate for a sidebar.
         To do this, I define a "title_page" function, with no sections. Maybe a separate class Memo?
+        
+        #### 11/17/2020
+        Implement the "Index" capability using a document called `Index`.
         """
         #----------------------------------
         self.publishme()
@@ -695,26 +705,29 @@ class Manual(DocPublisher):
     def index_document(self):
         """Index Document
 
-        The index.html file that is managed by default can be enhanced with a special document named "Index".
-        If such a class is found in the module, it will be invoked after any other document is saved.
-        The only difference is that it will be saved in the root folder. 
-
-        The easiest use is to inherit from jupydoc.Docindex, and supply the title, abstract, and possibly author fields in the yaml class docstring.
+        The folder containing the documents is indexed by a file index.html containing a table of links to the documents.
+        It is actually a document itself, created by a class called "Index". There are two ways for the user to adjust its
+        appearance: 
+        1. The presence of an "Index" declaration in the `__init__.py` file. It should be a yaml text string which declares
+        "title" and "abastract", and optionally "author". 
 
         ```
-        from jupydoc import DocIndex
+ 
+        Index=\\
+        '''
+        
+        title:  A collection of documents
 
-        __docs__ = ['Index']
-
-        class Index(DocIndex):
-            '''
-            title:  A collection of documents
-
-            abstract: |
-                These are the documents relevant to an important study.
-            '''
+        abstract: |
+            These are the documents relevant to an important study.
+        '''
         ```
-        This will call the `title_page` function of `DocIndex`, which includes a table for the index. 
+        
+        2. The presence of an "Index" document class.
+
+        It one of the documents is named "Index", and "Index" is not an attribute of `__init__.py`, then that document will be used to 
+        create the `index.html` file. 
+
         """
         self.publishme()
 

@@ -71,7 +71,7 @@ class Publisher(object):
         # make current date, and this file's path and name avaailable
         self.date=str(datetime.datetime.now())[:16]
         full_filename = inspect.stack()[0][1]
-        self.path, self.filename = os.path.split(full_filename)
+        self.filepath, self.filename = os.path.split(full_filename)
 
         self.display_on=True
         self.clear()
@@ -190,7 +190,7 @@ class Publisher(object):
               fig_style='jupydoc_fig',
               )->'a JupydocImage object that generates HTML':
         error=''
-        image_path = getattr(self, 'image_folder', self.path)
+        image_path = getattr(self, 'image_folder', self.filepath)
         if image_path[0]=='$':
             image_path = os.path.expandvars(image_path)
         filename = os.path.expandvars(filename)

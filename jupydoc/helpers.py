@@ -26,6 +26,9 @@ class DocInfo(collections.OrderedDict):
         title_page_name='title_page',
         verify_list:'list of acceptable function names'=[]):
  
+        # set the default link to the parent folder
+        self.back_link = '<a href="../"> back</a>'
+        
         if not doc_dict or type(doc_dict) == str:
             print(f'Improper or missing class docstring', file=sys.stderr)
             raise Exception('Improper or missing class docstring')
@@ -84,8 +87,8 @@ class DocInfo(collections.OrderedDict):
         if j==0 and i>1: # end of a section
             self.section_trailer = '\n<p style="text-align: right;"><a href="#top">top</a></p>\n'
         elif i==1: # top
-            self.section_trailer = '\n<p style="text-align: right;"><a href="../index.html?skipDecoration">back to index</a></p>'
-
+            self.section_trailer = f'\n<p style="text-align: right;">{self.back_link}</p>'
+            
         return ret
 
     def annotate(self, header_text, doc):
