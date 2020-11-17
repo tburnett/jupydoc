@@ -147,7 +147,8 @@ class Publisher(object):
             fullpath = os.path.join(fullpath, self.docname)
 
         if hasattr(self, 'docman'):
-            from_file = f' From file <samp>{self.docman.source_file}</samp>,'
+            module = self.docman.lookup_module.get(self.docname, 'not found?')
+            from_file = f' From module <samp>{module}.py</samp>,'
         else: from_file=''
         docname = f'Document {self.docname}' if self.docname else 'Index document'
         self.markdown(

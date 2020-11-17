@@ -182,22 +182,21 @@ class DocPublisher(Publisher):
         if 'Index' in docman.doc_classes and self.docname!='Index':
             print(f'Running the Index document for {obj.docname}')
             docman('Index')()
-            assert True
-        elif hasattr(docman, 'indexdoc', ) and docman.indexdoc:
+            return
+
+        if hasattr(docman, 'indexdoc', ) and docman.indexdoc:
             # DocMan has found an Index declaration, a yaml string, in the __init__.py of this package
             # use it with DocIndex to create a document to save in the docpath folder
             
             print(f'Updating index, applying "Index" declaration in __index__.py')
-            Index.__doc__ = docman.indexdoc
-            di  = Index(docpath=self.docpath, docname='Index')
-            di(save_ok=False)
-            di.save()
+            indexdoc = docman.indexdoc
+        else:
+            indexdoc = f"title: Documents in folder {os.path.split(self.docpath)[-1]} "
 
-        else: 
-            print('Updating index and basic index.html')
-            # this updates yaml    
-            indexer()
-        return 
+        Index.__doc__ = indexdoc
+        di  = Index(docpath=self.docpath, docname='Index')
+        di(save_ok=False)
+        di.save()
     
     def process_doc(self, doc, vars):
         """Override the base class to add document features to the output of a doc function
