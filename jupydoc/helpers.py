@@ -2,7 +2,7 @@
 jupydoc helper class DocInfo, functions doc_formatter and md_to_html
 
 """
-import sys
+import sys, os
 import string, pprint , collections
 from nbconvert.exporters import  HTMLExporter
 
@@ -28,7 +28,7 @@ class DocInfo(collections.OrderedDict):
  
         # set the default link to the parent folder
         self.back_link = '<a href="../"> back</a>'
-        
+
         if not doc_dict or type(doc_dict) == str:
             print(f'Improper or missing class docstring', file=sys.stderr)
             raise Exception('Improper or missing class docstring')
@@ -283,6 +283,8 @@ def md_to_html(output, filename, title='jupydoc'):
     
     # print(f'writing rendered HTML to {filename}')
     if filename:
+        filepath,_ = os.path.split(filename)
+        os.makedirs(filepath, exist_ok=True)
         with open(filename, 'wb') as f:
             f.write(output.encode('utf8'))
     else:

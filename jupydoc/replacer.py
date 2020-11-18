@@ -73,7 +73,13 @@ if plt:
                 # only has to do this once:
                 fig=self.fig
                 n =self.number
-                caption = f'<b>Figure {n}</b>. ' + getattr(fig,'caption', '').format(**self.vars)
+
+                # the caption, which may be absent.
+                caption = getattr(fig,'caption', '')
+                if caption is not None:
+                    caption = f'<b>Figure {n}</b>. ' + getattr(fig,'caption', '').format(**self.vars)
+                    figcaption = f' <figcaption>{caption}</figcaption>'
+                else: figcaption=''
 
                 # save the figure to a file, then close it
                 fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
@@ -91,7 +97,7 @@ if plt:
                      f'<a href="{browser_fn}"'\
                       f'<figure>'\
                         f'   <img src="{browser_fn}" alt="Figure {n} at {browser_fn}" {img_width}>'\
-                        f' <figcaption>{caption}</figcaption>'\
+                        f' {figcaption}' \
                       '</figure>'\
                      '</a>'\
                     '</div>\n'

@@ -251,11 +251,12 @@ class Publisher(object):
         r = JupydocImage(folders = self.doc_folders) 
         return r       
     
-    def figure(self, fig, caption=None, width=None):
-        """convenient way to add caption and width attributes
+    def figure(self, fig, caption='', width=None):
+        """convenient way to add or modify caption and width attributes in existing Figure
+            Will remove the caption line if set to None
         """
         assert fig.__class__.__name__=='Figure', 'Expect fig to be a Figure'
-        if caption: fig.caption=caption
+        if caption is None or caption: fig.caption=caption
         if width: fig.width=width
         return fig
     #-----------------------------------------------------------

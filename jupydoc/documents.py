@@ -122,25 +122,10 @@ class Manual(DocPublisher):
         It can be implemented as this, which can be used to test the options in the next section.
         
         #### Example
-        The following is in a Jupyter notebook cell:
-        ```
-        from jupydoc import Publisher
+        The following shows a Jupyter cell execution:
 
-        class Basic(Publisher):
-
-            def doit(self):
-                """This is the output from a minimal example
-
-                The value of $x$ is {x}, but {2*x} is not recognized.
-                """
-                #-------- code ---------
-                #-----------------------
-                x=99
-                self.publishme()
-                
-        doc = Basic(docpath='.')
-        doc.doit()
-        ```
+        {basic}
+  
 
         #### Requirements
         This shows the basic requirements for a function with this capability:
@@ -186,7 +171,7 @@ class Manual(DocPublisher):
         description.
 
         '''
-
+        basic = self.image('images/basic_test.png')
         self.publishme()
 
     def variable_formatting(self):
@@ -257,7 +242,7 @@ class Manual(DocPublisher):
         [HTML `img` tag](https://www.w3schools.com/tags/tag_img.asp).
 
         The full path for the name if not absolute, is relative to the source file. 
-        Unless the image is already in the subfolder `images` as is the case here, it will be copied there, with an appended `fig_xx`. 
+        Images are copied from this source to a document subfolder, `fig_xx`. 
         
         An option is to specify an `image_folder` in the class constructor, for example
    
@@ -295,6 +280,11 @@ class Manual(DocPublisher):
         the figures in a section to be unique. But the actual number is set to be sequential for
         the whole document.
         Then number can be referred to in the text as `{{fig1.number}}`.
+
+        There are three options for the caption:
+        * default, just the figure number
+        * Figure number plus text
+        * No caption: specify caption=None for this.
         """
         try:
             import matplotlib.pyplot as plt
