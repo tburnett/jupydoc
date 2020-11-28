@@ -316,11 +316,16 @@ class Publisher(object):
         fig.caption=f'Fig. {fig.number}.{text}'
 
 class NBdevCell(Publisher):
-    """ Appropriate for rendering a single cell in the nbdev environment
+    """ Use to render a single cell in the nbdev environment
     """
 
     def __init__(self):
-        super().__init__()
-
+        super().__init__()        
         self.doc_folders.append('docs')
-        
+
+        # check contends of images and set next figure number (assume folder cleared to start)
+        import glob
+        n = len(glob.glob('images/fig_??.png'))
+        self.object_replacer.figure_number=n
+
+
