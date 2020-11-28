@@ -267,7 +267,7 @@ class Manual(DocPublisher):
         x = np.linspace(0,10)
         fig1,ax=plt.subplots(num=self.newfignum(), figsize=(4,3))
         ax.plot(x, x**2)
-        ax.set(xlabel='$x$', ylabel='$x^2$', title=f'figure {{fig1.number}}')
+        ax.set(xlabel='$x$', ylabel='$x^2$')
         fig1.caption='''Caption for Fig. {{fig1.number}}, which
                 shows $x^2$ vs. $x$.'''
         ```
@@ -298,7 +298,7 @@ class Manual(DocPublisher):
         x = np.linspace(*xlim)
         fig1,ax=plt.subplots(num=self.newfignum(), figsize=(4,3))
         ax.plot(x, x**2)
-        ax.set(xlabel='$x$', ylabel='$x^2$', title=f'figure {fig1.number}')
+        ax.set(xlabel='$x$', ylabel='$x^2$')
         fig1.caption="""Caption for Fig. {fig1.number}, which
                 shows $x^2$ vs. $x$.    
             """

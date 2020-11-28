@@ -78,7 +78,7 @@ class Publisher(object):
 
     def _repr_mimebundle_(self, include=None, exclude=None):
         if self._has_data:
-            return {'text/markdown': self.data}
+            return {'text/markdown': self._data}
         return {'text/plain': str(self) }
 
     def publishme(self,  
@@ -108,9 +108,9 @@ class Publisher(object):
         # Now use the helper function to do the formatting, replacing {xx} if xx is recognized
         md_data = doc_formatter(  doc,   vars,  )
 
-        # self.data = self.data + '\n\n' + md_data._repr_mimebundle_()['text/markdown']
+        # self._data = self._data + '\n\n' + md_data._repr_mimebundle_()['text/markdown']
         # add this displayable object to the output tuple
-        self.data += (md_data,)
+        self._data += (md_data,)
 
         # perhaps display it
         self._display(md_data)
@@ -125,7 +125,7 @@ class Publisher(object):
 
     def clear(self):
         # start the objs tuple 
-        self.data = (doc_formatter(jupydoc_css + '\n<a id="top"></a>', ),)
+        self._data = (doc_formatter(jupydoc_css + '\n<a id="top"></a>', ),)
         self._fignum = 0 # local convenience, not true 
         self._has_data = False
         self.object_replacer.clear() # for fig number at least
@@ -160,7 +160,7 @@ class Publisher(object):
             self.markdown(append, clean=False)
 
         html_title = self.docname if self.docname !='Index' else f'{os.path.split(self.docpath)[-1]} index'
-        md_to_html(self.data, os.path.join(fullpath,'index.html'), title=html_title) 
+        md_to_html(self._data, os.path.join(fullpath,'index.html'), title=html_title) 
          
         if not quiet:
             t = f'Document {self.docname}' if self.docname else 'Index'
@@ -175,12 +175,12 @@ class Publisher(object):
             text = f'<p style="margin-left: [indent]%" {text}</p>'
         if clean:
             text= inspect.cleandoc(text)
-        self.data  += (doc_formatter( text ) ,)
+        self._data  += (doc_formatter( text ) ,)
 
     # disable for now--couidn't make it work
     # def html(self, text:'raw HTML text to add to document',
     #     )->'HTML':
-    #     self.data += (doc_formatter(text, mimetype='text/html'),)
+    #     self._data += (doc_formatter(text, mimetype='text/html'),)
 
     def image(self, filename, 
               caption='', 
@@ -314,3 +314,13 @@ class Publisher(object):
                 text:'text of caption for most recent figure'):
         fig = plt.gcf()
         fig.caption=f'Fig. {fig.number}.{text}'
+
+class NBdevCell(Publisher):
+    """ Appropriate for rendering a single cell in the nbdev environment
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.doc_folders.append('docs')
+        

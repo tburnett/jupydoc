@@ -86,7 +86,7 @@ class DocInfo(collections.OrderedDict):
         self.current_index=[i,j]
         if j==0 and i>1: # end of a section
             self.section_trailer = '\n<p style="text-align: right;"><a href="#top">top</a></p>\n'
-        elif i==1: # top
+        elif j==0 & i<=1: # top
             self.section_trailer = f'\n<p style="text-align: right;">{self.back_link}</p>'
             
         return ret

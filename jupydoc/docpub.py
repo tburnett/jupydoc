@@ -169,7 +169,7 @@ class DocPublisher(Publisher):
                     if hasattr(self.docman, 'class_obj') :
                         s = '<details> <summary> Python source code </summary> '
                         s+=    '<pre>'
-                        s+=     inspect.getsource(self.docman.class_obj)
+                        s+=     inspect.getsource(self.docman.class_obj).replace('<', '&lt;').replace('>', '&gt;')
                         s+=     '</pre>'
                         s+= '</details>'
 

@@ -106,7 +106,7 @@ if plt:
     # def __str__(self):
     #     return str(self.img)
 
-    wrappers['Figure'] = (FigureWrapper, {})
+    wrappers['Figure'] = (FigureWrapper, {'folder_name': 'images'}) # was 'figs', but this is OK, what nbdev wants
 
 if pd:
     class DataFrameWrapper(Wrapper): 
