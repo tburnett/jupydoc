@@ -54,17 +54,16 @@ if plt:
             self.fig_folders=kwargs.pop('fig_folders', self.replacer.document_folders)
             # print(f'***fig_folders: {self.fig_folders}')
 
-            
             self.replacer.figure_number += 1
             self.number = self.replacer.figure_number
+            self.prefix = self.replacer.figure_prefix
             self.fig_class=kwargs.pop('fig_class', 'jupydoc_fig') 
 
             for folder in self.fig_folders:
                 t = os.path.join(folder,  self.folder_name)
                 os.makedirs(t, exist_ok=True)
                 assert os.path.isdir(t), f'{t} not found'
-                # print(f'*** saving to {t}')
-
+                # print(f'*** saving to {t}, with prefix {self.prefix}')
 
         def __str__(self):
             
@@ -73,6 +72,7 @@ if plt:
                 # only has to do this once:
                 fig=self.fig
                 n =self.number
+                prefix = self.prefix+'_' if self.prefix else ''
 
                 # the caption, which may be absent.
                 caption = getattr(fig,'caption', '')
@@ -82,7 +82,7 @@ if plt:
                 else: figcaption=''
 
                 # save the figure to a file, then close it
-                fn = os.path.join(self.folder_name, f'fig_{n:02d}.png')
+                fn = os.path.join(self.folder_name, f'{prefix}fig_{n:02d}.png')
                 browser_fn =fn
                 
                 # actually save it for the document, perhaps both in the local, and document folders
@@ -94,12 +94,10 @@ if plt:
                 # add the HTML as an attribute, to insert the image, including  caption
                 self._html =\
                     f'<div class="{self.fig_class}">'\
-                     f'<a href="{browser_fn}"'\
                       f'<figure>'\
                         f'   <img src="{browser_fn}" alt="Figure {n} at {browser_fn}" {img_width}>'\
                         f' {figcaption}' \
                       '</figure>'\
-                     '</a>'\
                     '</div>\n'
             return self._html
 
@@ -167,11 +165,13 @@ class ObjectReplacer(dict):
     """
     def __init__(self, 
                  folders:'one or more document folders to save images'=['.'], 
+                 figure_prefix:'prefix for figure filename'='',
                 ):
 
         self.update(wrappers)
         self.set_folders(folders)
         self.figure_number=0
+        self.figure_prefix = figure_prefix
         self.debug=False
         
     # def add_rep(self, class_name:'name of class to replace', 

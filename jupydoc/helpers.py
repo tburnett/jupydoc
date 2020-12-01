@@ -321,3 +321,48 @@ def parse_fields(string):
         fields.append('\n'.join(slines[a+1:b]))
         a=b
     return fields
+
+def monospace(text:'Either a string, or an object',
+                summary:'string for <details>'=None,
+                open:'initially show details'=False, 
+                indent='5%',
+                )->str:
+
+    text = str(text).replace('\n', '<br>')
+    out = f'<p style="margin-left: {indent}"><pre>{text}</pre></p>'
+    if not summary:
+        return out
+    return f'<details {"open" if open else ""}><summary> {summary} </summary> {out} </details>'
+
+
+    
+def shell(text:'a shell command ', mono=True, **kwargs):
+    import subprocess
+    try:
+        ret = subprocess.check_output([text], shell=True).decode('utf-8')
+    except Exception as e:
+        ret = f'Command {text} failed : {e}'
+    return monospace(ret, **kwargs) if mono else ret
+
+def capture_print( **kwargs):
+
+
+    class Capture_print(object):
+        _stream = 'stdout'
+        
+        def __init__(self):
+            import io
+            self._new = io.StringIO()
+            self._old = getattr(sys, self._stream)
+
+        def __enter__(self):
+            setattr(sys, self._stream, self._new)
+            return self
+        
+        def __exit__(self, exctype, excinst, exctb):
+            setattr(sys, self._stream, self._old)
+            
+        def __str__(self):
+            return monospace(self._new.getvalue(), **kwargs)
+
+    return Capture_print()

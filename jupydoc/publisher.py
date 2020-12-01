@@ -82,6 +82,7 @@ class Publisher(object):
         return {'text/plain': str(self) }
 
     def publishme(self,  
+                doc:'optional doc string'=None,
                  **kwargs:'additional variable definitions',
                  )->None:
         """
@@ -92,7 +93,7 @@ class Publisher(object):
         back =inspect.currentframe().f_back
         name= self.name = inspect.getframeinfo(back).function
         locs = inspect.getargvalues(back).locals
-        doc = inspect.getdoc(eval(f'self.{name}'))
+        doc = doc or inspect.getdoc(eval(f'self.{name}'))
  
         # symbol table: predefinded + locals + kwargs
         vars = self.predefined.copy()
@@ -315,17 +316,48 @@ class Publisher(object):
         fig = plt.gcf()
         fig.caption=f'Fig. {fig.number}.{text}'
 
-class NBdevCell(Publisher):
-    """ Use to render a single cell in the nbdev environment
-    """
+def nbdoc(userfun:'a function'):
+    """Assume called from a jupyter cell, with a function of no args
+    which has a docstring in markdown format. The code is extracted, a 
+    function call appended, and then executed.
+    """   
+    import inspect
 
-    def __init__(self):
-        super().__init__()        
-        self.doc_folders.append('docs')
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
 
-        # check contends of images and set next figure number (assume folder cleared to start)
-        import glob
-        n = len(glob.glob('images/fig_??.png'))
-        self.object_replacer.figure_number=n
+    from jupydoc.replacer import ObjectReplacer
+    from jupydoc.helpers import doc_formatter, monospace, capture_print, shell
+    
+    import IPython.display as display
 
 
+    # process the function's code
+    source, _ = inspect.getsourcelines(userfun)
+    assert source[0].startswith('def '), 'Expect first line to be a "def"'
+    code = inspect.cleandoc(''.join(source[1:]))
+    name = userfun.__name__
+
+    # this object will replace references to objects that it recognizes, like "Figure"
+    # It needs to know where to put image files
+    orep = ObjectReplacer(folders=['','docs'], figure_prefix=name)
+    
+    # get the function's docstring, assumed to be MD
+    doc = inspect.cleandoc(userfun.__doc__)
+    
+    # a call to this is added to end of the user code
+    def _generate(name):
+        # gets local symbols from calling function
+        back =inspect.currentframe().f_back
+        locs = inspect.getargvalues(back).locals
+        
+        vars = locs
+        # replace variable objects if recognized
+        orep(vars)
+        # format the doc string, replacing recognized {...} with a str()
+        md_data = doc_formatter(doc, vars)
+        # have IPython display it
+        display.display( md_data )  
+
+    exec(code + f'\n_generate("{name}")', globals(), locals())
